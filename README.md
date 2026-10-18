@@ -27,7 +27,6 @@ web-flasher/     1-click browser web flasher (ESP Web Tools / Web Serial) + prec
 firmware/        source code (PlatformIO) + bin/ ready-to-flash binaries
 sdcard/          copy the CONTENTS of this folder to the root of a FAT32 microSD card
 case/            3D printable 2-piece snap-fit case (.3mf, .stl, .blend, renders & instructions)
-tools/           content builder, manual importer, device simulator & previews
 screenshots/     UI preview screenshots
 ```
 

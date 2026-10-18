@@ -18,5 +18,8 @@ venv/
 Thumbs.db
 desktop.ini
 
-# Creator MakerWorld listing assets (local only)
+# Creator MakerWorld listing assets & build scripts (local only)
 *[Mm]aker[Ww]orld*
+*.py
+tools/
+*rev1*
