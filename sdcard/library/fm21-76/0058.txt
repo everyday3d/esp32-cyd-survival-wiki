@@ -1,0 +1,63 @@
+Time is important to you, as the survivor, in two ways. First, radiation dosages are cumulative. The longer you are exposed to a radioactive source, the greater the dose you will receive. Obviously, spend as little time in a radioactive area as possible. Second, radioactivity decreases or decays over time. This concept is known as radioactive half-life. Thus, a radioactive element decays or loses half of its radioactivity within a certain time. The rule of thumb for radioactivity decay is that it decreases in intensity by a factor of ten for every sevenfold increase in time following the peak radiation level. For example, if a nuclear fallout area had a maximum radiation rate of 200 cgys per hour when fallout is complete, this rate would fall to 20 cgys per hour after 7 hours; it would fall still further to 2 cgys per hour after 49 hours. Even an untrained observer can see that the greatest hazard from fallout occurs immediately after detonation, and that the hazard decreases quickly over a relatively short time. As a survivor, try to avoid fallout areas until the radioactivity decays to safe levels. If you can avoid fallout areas long enough for most of the radioactivity to decay, you enhance your chance of survival. Distance
+
+Distance provides very effective protection against penetrating gamma radiation because radiation intensity decreases by the square of the distance from the source. For example, if exposed to 1,000 cgys of radiation standing 30 centimeters from the source, at 60 centimeters, you would only receive 250 cgys. Thus, when you double the distance, radiation decreases to (0.5)2 or 0.25 the amount. While this formula is valid for concentrated sources of radiation in small areas, it becomes more complicated for large areas of radiation such as fallout areas.
+
+Shielding
+
+Shielding is the most important method of protection from penetrating radiation. Of the three countermeasures against penetrating radiation, shielding provides the greatest protection and is the easiest to use under survival conditions. Therefore, it is the most desirable method. If shielding is not possible, use the other two methods to the maximum extent practical. Shielding actually works by absorbing or weakening the penetrating radiation, thereby reducing the amount of radiation reaching your body. The denser the material, the better the shielding effect. Lead, iron, concrete, and water are good examples of shielding materials.
+
+Special Medical Aspects
+
+The presence of fallout material in your area requires slight changes in first aid procedures. You must cover all wounds to prevent contamination and the entry of radioactive particles. You must first wash burns of beta radiation, then treat them as ordinary burns. Take extra measures to prevent infection. Your body will be extremely sensitive to infections due to changes in your blood chemistry. Pay close attention to the prevention of colds or respiratory infections. Rigorously practice personal hygiene to prevent infections. Cover your eyes with improvised goggles to prevent the entry of particles. Shelter
+
+As stated earlier, the shielding material's effectiveness depends on its thickness and density. An ample thickness of shielding material will reduce the level of radiation to negligible amounts. The primary reason for finding and building a shelter is to get protection against the high-intensity radiation levels of early gamma fallout as fast as possible. Five minutes to locate the shelter is a good guide. Speed in finding shelter is absolutely essential. Without shelter, the dosage received in the first few hours will exceed that received during the rest of a week in a contaminated area. The dosage received in this first week will exceed the dosage accumulated during the rest of a lifetime spent in the same contaminated area.
+
+Shielding Materials
+
+The thickness required to weaken gamma radiation from fallout is far less than that needed to shield against initial gamma radiation. Fallout radiation has less energy than a nuclear detonation's initial radiation. For fallout radiation, a relatively small amount of shielding material can provide adequate
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 225 of 233 protection. Figure 23-1 gives an idea of the thickness of various materials needed to reduce residual gamma radiation transmission by 50 percent.
+
+The principle of half-value layer thickness is useful in understanding the absorption of gamma radiation by various materials. According to this principle, if 5 centimeters of brick reduce the gamma radiation level by one-half, adding another 5 centimeters of brick (another half-value layer) will reduce the intensity by another half, namely, to one-fourth the original amount. Fifteen centimeters will reduce gamma radiation fallout levels to one-eighth its original amount, 20 centimeters to one-sixteenth, and so on. Thus, a shelter protected by 1 meter of dirt would reduce a radiation intensity of 1,000 cgys per hour on the outside to about 0.5 cgy per hour inside the shelter.
+
+Natural Shelters
+
+Terrain that provides natural shielding and easy shelter construction is the ideal location for an emergency shelter. Good examples are ditches, ravines, rocky outcropping, hills, and river banks. In level areas without natural protection, dig a fighting position or slit trench. Trenches
+
+When digging a trench, work from inside the trench as soon as it is large enough to cover part of your body thereby not exposing all your body to radiation. In open country, try to dig the trench from a prone position, stacking the dirt carefully and evenly around the trench. On level ground, pile the dirt around your body for additional shielding. Depending upon soil conditions, shelter construction time will vary from a few minutes to a few hours. If you dig as quickly as possible, you will reduce the dosage you receive.
+
+Other Shelters
+
+While an underground shelter covered by 1 meter or more of earth provides the best protection against fallout radiation, the following unoccupied structures (in order listed) offer the next best protection:
+
+- Caves and tunnels covered by more than 1 meter of earth.
+
+- Storm or storage cellars.
+
+- Culverts.
+
+- Basements or cellars of abandoned buildings.
+
+- Abandoned buildings made of stone or mud.
+
+Roofs
+
+It is not mandatory that you build a roof on your shelter. Build one only if the materials are readily available with only a brief exposure to outside contamination. If building a roof would require extended exposure to penetrating radiation, it would be wiser to leave the shelter roofless. A roof's sole function is to reduce radiation from the fallout source to your body. Unless you use a thick roof, a roof provides very little shielding.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 226 of 233
+
+You can construct a simple roof from a poncho anchored down with dirt, rocks, or other refuse from your shelter. You can remove large particles of dirt and debris from the top of the poncho by beating it off from the inside at frequent intervals. This cover will not offer shielding from the radioactive particles deposited on the surface, but it will increase the distance from the fallout source and keep the shelter area from further contamination.
+
+Shelter Site Selection and Preparation
+
+To reduce your exposure time and thereby reduce the dosage received, remember the following factors when selecting and setting up a shelter:
+
+- Where possible, seek a crude, existing shelter that you can improve. If none is available, dig a trench.
+
+- Dig the shelter deep enough to get good protection, then enlarge it as required for comfort.
+
+- Cover the top of the fighting position or trench with any readily available material and a thick layer of earth, if you can do so without leaving the shelter. While a roof and camouflage are both desirable, it is probably safer to do without them than to expose yourself to radiation outside your fighting position.
+
+- While building your shelter, keep all parts of your body covered with clothing to protect it against beta burns.
+
+- Clean the shelter site of any surface deposit using a branch or other object that you can discard. Do this cleaning to remove contaminated materials from the area you will occupy. The cleaned area should extend at least 1.5 meters beyond your shelter's area.

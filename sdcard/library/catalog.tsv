@@ -1,2 +1,3 @@
 # id	title	parts	pdf file	source  (written by import_manual.py)
-field-guide	Survival Wiki Field Guide (all articles)	10	field-guide.pdf	Every article in one book. Print the PDF as a paper backup.
+field-guide	Survival Wiki Field Guide (all articles)	10		Every article in one book. Print the PDF as a paper backup.
+fm21-76	US Army Survival Manual (FM 21-76)	62	fm21-76.pdf	US Army, 1992. Public domain.

@@ -372,7 +372,7 @@ esp-web-install-button {
     <div class="step-card">
       <div class="step-num">3</div>
       <h3>Power On & Explore</h3>
-      <p>Press the <strong>RESET</strong> button or plug into battery power. Browse 43 illustrated survival guides on-screen, or connect a phone to the <code>SurvivalWiki</code> Wi-Fi network!</p>
+      <p>Press the <strong>RESET</strong> button or plug into battery power. Browse 61 illustrated emergency guides & US Army Survival Manual FM 21-76 on-screen, or connect a phone to the <code>SurvivalWiki</code> Wi-Fi network!</p>
     </div>
   </div>
 
@@ -386,16 +386,17 @@ esp-web-install-button {
 ├── <span class="comment">config.txt</span>               <span class="comment"># Device configuration (brightness, Wi-Fi SSID)</span>
 ├── <span class="folder">wiki/</span>
 │   ├── <span class="comment">categories.tsv</span>         <span class="comment"># Top-level wiki categories</span>
-│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Article catalog index</span>
+│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Article catalog index (61 articles)</span>
 │   ├── <span class="comment">search.json.gz</span>         <span class="comment"># Pre-indexed search database for phone browser</span>
-│   ├── <span class="folder">articles/</span>              <span class="comment"># 43 full-text Markdown emergency guides</span>
+│   ├── <span class="folder">articles/</span>              <span class="comment"># 61 full-text Markdown emergency guides</span>
 │   │   ├── hypothermia.md
 │   │   ├── purifying-water.md
 │   │   └── ...
 │   └── <span class="folder">img/</span>                   <span class="comment"># Illustrated diagrams (CPR, water filter, knots, etc.)</span>
 ├── <span class="folder">library/</span>
-│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Library manual index</span>
-│   └── <span class="folder">field-guide/</span>          <span class="comment"># Multi-part wilderness & medical field manuals</span>
+│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Library manual index (Field Guide & FM 21-76)</span>
+│   ├── <span class="folder">field-guide/</span>          <span class="comment"># 10-part compiled offline field guide (61 articles)</span>
+│   └── <span class="folder">fm21-76/</span>              <span class="comment"># US Army Survival Manual FM 21-76 (62 chapters + PDF)</span>
 └── <span class="folder">web/</span>
     ├── <span class="comment">index.html</span>             <span class="comment"># Mobile captive portal web app</span>
     └── <span class="comment">index.html.gz</span>
@@ -414,7 +415,7 @@ esp-web-install-button {
       </p>
     </div>
     <div style="text-align:center;">
-      <img src="../case/preview_hero_assembled_rev2.png" alt="ESP32 CYD Case" style="width:100%; max-width:240px; border-radius:10px; border:1px solid var(--border); box-shadow:0 8px 20px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+      <img src="preview_hero_assembled_rev2.png" alt="ESP32 CYD Case" style="width:100%; max-width:240px; border-radius:10px; border:1px solid var(--border); box-shadow:0 8px 20px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
     </div>
   </div>
 

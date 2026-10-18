@@ -1,0 +1,65 @@
+Quicksand is a mixture of sand and water that forms a shifting mass. It yields easily to pressure and sucks down and engulfs objects resting on its surface. It varies in depth and is usually localized. Quicksand commonly occurs on flat shores, in silt-choked rivers with shifting watercourses, and near the mouths of large rivers. If you are uncertain whether a sandy area is quicksand, toss a small stone on it. The stone will sink in quicksand. Although quicksand has more suction than mud or muck, you can cross it just as you would cross a bog. Lie face down, spread your arms and legs, and move slowly across. VEGETATION OBSTACLES
+
+Some water areas you must cross may have underwater and floating plants that will make swimming difficult. However, you can swim through relatively dense vegetation if you remain calm and do not thrash about. Stay as near the surface as possible and use the breaststroke with shallow leg and arm motion. Remove the plants around you as you would clothing. When you get tired, float or swim on your back until you have rested enough to continue with the breaststroke.
+
+The mangrove swamp is another type of obstacle that occurs along tropical coastlines. Mangrove trees or shrubs throw out many prop roots that form dense masses. To get through a mangrove swamp, wait for low tide. If you are on the inland side, look for a narrow grove of trees and work your way seaward through these. You can also try to find the bed of a waterway or creek through the trees and follow it to the sea. If you are on the seaward side, work inland along streams or channels. Be on the lookout for crocodiles that you find along channels and in shallow water. If there are any near you, leave the water and scramble over the mangrove roots. While crossing a mangrove swamp, it is possible to gather food from tidal pools or tree roots.
+
+To cross a large swamp area, construct some type of raft.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 193 of 233
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 194 of 233
+
+CHAPTER 18 - FIELD-EXPEDIENT DIRECTION FINDING
+
+In a survival situation, you will be extremely fortunate if you happen to have a map and compass. If you do have these two pieces of equipment, you will most likely be able to move toward help. If you are not proficient in using a map and compass, you must take the steps to gain this skill.
+
+There are several methods by which you can determine direction by using the sun and the stars. These methods, however, will give you only a general direction. You can come up with a more nearly true direction if you know the terrain of the territory or country. You must learn all you can about the terrain of the country or territory to which you or your unit may be sent, especially any prominent features or landmarks. This knowledge of the terrain together with using the methods explained below will let you come up with fairly true directions to help you navigate. USING THE SUN AND SHADOWS
+
+The earth's relationship to the sun can help you to determine direction on earth. The sun always rises in the east and sets in the west, but not exactly due east or due west. There is also some seasonal variation. In the northern hemisphere, the sun will be due south when at its highest point in the sky, or when an object casts no appreciable shadow. In the southern hemisphere, this same noonday sun will mark due north. In the northern hemisphere, shadows will move clockwise. Shadows will move counterclockwise in the southern hemisphere. With practice, you can use shadows to determine both direction and time of day. The shadow methods used for direction finding are the shadow-tip and watch methods.
+
+Shadow-Tip Methods
+
+In the first shadow-tip method, find a straight stick 1 meter long, and a level spot free of brush on which the stick will cast a definite shadow. This method is simple and accurate and consists of four steps:
+
+- Step 1. Place the stick or branch into the ground at a level spot where it will cast a distinctive shadow. Mark the shadow's tip with a stone, twig, or other means. This first shadow mark is always west--everywhere on earth.
+
+- Step 2. Wait 10 to 15 minutes until the shadow tip moves a few centimeters. Mark the shadow tip's new position in the same way as the first.
+
+- Step 3. Draw a straight line through the two marks to obtain an approximate east-west line.
+
+- Step 4. Stand with the first mark (west) to your left and the second mark to your right--you are now facing north. This fact is true everywhere on earth.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 195 of 233
+
+An alternate method is more accurate but requires more time. Set up your shadow stick and mark the first shadow in the morning. Use a piece of string to draw a clean arc through this mark and around the stick. At midday, the shadow will shrink and disappear. In the afternoon, it will lengthen again and at the point where it touches the arc, make a second mark. Draw a line through the two marks to get an accurate east-west line (see Figure 18-1).
+
+The Watch Method
+
+You can also determine direction using a common or analog watch--one that has hands. The direction will be accurate if you are using true local time, without any changes for daylight savings time. Remember, the further you are from the equator, the more accurate this method will be. If you only have a digital watch, you can overcome this obstacle. Quickly draw a watch on a circle of paper with the correct time on it and use it to determine your direction at that time. In the northern hemisphere, hold the watch horizontal and point the hour hand at the sun. Bisect the angle between the hour hand and the 12 o'clock mark to get the north-south line (Figure 18-2). If there is any doubt as to which end of the line is north, remember that the sun rises in the east, sets in the west, and is due south at noon. The sun is in the east before noon and in the west after noon.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 196 of 233
+
+Note: If your watch is set on daylight savings time, use the midway point between the hour hand and 1 o'clock to determine the north-south line.
+
+In the southern hemisphere, point the watch's 12 o'clock mark toward the sun and a midpoint halfway between 12 and the hour hand will give you the north-south line (Figure 18-2). USING THE MOON
+
+Because the moon has no light of its own, we can only see it when it reflects the sun's light. As it orbits the earth on its 28-day circuit, the shape of the reflected light varies according to its position. We say there is a new moon or no moon when it is on the opposite side of the earth from the sun. Then, as it moves away from the earth's shadow, it begins to reflect light from its right side and waxes to become a full moon before waning, or losing shape, to appear as a sliver on the left side. You can use this information to identify direction.
+
+If the moon rises before the sun has set, the illuminated side will be the west. If the moon rises after midnight, the illuminated side will be the east. This obvious discovery provides us with a rough east-west reference during the night.
+
+USING THE STARS
+
+Your location in the Northern or Southern Hemisphere determines which constellation you use to determine your north or south direction.
+
+The Northern Sky
+
+The main constellations to learn are the Ursa Major, also known as the Big Dipper or the Plow, and Cassiopeia (Figure 18-3). Neither of these constellations ever sets. They are always visible on a clear night. Use them to locate Polaris, also known as the polestar or the North Star. The North Star forms part of the Little Dipper handle and can be confused with the Big Dipper. Prevent confusion by using both the Big Dipper and Cassiopeia together. The Big Dipper and Cassiopeia are always directly opposite each. other and rotate counterclockwise around Polaris, with Polaris in the center. The Big Dipper is a seven star constellation in the shape of a dipper. The two stars forming the outer lip of this dipper are the "pointer stars" because they point to the North Star. Mentally draw a line from the outer bottom star to the outer top star of the Big Dipper's bucket. Extend this line about five times the distance between the pointer stars. You will find the North Star along this line.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 197 of 233
+
+Cassiopeia has five stars that form a shape like a "W" on its side. The North Star is straight out from Cassiopeia's center star.
+
+After locating the North Star, locate the North Pole or true north by drawing an imaginary line directly to the earth.
+
+The Southern Sky

@@ -1,0 +1,89 @@
+All eggs, even if laid during the period of fallout, will be safe to eat. Completely avoid milk from any animals in a fallout area because animals absorb large amounts of radioactivity from the plants they eat. Plants as a Food Source
+
+Plant contamination occurs by the accumulation of fallout on their outer surfaces or by absorption of radioactive elements through their roots. Your first choice of plant food should be vegetables such as potatoes, turnips, carrots, and other plants whose edible portion grows underground. These are the safest to eat once you scrub them and remove their skins.
+
+Second in order of preference are those plants with edible parts that you can decontaminate by washing and peeling their outer surfaces. Examples are bananas, apples, tomatoes, prickly pears, and other such fruits and vegetables.
+
+Any smooth-skinned vegetable, fruit, or plant that you cannot easily peel or effectively decontaminate by washing will be your third choice of emergency food.
+
+The effectiveness of decontamination by scrubbing is inversely proportional to the roughness of the fruit's surface. Smooth-surfaced fruits have lost 90 percent of their contamination after washing, while washing rough-surfaced plants removes only about 50 percent of the contamination. You eat rough-surfaced plants (such as lettuce) only as a last resort because you cannot effectively decontaminate them by peeling or washing. Other difficult foods to decontaminate by washing with water include dried fruits (figs, prunes, peaches, apricots, pears) and soya beans. In general, you can use any plant food that is ready for harvest if you can effectively decontaminate it. Growing plants, however, can absorb some radioactive materials through their leaves as well as from the soil, especially if rains have occurred during or after the fallout period. Avoid using these plants for food except in an emergency.
+
+BIOLOGICAL ENVIRONMENTS
+
+The use of biological agents is real. Prepare yourself for survival by being proficient in the tasks identified in your Soldier's Manuals of Common Tasks (SMCTs). Know what to do to protect yourself against these agents.
+
+Biological Agents and Effects
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 229 of 233
+
+Biological agents are microorganisms that can cause disease among personnel, animals, or plants. They can also cause the deterioration of material. These agents fall into two broad categories-pathogens (usually called germs) and toxins. Pathogens are living microorganisms that cause lethal or incapacitating diseases. Bacteria, rickettsiae, fungi, and viruses are included in the pathogens. Toxins are poisons that plants, animals, or microorganisms produce naturally. Possible biological war-fare toxins include a variety of neurotoxic (affecting the central nervous system) and cytotoxic (causing cell death) compounds.
+
+Germs
+
+Germs are living organisms. Some nations have used them in the past as weapons. Only a few germs can start an infection, especially if inhaled into the lungs. Because germs are so small and weigh so little, the wind can spread them over great distances; they can also enter unfiltered or nonairtight places. Buildings and bunkers can trap them thus causing a higher concentration. Germs do not affect the body immediately. They must multiply inside the body and overcome the body's defenses--a process called the incubation period. Incubation periods vary from several hours to several months, depending on the germ. Most germs must live within another living organism (host), such as your body, to survive and grow. Weather conditions such as wind, rain, cold, and sunlight rapidly kill germs. Some germs can form protective shells, or spores, to allow survival outside the host. Spore-producing agents are a long-term hazard you must neutralize by decontaminating infected areas or personnel. Fortunately, most live agents are not spore-producing. These agents must find a host within roughly a day of their delivery or they die. Germs have three basic routes of entry into your body: through the respiratory tract, through a break in the skin, and through the digestive tract. Symptoms of infection vary according to the disease.
+
+Toxins
+
+Toxins are substances that plants, animals, or germs produce naturally. These toxins are what actually harm man, not bacteria. Botulin, which produces botulism, is an example. Modern science has allowed large-scale production of these toxins without the use of the germ that produces the toxin. Toxins may produce effects similar to those of chemical agents. Toxic victims may not, however, respond to first aid measures used against chemical agents. Toxins enter the body in the same manner as germs. However, some toxins, unlike germs, can penetrate unbroken skin. Symptoms appear almost immediately, since there is no incubation period. Many toxins are extremely lethal, even in very small doses. Symptoms may include any of the following:
+
+- Dizziness.
+
+- Mental confusion.
+
+- Blurred or double vision.
+
+- Numbness or tingling of skin.
+
+- Paralysis.
+
+- Convulsions.
+
+- Rashes or blisters.
+
+- Coughing.
+
+- Fever.
+
+- Aching muscles.
+
+- Tiredness.
+
+- Nausea, vomiting, and/or diarrhea.
+
+- Bleeding from body openings.
+
+- Blood in urine, stool, or saliva.
+
+- Shock.
+
+- Death.
+
+Detection of Biological Agents
+
+Biological agents are, by nature, difficult to detect. You cannot detect them by any of the five physical senses. Often, the first sign of a biological agent will be symptoms of the victims exposed to the agent.
+
+FM 21-76 US ARMY SURVIVAL MANUAL Reprinted as permitted by U.S. Department of the Army Page 230 of 233
+
+Your best chance of detecting biological agents before they can affect you is to recognize their means of delivery. The three main means of delivery are--
+
+- Bursting-type munitions. These may be bombs or projectiles whose burst causes very little damage. The burst will produce a small cloud of liquid or powder in the immediate impact area. This cloud will disperse eventually; the rate of dispersion depends on terrain and weather conditions.
+
+- Spray tanks or generators. Aircraft or vehicle spray tanks or ground-level aerosol generators produce an aerosol cloud of biological agents.
+
+- Vectors. Insects such as mosquitoes, fleas, lice, and ticks deliver pathogens. Large infestations of these insects may indicate the use of biological agents.
+
+Another sign of a possible biological attack is the presence of unusual substances on the ground or on vegetation, or sick-looking plants, crops, or animals.
+
+Influence of Weather and Terrain
+
+Your knowledge of how weather and terrain affect the agents can help you avoid contamination by biological agents. Major weather factors that affect biological agents are sunlight, wind, and precipitation. Aerosol sprays will tend to concentrate in low areas of terrain, similar to early morning mist. Sunlight contains visible and ultraviolet solar radiation that rapidly kills most germs used as biological agents. However, natural or man-made cover may protect some agents from sunlight. Other man-made mutant strains of germs may be resistant to sunlight.
+
+High wind speeds increase the dispersion of biological agents, dilute their concentration, and dehydrate them. The further downwind the agent travels, the less effective it becomes due to dilution and death of the pathogens. However, the downwind hazard area of the biological agent is significant and you cannot ignore it.
+
+Precipitation in the form of moderate to heavy rain tends to wash biological agents out of the air, reducing downwind hazard areas. However, the agents may still be very effective where they were deposited on the ground.
+
+Protection Against Biological Agents
+
+While you must maintain a healthy respect for biological agents, there is no reason for you to panic. You can reduce your susceptibility to biological agents by maintaining current immunizations, avoiding contaminated areas, and controlling rodents and pests. You must also use proper first aid measures in the treatment of wounds and only safe or properly decontaminated sources of food and water. You must ensure that you get enough sleep to prevent a run-down condition. You must always use proper field sanitation procedures.
+
+Assuming you do not have a protective mask, always try to keep your face covered with some type of cloth to protect yourself against biological agent aerosols. Dust may contain biological agents; wear some type of mask when dust is in the air.

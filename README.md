@@ -17,8 +17,8 @@ An offline survival knowledge base and field reference engineered specifically f
 > - **Storage:** Onboard MicroSD (TF) card slot on dedicated VSPI bus (`PIN_SD_CS 5`, `SCK 18`, `MISO 19`, `MOSI 23`)
 > - *(Note: Older Sunton `ESP32-3248S035` boards with off-center Micro-USB and M2 holes will NOT fit this case)*
 
-- **On the 3.5" Screen:** Browse 8 categories and 43 illustrated emergency articles, plus a full Library of manuals.
-- **On Phones & Laptops:** The device hosts its own standalone Wi-Fi captive portal network (`SurvivalWiki`). Phones that join get the entire search-indexed wiki with color diagrams in their browser.
+- **On the 3.5" Screen:** Browse 8 categories and 61 illustrated emergency articles, plus the complete 233-page **US Army Survival Manual (FM 21-76)** pre-indexed across 62 paged chapters and the field guide book.
+- **On Phones & Laptops:** The device hosts its own standalone Wi-Fi captive portal network (`SurvivalWiki`). Phones that join get the entire search-indexed wiki with color diagrams in their browser, plus direct PDF download access to the complete US Army FM 21-76 manual.
 - **100% Offline & Grid-Down:** No internet required, ever. Everything lives on the microSD card and runs off any 5V USB-C battery bank.
 - **Custom Snap-Fit Case Included:** Includes 3D printable, support-free 2-piece enclosure designed specifically for the 101.50 × 55.50 mm E32R35T board with centered USB-C port and M3 alignment pins.
 
@@ -60,7 +60,8 @@ screenshots/     UI preview screenshots
    │   └── img/
    ├── library/
    │   ├── catalog.tsv
-   │   └── field-guide/
+   │   ├── field-guide/       # All articles compiled into single book
+   │   └── fm21-76/           # US Army Survival Manual (FM 21-76, 62 parts + PDF)
    └── web/
        ├── index.html
        └── index.html.gz
