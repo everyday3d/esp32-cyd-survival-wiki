@@ -91,7 +91,7 @@ The `case/` directory includes the official **rev2** precision snap-fit enclosur
 - **100% Support-Free Printing:** Both parts print flat on `Z = 0` (Base on its back, Top Bezel face-down).
 - **Exact E32R35T Clearances:** Accommodates the `101.50 × 55.50 mm` PCB with an open cavity that leaves all rear perimeter components unobstructed.
 - **Centered USB-C Port:** Wide cutout with external overmold relief so thick USB-C cable plugs seat flush.
-- **Port Access:** Features a bottom thumb scoop for microSD insertion/removal, dedicated access ports for `RESET` and `BOOT` tactile switches, top peripheral windows for JST 1.25mm connectors, and debossed **`BOXERDAWG3D`** branding with angled cooling louvers.
+- **Port Access:** Features a bottom thumb scoop for microSD insertion/removal, dedicated access ports for `RESET` and `BOOT` tactile switches, top peripheral windows for JST 1.25mm connectors, and angled passive cooling louvers.
 - See [`case/PRINT_INSTRUCTIONS.md`](case/PRINT_INSTRUCTIONS.md) and [`case/ESP32_35_Touch_Case_rev2.3mf`](case/ESP32_35_Touch_Case_rev2.3mf).
 
 ---
