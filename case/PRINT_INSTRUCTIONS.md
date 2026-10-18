@@ -10,8 +10,8 @@ tags:
 # Print & Assembly Guide — 3.5" ESP32 Touch CYD Case (`rev2`)
 
 ## 1. Recommended Slicer Settings
-- **Project File**: Open `ESP32_35_Touch_Case_rev2.3mf` in Bambu Studio / OrcaSlicer (or import `1_ESP32_35_Case_Base_rev2.stl` and `2_ESP32_35_Case_Top_rev2.stl`).
-- **Orientation**: Both parts are pre-oriented **flat on `Z = 0`** (`1_ESP32_35_Case_Base_rev2` on its bottom exterior; `2_ESP32_35_Case_Top_rev2` face-down on its top bezel).
+- **Project File**: Open [`3mf/ESP32_35_Touch_Case_rev2.3mf`](3mf/ESP32_35_Touch_Case_rev2.3mf) in Bambu Studio / OrcaSlicer (or import [`stl/1_ESP32_35_Case_Base_rev2.stl`](stl/1_ESP32_35_Case_Base_rev2.stl) and [`stl/2_ESP32_35_Case_Top_rev2.stl`](stl/2_ESP32_35_Case_Top_rev2.stl)).
+- **Orientation**: Both parts are pre-oriented **flat on `Z = 0`** (`stl/1_ESP32_35_Case_Base_rev2.stl` on its bottom exterior; `stl/2_ESP32_35_Case_Top_rev2.stl` face-down on its top bezel).
 - **Supports**: **None (`0`)** — 100% support-free geometry.
 - **Layer Height**: `0.20 mm` Standard (`0.4 mm` nozzle).
 - **Wall Loops**: `3` walls.
