@@ -1,0 +1,8 @@
+# Survival Wiki settings - edit on a computer, then put the card back in.
+# Wi-Fi network name that phones will see:
+ssid=SurvivalWiki
+# Leave blank for an open network (easiest in an emergency),
+# or set 8 or more characters to require a password:
+password=
+# Wi-Fi channel 1-11:
+channel=6

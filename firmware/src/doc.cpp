@@ -1,0 +1,336 @@
+#include "doc.h"
+#include "config.h"
+#include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
+#include <SD.h>
+
+extern TFT_eSPI tft;
+
+static const int TEXT_X = 10;
+static const int TEXT_W = SCR_W - 20;
+
+static int lineHeight(uint8_t s) {
+  switch (s) {
+    case S_H1: return 34;
+    case S_H2: return 28;
+    case S_CAPTION: return 18;
+    default: return 22;
+  }
+}
+
+static void setStyleFont(uint8_t s) {
+  switch (s) {
+    case S_H1: tft.setFreeFont(&FreeSansBold12pt7b); break;
+    case S_H2: tft.setFreeFont(&FreeSansBold9pt7b); break;
+    case S_CAPTION: tft.setTextFont(2); break;
+    default: tft.setFreeFont(&FreeSans9pt7b); break;
+  }
+}
+
+// ---------- UTF-8 -> ASCII (the built-in fonts only have ASCII) ----------
+void docSanitize(char *s, int &len) {
+  int w = 0;
+  for (int r = 0; r < len;) {
+    uint8_t c = (uint8_t)s[r];
+    if (c < 0x80) { if (c != '\r') s[w++] = (char)c; r++; continue; }
+    uint8_t c1 = r + 1 < len ? (uint8_t)s[r + 1] : 0;
+    uint8_t c2 = r + 2 < len ? (uint8_t)s[r + 2] : 0;
+    if (c == 0xC2 && c1 == 0xB0) { r += 2; continue; }                    // degree sign: dropped (212F)
+    if (c == 0xC2 && c1 == 0xB5) { s[w++] = 'u'; r += 2; continue; }      // micro
+    if (c == 0xC3 && c1 == 0x97) { s[w++] = 'x'; r += 2; continue; }      // multiply
+    if (c == 0xC2 && c1 == 0xA0) { s[w++] = ' '; r += 2; continue; }      // nbsp
+    if (c == 0xE2 && c1 == 0x80) {
+      if (c2 == 0x98 || c2 == 0x99) s[w++] = '\'';
+      else if (c2 == 0x9C || c2 == 0x9D) s[w++] = '"';
+      else if (c2 == 0x93 || c2 == 0x94) s[w++] = '-';
+      else if (c2 == 0xA2) s[w++] = '*';
+      else if (c2 == 0xA6) { s[w++] = '.'; s[w++] = '.'; s[w++] = '.'; }
+      else s[w++] = '?';
+      r += 3; continue;
+    }
+    if (c == 0xE2 && c1 == 0x86 && c2 == 0x92) { s[w++] = '-'; s[w++] = '>'; r += 3; continue; }
+    if (c == 0xE2 && c1 == 0x89 && c2 == 0x88) { s[w++] = '~'; r += 3; continue; }
+    if (c == 0xE2 && c1 == 0x89 && c2 == 0xA5) { s[w++] = '>'; s[w++] = '='; r += 3; continue; }
+    if (c == 0xE2 && c1 == 0x89 && c2 == 0xA4) { s[w++] = '<'; s[w++] = '='; r += 3; continue; }
+    // unknown multi-byte character: skip it, show '?'
+    int n = (c >= 0xF0) ? 4 : (c >= 0xE0) ? 3 : (c >= 0xC0) ? 2 : 1;
+    s[w++] = '?';
+    r += n;
+  }
+  len = w;
+  s[len] = 0;
+}
+
+// Remove inline Markdown (bold, code, links) so the text wraps cleanly.
+static void stripInline(char *s, int &len) {
+  int w = 0;
+  for (int r = 0; r < len;) {
+    char c = s[r];
+    if ((c == '*' && r + 1 < len && s[r + 1] == '*') || (c == '_' && r + 1 < len && s[r + 1] == '_')) { r += 2; continue; }
+    if (c == '`') { r++; continue; }
+    if (c == '[' && (r == 0 || s[r - 1] != '!')) {
+      // [text](url) -> text   (only when it all sits on one line)
+      int close = -1, end = -1;
+      for (int k = r + 1; k < len && s[k] != '\n'; k++) if (s[k] == ']') { close = k; break; }
+      if (close > 0 && close + 1 < len && s[close + 1] == '(') {
+        for (int k = close + 2; k < len && s[k] != '\n'; k++) if (s[k] == ')') { end = k; break; }
+      }
+      if (end > 0) {
+        for (int k = r + 1; k < close; k++) s[w++] = s[k];
+        r = end + 1;
+        continue;
+      }
+    }
+    s[w++] = c;
+    r++;
+  }
+  len = w;
+  s[len] = 0;
+}
+
+bool Doc::load(const char *path, bool markdown) {
+  free();
+  File f = SD.open(path, FILE_READ);
+  if (!f) return false;
+  buf = (char *)malloc(MAX_DOC_BYTES + 1);
+  if (!buf) { f.close(); return false; }
+  len = f.read((uint8_t *)buf, MAX_DOC_BYTES);
+  f.close();
+  if (len < 0) len = 0;
+  buf[len] = 0;
+  docSanitize(buf, len);
+  if (markdown) stripInline(buf, len);
+  layout(markdown);
+  return true;
+}
+
+void Doc::free() {
+  if (buf) ::free(buf);
+  buf = nullptr;
+  len = 0;
+  items.clear();
+  items.shrink_to_fit();
+  totalH = 0;
+  docTitle = "";
+}
+
+static char tmp[256];
+
+static const char *slice(const char *b, int start, int n) {
+  if (n > (int)sizeof(tmp) - 1) n = sizeof(tmp) - 1;
+  memcpy(tmp, b + start, n);
+  tmp[n] = 0;
+  return tmp;
+}
+
+void Doc::wrap(int start, int end, int x0, int width, uint8_t style) {
+  setStyleFont(style);
+  int lh = lineHeight(style);
+  int pos = start;
+  while (pos < end) {
+    while (pos < end && buf[pos] == ' ') pos++;
+    if (pos >= end) break;
+    int lineStart = pos, lastFit = -1, p = pos;
+    while (p < end) {
+      int we = p;
+      while (we < end && buf[we] != ' ') we++;
+      if (tft.textWidth(slice(buf, lineStart, we - lineStart)) <= width) {
+        lastFit = we;
+        p = we;
+        while (p < end && buf[p] == ' ') p++;
+      } else break;
+    }
+    if (lastFit < 0) {  // one very long word: break it by characters
+      int e = lineStart + 1;
+      while (e < end && tft.textWidth(slice(buf, lineStart, e + 1 - lineStart)) <= width) e++;
+      lastFit = e;
+    }
+    items.push_back({(uint16_t)lineStart, (uint16_t)(lastFit - lineStart), (int16_t)x0, (int16_t)cursorY, (int16_t)lh, style});
+    cursorY += lh;
+    pos = lastFit;
+  }
+}
+
+void Doc::layout(bool markdown) {
+  items.clear();
+  items.reserve(160);
+  cursorY = 8;
+  int i = 0;
+
+  // Optional front matter: ---\n title: ...\n ---
+  if (markdown && len > 4 && strncmp(buf, "---\n", 4) == 0) {
+    int p = 4;
+    while (p < len) {
+      int e = p;
+      while (e < len && buf[e] != '\n') e++;
+      if (e - p >= 3 && strncmp(buf + p, "---", 3) == 0) { i = e + 1; break; }
+      if (strncmp(buf + p, "title:", 6) == 0) {
+        int t = p + 6;
+        while (t < e && buf[t] == ' ') t++;
+        docTitle = String(slice(buf, t, e - t));
+        wrap(t, e, TEXT_X, TEXT_W, S_H1);
+        addGap(4);
+      }
+      p = e + 1;
+    }
+  }
+
+  bool lastBlank = true, inWarn = false;
+  while (i < len) {
+    int e = i;
+    while (e < len && buf[e] != '\n') e++;
+    int s = i;
+    i = e + 1;
+    while (s < e && buf[s] == ' ') s++;
+    int n = e - s;
+
+    bool isWarn = markdown && n >= 1 && buf[s] == '>';
+    if (inWarn && !isWarn) {
+      items.push_back({0, 0, 0, (int16_t)cursorY, 8, S_WARNPAD});
+      cursorY += 8 + 6;
+      inWarn = false;
+    }
+
+    if (n == 0) {
+      if (!lastBlank) addGap(8);
+      lastBlank = true;
+      continue;
+    }
+    lastBlank = false;
+
+    if (!markdown) { wrap(s, e, TEXT_X, TEXT_W, S_BODY); continue; }
+
+    if (isWarn) {
+      if (!inWarn) {
+        addGap(2);
+        items.push_back({0, 0, 0, (int16_t)cursorY, 8, S_WARNPAD});
+        cursorY += 8;
+        inWarn = true;
+      }
+      int t = s + 1;
+      while (t < e && buf[t] == ' ') t++;
+      wrap(t, e, 22, SCR_W - 40, S_WARN);
+    } else if (n > 2 && buf[s] == '#' ) {
+      int t = s;
+      while (t < e && buf[t] == '#') t++;
+      bool h1 = (t - s) == 1;
+      while (t < e && buf[t] == ' ') t++;
+      addGap(h1 ? 8 : 6);
+      wrap(t, e, TEXT_X, TEXT_W, h1 ? S_H1 : S_H2);
+    } else if (n >= 3 && strncmp(buf + s, "---", 3) == 0) {
+      items.push_back({0, 0, 0, (int16_t)cursorY, 16, S_RULE});
+      cursorY += 16;
+    } else if (n > 2 && (buf[s] == '-' || buf[s] == '*') && buf[s + 1] == ' ') {
+      items.push_back({0, 0, 14, (int16_t)cursorY, 22, S_MARK});
+      wrap(s + 2, e, 28, SCR_W - 38, S_BULLET);
+    } else if (n > 2 && isdigit((unsigned char)buf[s])) {
+      int t = s;
+      while (t < e && isdigit((unsigned char)buf[t])) t++;
+      if (t < e - 1 && buf[t] == '.' && buf[t + 1] == ' ') {
+        items.push_back({(uint16_t)s, (uint16_t)(t + 1 - s), 10, (int16_t)cursorY, 22, S_MARK});
+        wrap(t + 2, e, 32, SCR_W - 42, S_BULLET);
+      } else {
+        wrap(s, e, TEXT_X, TEXT_W, S_BODY);
+      }
+    } else if (n > 5 && buf[s] == '!' && buf[s + 1] == '[') {
+      // ![caption](img/file.jpg)
+      int cb = s + 2, ce = cb;
+      while (ce < e && buf[ce] != ']') ce++;
+      int ps = ce + 2, pe = ps;
+      while (pe < e && buf[pe] != ')') pe++;
+      if (ce < e && ps < e && pe <= e) {
+        String full = String("/wiki/") + slice(buf, ps, pe - ps);
+        uint16_t w = 0, h = 0;
+        addGap(4);
+        if (TJpgDec.getFsJpgSize(&w, &h, full.c_str(), SD) == JDR_OK && w > 0) {
+          int sc = 1;
+          while (w / sc > TEXT_W && sc < 8) sc *= 2;
+          int dh = h / sc;
+          items.push_back({(uint16_t)ps, (uint16_t)(pe - ps), (int16_t)((SCR_W - w / sc) / 2), (int16_t)cursorY, (int16_t)dh, S_IMG});
+          cursorY += dh + 4;
+        } else {
+          items.push_back({(uint16_t)ps, (uint16_t)(pe - ps), 0, (int16_t)cursorY, 40, S_IMG});
+          cursorY += 44;
+        }
+        if (ce > cb) wrap(cb, ce, TEXT_X, TEXT_W, S_CAPTION);
+        addGap(6);
+      }
+    } else {
+      wrap(s, e, TEXT_X, TEXT_W, S_BODY);
+    }
+  }
+  if (inWarn) {
+    items.push_back({0, 0, 0, (int16_t)cursorY, 8, S_WARNPAD});
+    cursorY += 8;
+  }
+  totalH = cursorY + 16;
+}
+
+static int jpgClipBottom = CONTENT_H;
+static bool jpgOut(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bmp) {
+  if (y >= jpgClipBottom) return false;   // rest of the picture is off-screen
+  tft.pushImage(x, y, w, h, bmp);
+  return true;
+}
+
+void Doc::draw(int scroll) {
+  tft.fillRect(0, 0, SCR_W, CONTENT_H, C_BG);
+  if (!buf) return;
+  tft.setTextDatum(TL_DATUM);
+  for (const DocItem &it : items) {
+    int y = it.y - scroll;
+    if (y + it.h < 0 || y > CONTENT_H) continue;
+    switch (it.style) {
+      case S_WARNPAD:
+        tft.fillRect(10, y, SCR_W - 20, it.h, C_WARN_BG);
+        tft.fillRect(10, y, 4, it.h, C_WARN_BAR);
+        break;
+      case S_WARN:
+        tft.fillRect(10, y, SCR_W - 20, it.h, C_WARN_BG);
+        tft.fillRect(10, y, 4, it.h, C_WARN_BAR);
+        setStyleFont(S_WARN);
+        tft.setTextColor(C_TEXT);
+        tft.drawString(slice(buf, it.off, it.len), it.x, y + 4);
+        break;
+      case S_RULE:
+        tft.drawFastHLine(TEXT_X, y + 8, TEXT_W, C_LINE);
+        break;
+      case S_MARK:
+        if (it.len == 0) {
+          tft.fillCircle(it.x + 4, y + 11, 3, C_ACCENT);
+        } else {
+          setStyleFont(S_BODY);
+          tft.setTextColor(C_ACCENT);
+          tft.drawString(slice(buf, it.off, it.len), it.x, y + 4);
+        }
+        break;
+      case S_IMG: {
+        String full = String("/wiki/") + slice(buf, it.off, it.len);
+        uint16_t w = 0, h = 0;
+        if (it.x == 0 && it.h == 40) {
+          tft.drawRect(TEXT_X, y, TEXT_W, 36, C_LINE);
+          tft.setTextFont(2);
+          tft.setTextColor(C_MUTED);
+          tft.drawString("[picture missing]", TEXT_X + 8, y + 10);
+        } else if (TJpgDec.getFsJpgSize(&w, &h, full.c_str(), SD) == JDR_OK) {
+          int sc = 1;
+          while (w / sc > TEXT_W && sc < 8) sc *= 2;
+          TJpgDec.setJpgScale(sc);
+          TJpgDec.setCallback(jpgOut);
+          jpgClipBottom = CONTENT_H;
+          TJpgDec.drawFsJpg(it.x, y, full.c_str(), SD);
+        }
+        break;
+      }
+      default: {
+        setStyleFont(it.style);
+        uint16_t col = C_TEXT;
+        if (it.style == S_H2) col = C_ACCENT;
+        if (it.style == S_CAPTION) col = C_MUTED;
+        tft.setTextColor(col);
+        tft.drawString(slice(buf, it.off, it.len), it.x, y + (it.style == S_CAPTION ? 1 : 4));
+        break;
+      }
+    }
+  }
+}

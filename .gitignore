@@ -1,0 +1,19 @@
+# Build outputs
+.pio/
+.vscode/.browse.c_cpp.ver.json
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/ipch/
+*.bin.gz
+*.orig
+
+# Python cache & virtual environment
+__pycache__/
+*.pyc
+.env
+venv/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
