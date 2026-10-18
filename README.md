@@ -32,6 +32,54 @@ screenshots/     UI preview screenshots
 
 ---
 
+## 🌟 Interface & Feature Spotlight
+
+Explore the visual modules, emergency manuals, touch UI, and wireless capabilities built into the ESP32 CYD Survival Wiki:
+
+### 1. 3.5" Touchscreen Emergency Dashboard
+[![Touch Dashboard Spotlight](docs/screenshots/01_touch_dashboard_spotlight.png)](docs/screenshots/01_touch_dashboard_spotlight.png)
+- **8 Instant Emergency Tiles**: 1-touch navigation for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
+- **Hardware Status Bar**: Displays live captive Wi-Fi state, active client counter, battery voltage, and MicroSD card status.
+- **Sub-80ms Catalog Loading**: Instant category switching reads directly from indexed TSV tables on FAT32 MicroSD cards.
+- **Dedicated Bottom Bar**: Touch-friendly navigation bar provides one-tap switching between Library reader, Wi-Fi hotspot toggle, and system settings.
+
+### 2. Illustrated Field Guides & Color Diagrams
+[![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
+- **61 Illustrated Field Articles**: Visual schematics for gravity water filtration, solar stills, wilderness traps, splinting, and shelter construction.
+- **High-Contrast Dark Theme**: Specially tuned contrast preserves readability in bright direct sunlight while preventing night blindness in dark conditions.
+- **Paged Navigation Engine**: Smooth touchscreen paging with percentage progress bar, fast-jump buttons, and instant return to category index.
+- **Immediate Trauma Access**: Rapid-access medical summaries provide step-by-step guidance for severe bleeding, hypothermia, CPR, and shock.
+
+### 3. US Army Survival Manual (FM 21-76) Complete Library
+[![US Army Survival Manual Spotlight](docs/screenshots/03_us_army_survival_manual_spotlight.png)](docs/screenshots/03_us_army_survival_manual_spotlight.png)
+- **Complete Military Survival Doctrine**: Full 233-page field manual pre-indexed across 62 paged chapters and subchapters on MicroSD.
+- **Psychology & Survival Craft**: In-depth coverage of wilderness psychology, survival kit assembly, water procurement, and emergency firecraft.
+- **Dangerous Plants & Wildlife**: Comprehensive plant identification guide, universal edibility testing protocol, and snake venom treatment.
+- **100% Grid-Down Autonomy**: Entirely offline with zero reliance on cellular towers, satellite connections, or external APIs.
+
+### 4. Wireless Smartphone Captive Portal & Search
+[![Wireless Smartphone Hub Spotlight](docs/screenshots/04_wifi_portal_search_spotlight.png)](docs/screenshots/04_wifi_portal_search_spotlight.png)
+- **Zero-Install Wi-Fi Hotspot**: Scan the device's on-screen QR code with any smartphone or tablet to instantly join the `SurvivalWiki` captive portal network.
+- **Client-Side Instant Search**: Type keywords into the local browser interface to search across all 61 guides and FM 21-76 subchapters in real time.
+- **Night-Vision Palette**: Red-light-friendly dark mode minimizes glare and light emissions during power outages or nighttime field operations.
+- **Simultaneous Multi-User Sharing**: Up to 8 connected mobile devices can read different survival manuals and emergency protocols simultaneously.
+
+### 5. 1-Click Browser Web Flasher via Web Serial
+[![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](docs/screenshots/05_web_serial_flasher_spotlight.png)
+- **Zero-Toolchain Turnkey Installation**: Flash the complete firmware image directly from Google Chrome or Microsoft Edge via the Web Serial API.
+- **Auto CH340 / CP2102 Detection**: Automatically connects to USB serial adapters without manual driver installation or terminal commands.
+- **Pre-Compiled Full Image**: Flashes bootloader, partition table, and the Survival Wiki OS in ~40 seconds.
+- **Single-Click Maintenance**: Effortlessly update or erase firmware directly from the web interface.
+
+### 6. Support-Free 3D Printed Snap-Fit Case
+[![Snap-Fit Field Case Spotlight](docs/screenshots/06_snap_fit_case_spotlight.png)](docs/screenshots/06_snap_fit_case_spotlight.png)
+- **100% Support-Free Printing**: Both halves print flat on `Z = 0`; face-down top bezel takes the textured finish of your PEI build plate.
+- **Centered USB-C Recess**: Accommodates standard USB-C cables, 90-degree adapters, and allows portable battery banks to sit flush against the case.
+- **MicroSD Card Scoop & Hardware Bosses**: MicroSD card thumb scoop allows instant card swaps; 4 tapered M3 corner alignment pins secure the board without screws.
+- **Passive Thermal Ventilation**: 9 angled cooling louvers vent heat from the ESP32-WROOM module during continuous Wi-Fi hotspot operation.
+
+---
+
 ## ⚡ Quick Start in 3 Steps
 
 ### 1. Flash the Firmware (1-Click in Browser)
@@ -119,10 +167,7 @@ Bring water to a rolling boil for at least 1 full minute (3 minutes at high alti
 ![Water Filter Diagram](img/water_filter.jpg)
 ```
 
-Run the content builder script after modifying articles:
-```bash
-python3 tools/build_content.py sdcard
-```
+Each article file added to `sdcard/wiki/articles/` is referenced in `sdcard/wiki/catalog.tsv` (Title, Category, Summary, Filename) and displays in its respective category index immediately upon reboot.
 
 ---
 
