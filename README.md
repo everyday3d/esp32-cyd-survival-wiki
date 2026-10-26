@@ -175,20 +175,37 @@ Each article file added to `sdcard/wiki/articles/` is referenced in `sdcard/wiki
 Requirements: VS Code with PlatformIO extension (or `pio` CLI).
 ```bash
 cd firmware
-pio run -t upload
+
+# Build and flash for 3.5" Hosyond / QDtech E32R35T:
+pio run -e survival-wiki-35 -t upload
+
+# Build and flash for 2.8" Sunton ESP32-2432S028R CYD:
+pio run -e survival-wiki-28 -t upload
 ```
 
 ---
 
-## 📜 Board Pinout Reference (`Hosyond E32R35T`)
+## 📜 Board Pinout Reference
+
+### 1. 3.5" Display Module (`Hosyond E32R35T`)
 | Function | ESP32 Pin | Details |
 |---|---|---|
-| **LCD SPI** | SCK 14, MOSI 13, MISO 12 | ST7796U controller, 40MHz SPI |
+| **LCD SPI** | SCK 14, MOSI 13, MISO 12 | ST7796U controller ($320 \times 480$), 40MHz SPI |
 | **LCD Control** | CS 15, DC 2, Backlight 27 | PWM backlight control |
 | **Touch SPI** | CS 33, IRQ 36 | XPT2046 resistive touch (HSPI) |
 | **MicroSD SPI** | CS 5, SCK 18, MISO 19, MOSI 23 | VSPI bus |
 | **RGB LED** | Red 22, Green 16, Blue 17 | Active LOW |
 | **Audio** | Amp Enable 4, DAC 26 | Internal speaker driver |
+
+### 2. 2.8" Display Module (`Sunton ESP32-2432S028R CYD`)
+| Function | ESP32 Pin | Details |
+|---|---|---|
+| **LCD SPI** | SCK 14, MOSI 13, MISO 12 | ILI9341 controller ($240 \times 320$), 40MHz SPI |
+| **LCD Control** | CS 15, DC 2, Backlight 21 | PWM backlight control |
+| **Touch SPI** | CS 33, IRQ 36 | XPT2046 resistive touch (HSPI) |
+| **MicroSD SPI** | CS 5, SCK 18, MISO 19, MOSI 23 | VSPI bus |
+| **RGB LED** | Red 4, Green 16, Blue 17 | Active LOW |
+| **Audio** | DAC 26 | Speaker output |
 
 ---
 

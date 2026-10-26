@@ -1,0 +1,17 @@
+{
+  "name": "ESP32 CYD Survival Wiki (2.8\" Display)",
+  "version": "1.1.0",
+  "home_assistant_domain": "esp32-cyd-survival-wiki",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "firmware/survival-wiki-28-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

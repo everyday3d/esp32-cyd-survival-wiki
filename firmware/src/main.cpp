@@ -1,6 +1,9 @@
 // =====================================================================
-//  Survival Wiki - offline survival reference for the ESP32-32E 3.5" board
-//  * Touch UI on the 320x480 screen, reading articles + pictures from SD
+//  Survival Wiki - offline survival reference for the ESP32 CYD
+//  Supports:
+//   - Hosyond / LCDWiki 3.5" ESP32-32E (E32R35T) [320x480 ST7796]
+//   - Sunton 2.8" ESP32-2432S028R CYD [240x320 ILI9341]
+//  * Touch UI on the screen, reading articles + pictures from SD
 //  * Wi-Fi hotspot with captive portal: phones get the full wiki in a browser
 // =====================================================================
 #include <Arduino.h>
@@ -58,7 +61,7 @@ enum Icon : uint8_t { I_NONE, I_UP, I_DOWN, I_LEFT, I_RIGHT };
 struct Btn { int16_t x, y, w, h; uint16_t id; String label; uint8_t icon; bool enabled; };
 static std::vector<Btn> btns;
 
-static const int ROWS_PER_PAGE = CONTENT_H / 48;   // 8
+static const int ROWS_PER_PAGE = CONTENT_H / ROW_H;
 
 // ---------------------------------------------------------------- helpers
 static uint16_t hexColor(const String &h) {
@@ -93,7 +96,6 @@ static String fitText(String s, int maxW) {
 }
 
 static String asciiOnly(const String &in) {
-  // reuse the document sanitizer for titles from the catalog
   static char b[160];
   int n = in.length();
   if (n > 150) n = 150;
@@ -183,34 +185,36 @@ static void loadLibraryList() {
 
 // ---------------------------------------------------------------- drawing
 static void drawIcon(uint8_t icon, int cx, int cy, uint16_t col) {
+  int half = (SCR_W < 300) ? 8 : 10;
+  int hSide = (SCR_W < 300) ? 5 : 6;
   switch (icon) {
-    case I_UP:    tft.fillTriangle(cx - 10, cy + 6, cx + 10, cy + 6, cx, cy - 7, col); break;
-    case I_DOWN:  tft.fillTriangle(cx - 10, cy - 6, cx + 10, cy - 6, cx, cy + 7, col); break;
-    case I_LEFT:  tft.fillTriangle(cx + 6, cy - 10, cx + 6, cy + 10, cx - 7, cy, col); break;
-    case I_RIGHT: tft.fillTriangle(cx - 6, cy - 10, cx - 6, cy + 10, cx + 7, cy, col); break;
+    case I_UP:    tft.fillTriangle(cx - half, cy + hSide, cx + half, cy + hSide, cx, cy - (hSide + 1), col); break;
+    case I_DOWN:  tft.fillTriangle(cx - half, cy - hSide, cx + half, cy - hSide, cx, cy + (hSide + 1), col); break;
+    case I_LEFT:  tft.fillTriangle(cx + hSide, cy - half, cx + hSide, cy + half, cx - (hSide + 1), cy, col); break;
+    case I_RIGHT: tft.fillTriangle(cx - hSide, cy - half, cx - hSide, cy + half, cx + (hSide + 1), cy, col); break;
   }
 }
 
 static void drawButton(const Btn &b, bool pressed) {
   uint16_t bg = pressed ? C_PRESS : C_PANEL;
-  tft.fillRoundRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4, 6, bg);
+  tft.fillRoundRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4, (SCR_W < 300 ? 5 : 6), bg);
   uint16_t fg = b.enabled ? C_TEXT : C_LINE;
   int cx = b.x + b.w / 2, cy = b.y + b.h / 2;
   if (b.icon != I_NONE) {
     if (b.label.length()) {
-      tft.setFreeFont(&FreeSansBold9pt7b);
+      if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSansBold9pt7b);
       int tw = tft.textWidth(b.label);
       int total = 18 + 6 + tw;
       int ix = cx - total / 2 + 9;
       drawIcon(b.icon, ix, cy, b.enabled ? C_ACCENT : C_LINE);
       tft.setTextDatum(ML_DATUM);
       tft.setTextColor(fg);
-      tft.drawString(b.label, ix + 15, cy);
+      tft.drawString(b.label, ix + (SCR_W < 300 ? 12 : 15), cy);
     } else {
       drawIcon(b.icon, cx, cy, b.enabled ? C_ACCENT : C_LINE);
     }
   } else {
-    tft.setFreeFont(&FreeSansBold9pt7b);
+    if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSansBold9pt7b);
     tft.setTextDatum(MC_DATUM);
     tft.setTextColor(fg);
     tft.drawString(b.label, cx, cy);
@@ -242,35 +246,42 @@ static void drawFooter(const FootDef *defs, int n) {
 }
 
 static void drawWifiBadge() {
-  int x = SCR_W - 74, y = 0;
-  tft.fillRect(x, y, 74, HEADER_H, C_HEADER);
-  int cx = x + 16, cy = 30;
+  int bw = (SCR_W < 300) ? 58 : 74;
+  int x = SCR_W - bw, y = 0;
+  tft.fillRect(x, y, bw, HEADER_H, C_HEADER);
+  int cx = x + (SCR_W < 300 ? 12 : 16);
+  int cy = (SCR_W < 300 ? 22 : 30);
   uint16_t col = wifiOn ? 0x07E9 : C_LINE;
-  for (int r = 4; r <= 14; r += 5) {
+  int rStart = (SCR_W < 300) ? 3 : 4;
+  int rEnd = (SCR_W < 300) ? 11 : 14;
+  int rStep = (SCR_W < 300) ? 4 : 5;
+  for (int r = rStart; r <= rEnd; r += rStep) {
     tft.drawArc(cx, cy, r + 1, r - 1, 135, 225, col, C_HEADER, false);
   }
   tft.fillCircle(cx, cy, 2, col);
   tft.setTextFont(2);
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(wifiOn ? C_TEXT : C_MUTED);
-  tft.drawString(wifiOn ? String(webClientCount()) + " on" : String("off"), cx + 14, 24);
+  tft.drawString(wifiOn ? String(webClientCount()) + " on" : String("off"), cx + (SCR_W < 300 ? 11 : 14), (SCR_W < 300 ? 18 : 24));
 }
 
 static void drawHeader(const String &title, bool back) {
   tft.fillRect(0, 0, SCR_W, HEADER_H, C_HEADER);
   tft.drawFastHLine(0, HEADER_H - 1, SCR_W, C_ACCENT);
-  int tx = 12;
+  int tx = (SCR_W < 300 ? 8 : 12);
+  int bw = (SCR_W < 300) ? 58 : 74;
   if (back) {
-    btns.push_back({0, 0, 52, HEADER_H, B_BACK, "", I_LEFT, true});
-    drawIcon(I_LEFT, 22, HEADER_H / 2, C_ACCENT);
-    tx = 44;
+    int backBtnW = (SCR_W < 300) ? 38 : 52;
+    btns.push_back({0, 0, (int16_t)backBtnW, HEADER_H, B_BACK, "", I_LEFT, true});
+    drawIcon(I_LEFT, backBtnW / 2, HEADER_H / 2, C_ACCENT);
+    tx = backBtnW;
   }
-  tft.setFreeFont(&FreeSansBold12pt7b);
+  if (SCR_W < 300) tft.setFreeFont(&FreeSansBold9pt7b); else tft.setFreeFont(&FreeSansBold12pt7b);
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(C_TEXT);
-  int maxW = SCR_W - tx - (back ? 12 : 80);
+  int maxW = SCR_W - tx - (back ? 10 : (bw + 6));
   String t = fitText(title, maxW);
-  if (tft.textWidth(t) > maxW || t.endsWith("...")) {   // long titles: smaller font
+  if (SCR_W >= 300 && (tft.textWidth(t) > maxW || t.endsWith("..."))) {   // long titles: smaller font
     tft.setFreeFont(&FreeSansBold9pt7b);
     t = fitText(title, maxW);
   }
@@ -316,28 +327,40 @@ static void drawHome() {
   btns.clear();
   tft.fillScreen(C_BG);
   drawHeader("SURVIVAL WIKI", false);
-  const int cols = 2, rows = 4, gap = 8;
+  const int cols = 2, rows = 4, gap = TILE_GAP;
   int tw = (SCR_W - gap * (cols + 1)) / cols;
   int th = (CONTENT_H - gap * (rows + 1)) / rows;
   for (int i = 0; i < nCats && i < cols * rows; i++) {
     int x = gap + (i % cols) * (tw + gap);
     int y = CONTENT_Y + gap + (i / cols) * (th + gap);
     btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)(B_TILE + i), "", I_NONE, true});
-    tft.fillRoundRect(x, y, tw, th, 10, cats[i].color);
-    drawCatIcon(cats[i].id, x + 24, y + 26);
-    tft.setFreeFont(&FreeSansBold9pt7b);
-    tft.setTextDatum(TL_DATUM);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString(fitText(cats[i].name, tw - 16), x + 10, y + th - 40);
-    tft.setTextFont(2);
-    tft.drawString(String(cats[i].count) + (cats[i].count == 1 ? " article" : " articles"), x + 10, y + th - 20);
+    tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), cats[i].color);
+    if (SCR_W < 300) {
+      // 2.8" compact split: icon on left, title + count on right
+      drawCatIcon(cats[i].id, x + 18, y + th / 2);
+      tft.setTextFont(2);
+      tft.setTextDatum(TL_DATUM);
+      tft.setTextColor(TFT_WHITE);
+      tft.drawString(fitText(cats[i].name, tw - 38), x + 34, y + 8);
+      tft.setTextFont(1);
+      tft.drawString(String(cats[i].count) + (cats[i].count == 1 ? " art." : " arts."), x + 35, y + 26);
+    } else {
+      // 3.5" full vertical stack
+      drawCatIcon(cats[i].id, x + 24, y + 26);
+      tft.setFreeFont(&FreeSansBold9pt7b);
+      tft.setTextDatum(TL_DATUM);
+      tft.setTextColor(TFT_WHITE);
+      tft.drawString(fitText(cats[i].name, tw - 16), x + 10, y + th - 40);
+      tft.setTextFont(2);
+      tft.drawString(String(cats[i].count) + (cats[i].count == 1 ? " article" : " articles"), x + 10, y + th - 20);
+    }
   }
   if (nCats == 0) {
     tft.setTextFont(2);
     tft.setTextDatum(MC_DATUM);
     tft.setTextColor(C_MUTED);
-    tft.drawString("No articles found on the SD card.", SCR_W / 2, CONTENT_Y + 150);
-    tft.drawString("Copy the 'sdcard' folder contents to it.", SCR_W / 2, CONTENT_Y + 172);
+    tft.drawString("No articles found on the SD card.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 90 : 150));
+    tft.drawString("Copy the 'sdcard' folder contents to it.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 112 : 172));
   }
   FootDef f[] = {{B_LIBRARY, "Library", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true}, {B_SETTINGS, "Settings", I_NONE, true}};
   drawFooter(f, 3);
@@ -351,28 +374,28 @@ static void drawList(const String &title, bool books) {
   if (listPage >= pages) listPage = pages - 1;
   int first = listPage * ROWS_PER_PAGE;
   for (int r = 0; r < ROWS_PER_PAGE && first + r < (int)list.size(); r++) {
-    int y = CONTENT_Y + r * 48;
+    int y = CONTENT_Y + r * ROW_H;
     const Entry &e = list[first + r];
-    btns.push_back({0, (int16_t)y, SCR_W, 48, (uint16_t)(B_ROW + first + r), "", I_NONE, true});
-    tft.setFreeFont(&FreeSans9pt7b);
+    btns.push_back({0, (int16_t)y, SCR_W, (int16_t)ROW_H, (uint16_t)(B_ROW + first + r), "", I_NONE, true});
+    if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSans9pt7b);
     tft.setTextDatum(ML_DATUM);
     tft.setTextColor(C_TEXT);
     if (books) {
-      tft.drawString(fitText(e.title, SCR_W - 50), 12, y + 17);
-      tft.setTextFont(2);
+      tft.drawString(fitText(e.title, SCR_W - (SCR_W < 300 ? 40 : 50)), (SCR_W < 300 ? 8 : 12), y + (SCR_W < 300 ? 13 : 17));
+      tft.setTextFont(SCR_W < 300 ? 1 : 2);
       tft.setTextColor(C_MUTED);
-      tft.drawString(e.extra + " parts", 12, y + 36);
+      tft.drawString(e.extra + " parts", (SCR_W < 300 ? 8 : 12), y + (SCR_W < 300 ? 27 : 36));
     } else {
-      tft.drawString(fitText(e.title, SCR_W - 50), 12, y + 24);
+      tft.drawString(fitText(e.title, SCR_W - (SCR_W < 300 ? 36 : 50)), (SCR_W < 300 ? 8 : 12), y + ROW_H / 2);
     }
-    drawIcon(I_RIGHT, SCR_W - 20, y + 24, C_LINE);
-    tft.drawFastHLine(8, y + 47, SCR_W - 16, C_LINE);
+    drawIcon(I_RIGHT, SCR_W - (SCR_W < 300 ? 14 : 20), y + ROW_H / 2, C_LINE);
+    tft.drawFastHLine(8, y + ROW_H - 1, SCR_W - 16, C_LINE);
   }
   if (list.empty()) {
     tft.setTextFont(2);
     tft.setTextDatum(MC_DATUM);
     tft.setTextColor(C_MUTED);
-    tft.drawString(books ? "No manuals in /library yet." : "Nothing here yet.", SCR_W / 2, CONTENT_Y + 120);
+    tft.drawString(books ? "No manuals in /library yet." : "Nothing here yet.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 80 : 120));
   }
   String pg = String(listPage + 1) + " / " + pages;
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_UP, "", I_UP, listPage > 0}, {B_NONE, pg.c_str(), I_NONE, true},
@@ -464,34 +487,37 @@ static void drawWifi() {
   btns.clear();
   tft.fillScreen(C_BG);
   drawHeader("Phone Access", true);
-  int y = CONTENT_Y + 10;
+  int y = CONTENT_Y + (SCR_W < 300 ? 6 : 10);
   if (wifiOn) {
+    int qrMax = (SCR_W < 300) ? 120 : 180;
     tft.setTextFont(2);
     tft.setTextDatum(TC_DATUM);
     tft.setTextColor(C_MUTED);
-    tft.drawString("Scan with a phone camera to join", SCR_W / 2, y);
-    drawQR(webQRText(wcfg), 70, y + 22, 180);
-    y += 214;
+    tft.drawString("Scan to connect phone", SCR_W / 2, y);
+    drawQR(webQRText(wcfg), (SCR_W - qrMax) / 2, y + 18, qrMax);
+    y += qrMax + (SCR_W < 300 ? 22 : 24);
     tft.setTextDatum(TL_DATUM);
-    tft.setFreeFont(&FreeSans9pt7b);
-    tft.setTextColor(C_MUTED);  tft.drawString("Network", 16, y);
-    tft.setTextColor(C_TEXT);   tft.drawString(fitText(wcfg.ssid, 190), 112, y);
-    y += 24;
-    tft.setTextColor(C_MUTED);  tft.drawString("Password", 16, y);
-    tft.setTextColor(C_TEXT);   tft.drawString(wcfg.password.length() >= 8 ? wcfg.password : String("none (open)"), 112, y);
-    y += 24;
-    tft.setTextColor(C_MUTED);  tft.drawString("Address", 16, y);
-    tft.setTextColor(C_ACCENT); tft.drawString("http://" + webIP(), 112, y);
-    y += 24;
-    tft.setTextColor(C_MUTED);  tft.drawString("Phones", 16, y);
-    tft.setTextColor(C_TEXT);   tft.drawString(String(webClientCount()) + " connected", 112, y);
+    if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSans9pt7b);
+    int col1W = (SCR_W < 300) ? 76 : 112;
+    int lineGap = (SCR_W < 300) ? 20 : 24;
+    tft.setTextColor(C_MUTED);  tft.drawString("Network", 12, y);
+    tft.setTextColor(C_TEXT);   tft.drawString(fitText(wcfg.ssid, SCR_W - col1W - 8), col1W, y);
+    y += lineGap;
+    tft.setTextColor(C_MUTED);  tft.drawString("Password", 12, y);
+    tft.setTextColor(C_TEXT);   tft.drawString(wcfg.password.length() >= 8 ? wcfg.password : String("none (open)"), col1W, y);
+    y += lineGap;
+    tft.setTextColor(C_MUTED);  tft.drawString("Address", 12, y);
+    tft.setTextColor(C_ACCENT); tft.drawString("http://" + webIP(), col1W, y);
+    y += lineGap;
+    tft.setTextColor(C_MUTED);  tft.drawString("Phones", 12, y);
+    tft.setTextColor(C_TEXT);   tft.drawString(String(webClientCount()) + " connected", col1W, y);
   } else {
-    tft.setFreeFont(&FreeSans9pt7b);
+    if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSans9pt7b);
     tft.setTextDatum(MC_DATUM);
     tft.setTextColor(C_MUTED);
-    tft.drawString("Wi-Fi hotspot is off.", SCR_W / 2, CONTENT_Y + 140);
+    tft.drawString("Wi-Fi hotspot is off.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 90 : 140));
     tft.setTextFont(2);
-    tft.drawString("Turn it on to share the wiki with phones.", SCR_W / 2, CONTENT_Y + 166);
+    tft.drawString("Turn it on to share the wiki with phones.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 116 : 166));
   }
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_WIFI_TOGGLE, wifiOn ? "Turn Wi-Fi off" : "Turn Wi-Fi on", I_NONE, true}};
   drawFooter(f, 2);
@@ -499,14 +525,15 @@ static void drawWifi() {
 }
 
 static void drawSettingRow(int y, const char *name, const String &value) {
-  tft.setFreeFont(&FreeSans9pt7b);
+  if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSans9pt7b);
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(C_TEXT);
-  tft.drawString(name, 14, y + 24);
+  tft.drawString(name, 12, y + (SCR_W < 300 ? 18 : 24));
   tft.setTextColor(C_ACCENT);
   tft.setTextDatum(MR_DATUM);
-  if (value.length()) tft.drawString(value, SCR_W - 110, y + 24);
-  tft.drawFastHLine(8, y + 51, SCR_W - 16, C_LINE);
+  int btnW = (SCR_W < 300) ? 80 : 98;
+  if (value.length()) tft.drawString(value, SCR_W - btnW - 14, y + (SCR_W < 300 ? 18 : 24));
+  tft.drawFastHLine(8, y + (SCR_W < 300 ? 37 : 51), SCR_W - 16, C_LINE);
 }
 
 static void drawSettings() {
@@ -514,27 +541,37 @@ static void drawSettings() {
   tft.fillScreen(C_BG);
   drawHeader("Settings", true);
   int y = CONTENT_Y + 4;
+  int rowStep = (SCR_W < 300) ? 38 : 52;
+  int btnH = (SCR_W < 300) ? 32 : 44;
+  int btnW = (SCR_W < 300) ? 80 : 98;
+  int halfBtnW = (btnW - 6) / 2;
+
   drawSettingRow(y, "Brightness", String(brightness * 100 / 255) + "%");
-  addBtn(SCR_W - 104, y + 4, 48, 44, B_BRIGHT_DN, "-");
-  addBtn(SCR_W - 54, y + 4, 48, 44, B_BRIGHT_UP, "+");
-  y += 52;
+  addBtn(SCR_W - btnW - 6, y + 2, halfBtnW, btnH, B_BRIGHT_DN, "-");
+  addBtn(SCR_W - halfBtnW - 4, y + 2, halfBtnW, btnH, B_BRIGHT_UP, "+");
+  y += rowStep;
+
   drawSettingRow(y, "Screen off after", "");
-  addBtn(SCR_W - 104, y + 4, 98, 44, B_TIMEOUT, TIMEOUT_NAMES[timeoutIdx]);
-  y += 52;
+  addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_TIMEOUT, TIMEOUT_NAMES[timeoutIdx]);
+  y += rowStep;
+
   drawSettingRow(y, "Invert colors", "");
-  addBtn(SCR_W - 104, y + 4, 98, 44, B_INVERT, invertColors ? "On" : "Off");
-  y += 52;
+  addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_INVERT, invertColors ? "On" : "Off");
+  y += rowStep;
+
   drawSettingRow(y, "Touch calibration", "");
-  addBtn(SCR_W - 104, y + 4, 98, 44, B_CALIB, "Redo");
-  y += 64;
-  tft.setTextFont(2);
+  addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_CALIB, "Redo");
+  y += (SCR_W < 300 ? 46 : 64);
+
+  tft.setTextFont(SCR_W < 300 ? 1 : 2);
   tft.setTextDatum(TL_DATUM);
   tft.setTextColor(C_MUTED);
   uint32_t totalMB = SD.totalBytes() / (1024 * 1024), usedMB = SD.usedBytes() / (1024 * 1024);
-  tft.drawString("Survival Wiki firmware " FW_VERSION, 14, y);
-  tft.drawString(String(nArticles) + " articles in " + nCats + " categories", 14, y + 20);
-  tft.drawString("SD card: " + String(usedMB) + " MB used of " + totalMB + " MB", 14, y + 40);
-  tft.drawString("Free memory: " + String(ESP.getFreeHeap() / 1024) + " KB", 14, y + 60);
+  int lineH = (SCR_W < 300 ? 15 : 20);
+  tft.drawString("Survival Wiki " FW_VERSION " (" BOARD_NAME ")", 12, y);
+  tft.drawString(String(nArticles) + " articles in " + nCats + " categories", 12, y + lineH);
+  tft.drawString("SD card: " + String(usedMB) + " MB used of " + totalMB + " MB", 12, y + lineH * 2);
+  tft.drawString("Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB", 12, y + lineH * 3);
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
   drawFooter(f, 1);
 }
@@ -546,11 +583,11 @@ static void drawNoSD() {
   tft.setFreeFont(&FreeSansBold9pt7b);
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(C_ACCENT);
-  tft.drawString("SD card not found", SCR_W / 2, CONTENT_Y + 110);
+  tft.drawString("SD card not found", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 70 : 110));
   tft.setTextFont(2);
   tft.setTextColor(C_MUTED);
-  tft.drawString("Insert the micro SD card (FAT32)", SCR_W / 2, CONTENT_Y + 150);
-  tft.drawString("with the Survival Wiki files, then tap Retry.", SCR_W / 2, CONTENT_Y + 170);
+  tft.drawString("Insert the micro SD card (FAT32)", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 100 : 150));
+  tft.drawString("with the Survival Wiki files, then tap Retry.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 120 : 170));
   FootDef f[] = {{B_RETRY, "Retry", I_NONE, true}};
   drawFooter(f, 1);
 }
@@ -580,9 +617,9 @@ static void calibrateTouch() {
   tft.setTextFont(2);
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(TFT_WHITE);
-  tft.drawString("Touch calibration", SCR_W / 2, 200);
-  tft.drawString("Tap each arrow corner as it appears", SCR_W / 2, 224);
-  tft.drawString("(a fingernail or stylus works best)", SCR_W / 2, 244);
+  tft.drawString("Touch calibration", SCR_W / 2, SCR_H / 2 - 30);
+  tft.drawString("Tap each arrow corner as it appears", SCR_W / 2, SCR_H / 2);
+  tft.drawString("(a fingernail or stylus works best)", SCR_W / 2, SCR_H / 2 + 24);
   delay(1200);
   tft.calibrateTouch(cal, TFT_MAGENTA, TFT_BLACK, 15);
   prefs.putBytes("cal", cal, sizeof(cal));
@@ -701,10 +738,25 @@ static void handleTap(int x, int y) {
 // ---------------------------------------------------------------- main
 void setup() {
   Serial.begin(115200);
-  pinMode(PIN_AUDIO_EN, OUTPUT); digitalWrite(PIN_AUDIO_EN, HIGH);   // speaker amp off
-  pinMode(PIN_LED_R, OUTPUT); digitalWrite(PIN_LED_R, HIGH);         // RGB LED off
+
+  // Audio amp (if present on 3.5" board)
+#if PIN_AUDIO_EN >= 0
+  pinMode(PIN_AUDIO_EN, OUTPUT);
+  digitalWrite(PIN_AUDIO_EN, HIGH);   // speaker amp off
+#endif
+
+  // RGB LED pins (active low)
+  pinMode(PIN_LED_R, OUTPUT); digitalWrite(PIN_LED_R, HIGH);
   pinMode(PIN_LED_G, OUTPUT); digitalWrite(PIN_LED_G, HIGH);
   pinMode(PIN_LED_B, OUTPUT); digitalWrite(PIN_LED_B, HIGH);
+
+  // Deselect SPI devices early to avoid bus conflicts during init
+  pinMode(PIN_SD_CS, OUTPUT);
+  digitalWrite(PIN_SD_CS, HIGH);
+#if defined(TOUCH_CS) && (TOUCH_CS >= 0)
+  pinMode(TOUCH_CS, OUTPUT);
+  digitalWrite(TOUCH_CS, HIGH);
+#endif
 
   prefs.begin("swiki", false);
   brightness = prefs.getUChar("bright", 200);
@@ -723,17 +775,18 @@ void setup() {
   TJpgDec.setSwapBytes(true);
   TJpgDec.setCallback(nullptr);
 
-  // splash
-  tft.setFreeFont(&FreeSansBold18pt7b);
+  // Splash screen scaled to display height
+  int splashCenter = SCR_H / 2 - 40;
+  if (SCR_W < 300) tft.setFreeFont(&FreeSansBold12pt7b); else tft.setFreeFont(&FreeSansBold18pt7b);
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(C_ACCENT);
-  tft.drawString("SURVIVAL", SCR_W / 2, 200);
+  tft.drawString("SURVIVAL", SCR_W / 2, splashCenter);
   tft.setTextColor(C_TEXT);
-  tft.drawString("WIKI", SCR_W / 2, 242);
+  tft.drawString("WIKI", SCR_W / 2, splashCenter + (SCR_W < 300 ? 30 : 42));
   tft.setTextFont(2);
   tft.setTextColor(C_MUTED);
-  tft.drawString("offline field reference", SCR_W / 2, 280);
-  tft.drawString("hold the screen now to recalibrate touch", SCR_W / 2, 440);
+  tft.drawString("offline field reference", SCR_W / 2, splashCenter + (SCR_W < 300 ? 56 : 80));
+  tft.drawString("hold screen to calibrate touch", SCR_W / 2, SCR_H - (SCR_W < 300 ? 24 : 40));
 
   uint16_t cal[5];
   bool haveCal = prefs.getBytes("cal", cal, sizeof(cal)) == sizeof(cal);

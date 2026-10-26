@@ -1,6 +1,6 @@
 {
-  "name": "ESP32 CYD Survival Wiki",
-  "version": "1.0.0",
+  "name": "ESP32 CYD Survival Wiki (3.5\" Display)",
+  "version": "1.1.0",
   "home_assistant_domain": "esp32-cyd-survival-wiki",
   "new_install_prompt_erase": true,
   "builds": [

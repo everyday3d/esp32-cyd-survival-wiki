@@ -174,6 +174,41 @@ header {
 .install-btn-wrapper {
   margin: 8px 0;
 }
+.target-btn {
+  flex: 1 1 200px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font);
+}
+.target-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(253, 94, 2, 0.5);
+}
+.target-btn.active {
+  background: rgba(253, 94, 2, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(253, 94, 2, 0.25);
+}
+.target-btn .tb-title {
+  color: var(--text-bright);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.target-btn.active .tb-title {
+  color: var(--accent-gold);
+}
+.target-btn .tb-sub {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
 esp-web-install-button {
   --esp-tools-button-border-radius: 10px;
   --esp-tools-button-color: #ffffff;
@@ -322,11 +357,11 @@ esp-web-install-button {
 
   <div class="hero">
     <h1>Flash <span>ESP32 CYD Survival Wiki</span></h1>
-    <p>Zero software or drivers required. Uses Web Serial in Chrome or Edge to flash your Hosyond 3.5" ESP32-32E Touch Display (<a href="https://www.amazon.com/dp/B0D93MBWC2" target="_blank" style="color:var(--accent-gold); font-weight:700;">Amazon B0D93MBWC2</a>, model <strong>QDtech / LCDWiki E32R35T</strong>) directly over USB-C in under 60 seconds.</p>
+    <p>Zero software or drivers required. Uses Web Serial in Chrome or Edge to flash your ESP32 CYD display directly over USB in under 60 seconds.</p>
     <div class="hero-pills">
       <span class="hero-pill glow">⚡ 1-Click Flash (&lt; 60s)</span>
-      <span class="hero-pill">🎯 Model: Hosyond / QDtech E32R35T</span>
-      <span class="hero-pill">📟 320x480 ST7796 Display</span>
+      <span class="hero-pill">🎯 Dual Target: 3.5" &amp; 2.8"</span>
+      <span class="hero-pill">📟 320x480 / 240x320</span>
       <span class="hero-pill">📱 Standalone Wi-Fi Portal</span>
       <span class="hero-pill">🔋 100% Offline (No Internet)</span>
       <span class="hero-pill">🖨️ 3D Printable Snap-Fit Case</span>
@@ -336,20 +371,44 @@ esp-web-install-button {
   <div class="flasher-card">
     <div class="flasher-grid">
       <div>
-        <h2 style="color:var(--text-bright); font-size:1.6rem; margin-bottom:10px;">Program Your Board Over USB-C</h2>
-        <p style="color:#94a3b8; font-size:1rem; margin-bottom:12px;">
-          Engineered specifically for the <strong>Hosyond 3.5" 320x480 ESP32-32E Touchscreen Board</strong> (<a href="https://www.amazon.com/dp/B0D93MBWC2" target="_blank" style="color:var(--accent-gold);">Amazon ASIN B0D93MBWC2</a>, model <code>E32R35T</code> with centered USB-C).
-        </p>
-        <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:16px;">
-          Plug your board into your computer with a USB-C data cable. Click the button on the right, pick the serial port (e.g. <code>USB-SERIAL CH340</code> or <code>CP2102</code>), and let Web Serial write the complete image.
-        </p>
+        <h2 style="color:var(--text-bright); font-size:1.6rem; margin-bottom:12px;">Program Your Board Over USB</h2>
+
+        <div class="model-selector" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
+          <button type="button" id="btn-target-35" class="target-btn active" onclick="selectTarget('35')">
+            <span class="tb-title">3.5" Display (Hosyond E32R35T)</span>
+            <span class="tb-sub">320&times;480 ST7796 &bull; Centered USB-C</span>
+          </button>
+          <button type="button" id="btn-target-28" class="target-btn" onclick="selectTarget('28')">
+            <span class="tb-title">2.8" Display (Classic CYD)</span>
+            <span class="tb-sub">240&times;320 ILI9341 &bull; ESP32-2432S028R</span>
+          </button>
+        </div>
+
+        <div id="target-desc-35" class="target-desc">
+          <p style="color:#94a3b8; font-size:1rem; margin-bottom:12px;">
+            Target: <strong>Hosyond 3.5" 320x480 ESP32-32E Touchscreen Board</strong> (<a href="https://www.amazon.com/dp/B0D93MBWC2" target="_blank" style="color:var(--accent-gold);">Amazon ASIN B0D93MBWC2</a>, model <code>E32R35T</code> with centered USB-C).
+          </p>
+          <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:12px;">
+            Full 320&times;480 resolution, ST7796 driver, 8-tile emergency dashboard, and centered USB-C cutout for external battery banks.
+          </p>
+        </div>
+
+        <div id="target-desc-28" class="target-desc" style="display:none;">
+          <p style="color:#94a3b8; font-size:1rem; margin-bottom:12px;">
+            Target: <strong>Sunton 2.8" 240x320 ESP32-2432S028R Cheap Yellow Display (CYD)</strong>.
+          </p>
+          <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:12px;">
+            Compact 240&times;320 resolution, ILI9341 driver, horizontal-split emergency tiles, and native XPT2046 touch calibration.
+          </p>
+        </div>
+
         <p style="color:#94a3b8; font-size:0.92rem;">
-          Includes bootloader, partition table, and the full ESP32 CYD Survival Wiki v1.0.0 firmware image written at offset <code>0x0</code>.
+          Includes bootloader, partition table, and the full ESP32 CYD Survival Wiki v1.1.0 firmware image written at offset <code>0x0</code>.
         </p>
       </div>
       <div class="flasher-action">
         <div style="font-size:0.85rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Browser Web Flasher</div>
-        <div class="install-btn-wrapper">
+        <div id="install-slot" class="install-btn-wrapper">
           <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
         </div>
         <div style="font-size:0.78rem; color:#64748b;">Requires Chrome, Edge, or Chromium browser with Web Serial enabled.</div>
@@ -436,5 +495,28 @@ esp-web-install-button {
 
 </div>
 
+<script>
+function selectTarget(target) {
+  const btn35 = document.getElementById('btn-target-35');
+  const btn28 = document.getElementById('btn-target-28');
+  const desc35 = document.getElementById('target-desc-35');
+  const desc28 = document.getElementById('target-desc-28');
+  const slot = document.getElementById('install-slot');
+
+  if (target === '28') {
+    btn28.classList.add('active');
+    btn35.classList.remove('active');
+    desc28.style.display = 'block';
+    desc35.style.display = 'none';
+    slot.innerHTML = '<esp-web-install-button manifest="manifest-28.json"></esp-web-install-button>';
+  } else {
+    btn35.classList.add('active');
+    btn28.classList.remove('active');
+    desc35.style.display = 'block';
+    desc28.style.display = 'none';
+    slot.innerHTML = '<esp-web-install-button manifest="manifest.json"></esp-web-install-button>';
+  }
+}
+</script>
 </body>
 </html>

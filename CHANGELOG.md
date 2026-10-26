@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- **2.8" CYD Hardware Profile & PlatformIO Target**: Added dedicated `survival-wiki-28` build environment in `platformio.ini` for Sunton 2.8" ESP32-2432S028R Cheap Yellow Display modules with ILI9341 driver and XPT2046 touch configuration (Fixes #4).
+- **Responsive 240x320 UI Engine**: Scaled touch UI across all screens (Header, Footer, 2x4 Emergency Home Grid with horizontal icon/label split, Category article lists with 6 rows/page, Settings, and Phone Access Wi-Fi QR view) to fit compact $240 \times 320$ displays natively (Fixes #4).
+- **Dynamic Multi-Target Web Flasher**: Added model selector in `docs/index.html` and `web-flasher/index.html` allowing makers to choose between 3.5" (`E32R35T`) and 2.8" (`ESP32-2432S028R`) targets before flashing in 1 click over Web Serial (Fixes #4).
+- **SPI Bus Decoupling**: Explicitly deselects `PIN_SD_CS` (GPIO 5) and `TOUCH_CS` (GPIO 33) high during early setup to prevent bus contention across shared HSPI/VSPI operations (Fixes #4).
+
+---
+
 ## [1.0.0] - 2026-10-18
 
 ### Added

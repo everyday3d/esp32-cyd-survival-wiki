@@ -6,24 +6,42 @@
 
 extern TFT_eSPI tft;
 
-static const int TEXT_X = 10;
-static const int TEXT_W = SCR_W - 20;
+static const int TEXT_X = (SCR_W < 300) ? 8 : 10;
+static const int TEXT_W = SCR_W - (TEXT_X * 2);
 
 static int lineHeight(uint8_t s) {
-  switch (s) {
-    case S_H1: return 34;
-    case S_H2: return 28;
-    case S_CAPTION: return 18;
-    default: return 22;
+  if (SCR_W < 300) {
+    switch (s) {
+      case S_H1: return 28;
+      case S_H2: return 24;
+      case S_CAPTION: return 16;
+      default: return 20;
+    }
+  } else {
+    switch (s) {
+      case S_H1: return 34;
+      case S_H2: return 28;
+      case S_CAPTION: return 18;
+      default: return 22;
+    }
   }
 }
 
 static void setStyleFont(uint8_t s) {
-  switch (s) {
-    case S_H1: tft.setFreeFont(&FreeSansBold12pt7b); break;
-    case S_H2: tft.setFreeFont(&FreeSansBold9pt7b); break;
-    case S_CAPTION: tft.setTextFont(2); break;
-    default: tft.setFreeFont(&FreeSans9pt7b); break;
+  if (SCR_W < 300) {
+    switch (s) {
+      case S_H1: tft.setFreeFont(&FreeSansBold9pt7b); break;
+      case S_H2: tft.setFreeFont(&FreeSansBold9pt7b); break;
+      case S_CAPTION: tft.setTextFont(2); break;
+      default: tft.setFreeFont(&FreeSans9pt7b); break;
+    }
+  } else {
+    switch (s) {
+      case S_H1: tft.setFreeFont(&FreeSansBold12pt7b); break;
+      case S_H2: tft.setFreeFont(&FreeSansBold9pt7b); break;
+      case S_CAPTION: tft.setTextFont(2); break;
+      default: tft.setFreeFont(&FreeSans9pt7b); break;
+    }
   }
 }
 
@@ -209,26 +227,26 @@ void Doc::layout(bool markdown) {
       }
       int t = s + 1;
       while (t < e && buf[t] == ' ') t++;
-      wrap(t, e, 22, SCR_W - 40, S_WARN);
+      wrap(t, e, (SCR_W < 300 ? 18 : 22), SCR_W - (SCR_W < 300 ? 30 : 40), S_WARN);
     } else if (n > 2 && buf[s] == '#' ) {
       int t = s;
       while (t < e && buf[t] == '#') t++;
       bool h1 = (t - s) == 1;
       while (t < e && buf[t] == ' ') t++;
-      addGap(h1 ? 8 : 6);
+      addGap(h1 ? (SCR_W < 300 ? 6 : 8) : (SCR_W < 300 ? 4 : 6));
       wrap(t, e, TEXT_X, TEXT_W, h1 ? S_H1 : S_H2);
     } else if (n >= 3 && strncmp(buf + s, "---", 3) == 0) {
-      items.push_back({0, 0, 0, (int16_t)cursorY, 16, S_RULE});
-      cursorY += 16;
+      items.push_back({0, 0, 0, (int16_t)cursorY, (int16_t)(SCR_W < 300 ? 12 : 16), S_RULE});
+      cursorY += (SCR_W < 300 ? 12 : 16);
     } else if (n > 2 && (buf[s] == '-' || buf[s] == '*') && buf[s + 1] == ' ') {
-      items.push_back({0, 0, 14, (int16_t)cursorY, 22, S_MARK});
-      wrap(s + 2, e, 28, SCR_W - 38, S_BULLET);
+      items.push_back({0, 0, (int16_t)(SCR_W < 300 ? 10 : 14), (int16_t)cursorY, (int16_t)lineHeight(S_BULLET), S_MARK});
+      wrap(s + 2, e, (SCR_W < 300 ? 22 : 28), SCR_W - (SCR_W < 300 ? 30 : 38), S_BULLET);
     } else if (n > 2 && isdigit((unsigned char)buf[s])) {
       int t = s;
       while (t < e && isdigit((unsigned char)buf[t])) t++;
       if (t < e - 1 && buf[t] == '.' && buf[t + 1] == ' ') {
-        items.push_back({(uint16_t)s, (uint16_t)(t + 1 - s), 10, (int16_t)cursorY, 22, S_MARK});
-        wrap(t + 2, e, 32, SCR_W - 42, S_BULLET);
+        items.push_back({(uint16_t)s, (uint16_t)(t + 1 - s), (int16_t)(SCR_W < 300 ? 8 : 10), (int16_t)cursorY, (int16_t)lineHeight(S_BULLET), S_MARK});
+        wrap(t + 2, e, (SCR_W < 300 ? 26 : 32), SCR_W - (SCR_W < 300 ? 34 : 42), S_BULLET);
       } else {
         wrap(s, e, TEXT_X, TEXT_W, S_BODY);
       }
@@ -282,36 +300,36 @@ void Doc::draw(int scroll) {
     if (y + it.h < 0 || y > CONTENT_H) continue;
     switch (it.style) {
       case S_WARNPAD:
-        tft.fillRect(10, y, SCR_W - 20, it.h, C_WARN_BG);
-        tft.fillRect(10, y, 4, it.h, C_WARN_BAR);
+        tft.fillRect((SCR_W < 300 ? 6 : 10), y, SCR_W - (SCR_W < 300 ? 12 : 20), it.h, C_WARN_BG);
+        tft.fillRect((SCR_W < 300 ? 6 : 10), y, (SCR_W < 300 ? 3 : 4), it.h, C_WARN_BAR);
         break;
       case S_WARN:
-        tft.fillRect(10, y, SCR_W - 20, it.h, C_WARN_BG);
-        tft.fillRect(10, y, 4, it.h, C_WARN_BAR);
+        tft.fillRect((SCR_W < 300 ? 6 : 10), y, SCR_W - (SCR_W < 300 ? 12 : 20), it.h, C_WARN_BG);
+        tft.fillRect((SCR_W < 300 ? 6 : 10), y, (SCR_W < 300 ? 3 : 4), it.h, C_WARN_BAR);
         setStyleFont(S_WARN);
         tft.setTextColor(C_TEXT);
-        tft.drawString(slice(buf, it.off, it.len), it.x, y + 4);
+        tft.drawString(slice(buf, it.off, it.len), it.x, y + (SCR_W < 300 ? 2 : 4));
         break;
       case S_RULE:
-        tft.drawFastHLine(TEXT_X, y + 8, TEXT_W, C_LINE);
+        tft.drawFastHLine(TEXT_X, y + (SCR_W < 300 ? 6 : 8), TEXT_W, C_LINE);
         break;
       case S_MARK:
         if (it.len == 0) {
-          tft.fillCircle(it.x + 4, y + 11, 3, C_ACCENT);
+          tft.fillCircle(it.x + (SCR_W < 300 ? 3 : 4), y + (SCR_W < 300 ? 9 : 11), (SCR_W < 300 ? 2 : 3), C_ACCENT);
         } else {
           setStyleFont(S_BODY);
           tft.setTextColor(C_ACCENT);
-          tft.drawString(slice(buf, it.off, it.len), it.x, y + 4);
+          tft.drawString(slice(buf, it.off, it.len), it.x, y + (SCR_W < 300 ? 2 : 4));
         }
         break;
       case S_IMG: {
         String full = String("/wiki/") + slice(buf, it.off, it.len);
         uint16_t w = 0, h = 0;
         if (it.x == 0 && it.h == 40) {
-          tft.drawRect(TEXT_X, y, TEXT_W, 36, C_LINE);
+          tft.drawRect(TEXT_X, y, TEXT_W, (SCR_W < 300 ? 30 : 36), C_LINE);
           tft.setTextFont(2);
           tft.setTextColor(C_MUTED);
-          tft.drawString("[picture missing]", TEXT_X + 8, y + 10);
+          tft.drawString("[picture missing]", TEXT_X + 6, y + 8);
         } else if (TJpgDec.getFsJpgSize(&w, &h, full.c_str(), SD) == JDR_OK) {
           int sc = 1;
           while (w / sc > TEXT_W && sc < 8) sc *= 2;
@@ -328,7 +346,7 @@ void Doc::draw(int scroll) {
         if (it.style == S_H2) col = C_ACCENT;
         if (it.style == S_CAPTION) col = C_MUTED;
         tft.setTextColor(col);
-        tft.drawString(slice(buf, it.off, it.len), it.x, y + (it.style == S_CAPTION ? 1 : 4));
+        tft.drawString(slice(buf, it.off, it.len), it.x, y + (it.style == S_CAPTION ? 1 : (SCR_W < 300 ? 2 : 4)));
         break;
       }
     }

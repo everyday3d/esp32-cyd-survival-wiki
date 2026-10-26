@@ -1,27 +1,50 @@
 // Survival Wiki - board configuration
-// Board: Hosyond / LCDWiki 3.5" ESP32-32E (E32R35T), ST7796U + XPT2046 resistive touch
+// Supports:
+//  - Hosyond / LCDWiki 3.5" ESP32-32E (E32R35T), ST7796U + XPT2046 resistive touch (320x480)
+//  - Sunton 2.8" ESP32-2432S028R CYD, ILI9341 + XPT2046 resistive touch (240x320)
 #pragma once
 
-#define FW_VERSION "1.0.0"
+#define FW_VERSION "1.1.0"
 
-// ---- Pins (display + touch pins are set in platformio.ini for TFT_eSPI) ----
-#define PIN_BACKLIGHT 27   // LCD backlight, HIGH = on (PWM dimmed)
-#define PIN_SD_CS      5   // microSD on its own SPI bus (VSPI)
-#define PIN_SD_SCK    18
-#define PIN_SD_MISO   19
-#define PIN_SD_MOSI   23
-#define PIN_LED_R     22   // RGB LED, common anode: LOW = on
-#define PIN_LED_G     16
-#define PIN_LED_B     17
-#define PIN_AUDIO_EN   4   // speaker amp enable, LOW = on (kept off)
+// ---- Hardware Profile ----
+#if defined(BOARD_CYD_28)
+  #define BOARD_NAME     "ESP32-2432S028 (2.8\" CYD)"
+  #define SCR_W          240
+  #define SCR_H          320
+  #define PIN_BACKLIGHT   21   // LCD backlight PWM on 2.8" CYD
+  #define PIN_SD_CS        5   // microSD on VSPI bus
+  #define PIN_SD_SCK      18
+  #define PIN_SD_MISO     19
+  #define PIN_SD_MOSI     23
+  #define PIN_LED_R        4   // RGB LED, active low
+  #define PIN_LED_G       16
+  #define PIN_LED_B       17
+  #define PIN_AUDIO_EN    -1   // No external amp enable (GPIO 26 DAC audio out)
+  #define HEADER_H        36
+  #define FOOTER_H        38
+  #define ROW_H           38
+  #define TILE_GAP         6
+#else
+  #define BOARD_NAME     "Hosyond 3.5\" E32R35T"
+  #define SCR_W          320
+  #define SCR_H          480
+  #define PIN_BACKLIGHT   27   // LCD backlight PWM on 3.5" E32R35T
+  #define PIN_SD_CS        5   // microSD on VSPI bus
+  #define PIN_SD_SCK      18
+  #define PIN_SD_MISO     19
+  #define PIN_SD_MOSI     23
+  #define PIN_LED_R       22   // RGB LED, active low
+  #define PIN_LED_G       16
+  #define PIN_LED_B       17
+  #define PIN_AUDIO_EN     4   // speaker amp enable, LOW = on (kept off)
+  #define HEADER_H        44
+  #define FOOTER_H        52
+  #define ROW_H           48
+  #define TILE_GAP         8
+#endif
 
-// ---- Screen layout (portrait 320 x 480) ----
-#define SCR_W      320
-#define SCR_H      480
-#define HEADER_H    44
-#define FOOTER_H    52
 #define CONTENT_Y  HEADER_H
-#define CONTENT_H  (SCR_H - HEADER_H - FOOTER_H)   // 384
+#define CONTENT_H  (SCR_H - HEADER_H - FOOTER_H)
 #define MARGIN       8
 
 // ---- Colors (RGB565) ----
