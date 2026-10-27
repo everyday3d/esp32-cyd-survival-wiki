@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Prebuilt 2.8" CYD Web Flasher Image**: Built and deployed merged single-binary firmware image `survival-wiki-28-full.bin` (bootloader, partitions, boot_app0, and application image at offset `0x0`) across `docs/firmware/`, `web-flasher/firmware/`, and `firmware/bin/`, resolving 404 download errors when flashing 2.8" displays (Fixes #5).
+- **Gitignore Rule Correction**: Narrowed case-insensitive `*MW*` pattern to `*MakerWorld*` and `MW_*` to prevent Windows filesystems from unintentionally matching the `mw` substring inside `firmware/` directories (Fixes #5).
+
 ### Added
 - **Dedicated 2.8" & 3.5" Enclosure Directories**: Reorganized `case/` into dedicated `case/2.8inch/` and `case/3.5inch/` subdirectories with localized STLs, CAD source files, renders, and detailed hardware guides for each module form factor.
 - **2.8" Snap-Fit Case 3MF Package**: Generated print-ready Bambu Studio / OrcaSlicer project `ESP32_28_Touch_Case_rev1.3mf` (1-plate, 100% support-free flat on Z=0, 0.20 mm standard layer height, 3 walls, 15% gyroid infill) for Sunton ESP32-2432S028R modules.
@@ -20,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [1.0.0] - 2026-10-18
+
+### Fixed
+- **Prebuilt 2.8" CYD Web Flasher Image**: Built and deployed merged single-binary firmware image `survival-wiki-28-full.bin` (bootloader, partitions, boot_app0, and application image at offset `0x0`) across `docs/firmware/`, `web-flasher/firmware/`, and `firmware/bin/`, resolving 404 download errors when flashing 2.8" displays (Fixes #5).
+- **Gitignore Rule Correction**: Narrowed case-insensitive `*MW*` pattern to `*MakerWorld*` and `MW_*` to prevent Windows filesystems from unintentionally matching the `mw` substring inside `firmware/` directories (Fixes #5).
 
 ### Added
 - **Target Board Calibration**: Explicit support and documentation for the Hosyond 3.5" ESP32-32E Touchscreen Display ([Amazon ASIN B0D93MBWC2](https://www.amazon.com/dp/B0D93MBWC2)), QDtech / LCDWiki `E32R35T` (Resistive Touch) / `E32N35T` (CYD).
