@@ -133,13 +133,12 @@ Explore the visual modules, emergency manuals, touch UI, and wireless capabiliti
 
 ---
 
-## 🖨️ 3D Printable Snap-Fit Case (`case/`)
-The `case/` directory includes the official **rev2** precision snap-fit enclosure designed in Blender 5.2:
-- **100% Support-Free Printing:** Both parts print flat on `Z = 0` (Base on its back, Top Bezel face-down).
-- **Exact E32R35T Clearances:** Accommodates the `101.50 × 55.50 mm` PCB with an open cavity that leaves all rear perimeter components unobstructed.
-- **Centered USB-C Port:** Wide cutout with external overmold relief so thick USB-C cable plugs seat flush.
-- **Port Access:** Features a bottom thumb scoop for microSD insertion/removal, dedicated access ports for `RESET` and `BOOT` tactile switches, top peripheral windows for JST 1.25mm connectors, and angled passive cooling louvers.
-- See the [`case/README.md`](case/README.md) guide and download [`case/3mf/ESP32_35_Touch_Case_rev2.3mf`](case/3mf/ESP32_35_Touch_Case_rev2.3mf).
+## 🖨️ 3D Printable Snap-Fit Cases (`case/`)
+The `case/` directory includes official precision snap-fit enclosures designed in Blender 5.2 for both supported screen sizes:
+- **Dedicated 2.8" CYD Enclosure (`case/2.8inch/`):** Tailored for Sunton `ESP32-2432S028R` with universal Micro-USB & Type-C clearance, 4 raised corner support bosses, rear stylus pinholes for BOOT/RESET, and debossed BoxerDawg3D base. Download [`case/2.8inch/ESP32_28_Touch_Case_rev1.3mf`](case/2.8inch/ESP32_28_Touch_Case_rev1.3mf).
+- **Dedicated 3.5" CYD Enclosure (`case/3.5inch/`):** Tailored for Hosyond `E32R35T` / `E32N35T` with centered USB-C, 4 tapered M3 corner alignment pins, peripheral headers clearance, and passive cooling louvers. Download [`case/3.5inch/ESP32_35_Touch_Case_rev2.3mf`](case/3.5inch/ESP32_35_Touch_Case_rev2.3mf).
+- **100% Support-Free Printing:** Both models print flat on `Z = 0` (Base on its back, Top Bezel face-down on textured PEI). Zero screws, brass inserts, or glue required.
+- See the [`case/README.md`](case/README.md) hub and [`case/PRINT_INSTRUCTIONS.md`](case/PRINT_INSTRUCTIONS.md) for full hardware comparison and slicer guidelines.
 
 ---
 

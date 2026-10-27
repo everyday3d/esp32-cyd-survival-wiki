@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dedicated 2.8" & 3.5" Enclosure Directories**: Reorganized `case/` into dedicated `case/2.8inch/` and `case/3.5inch/` subdirectories with localized STLs, CAD source files, renders, and detailed hardware guides for each module form factor.
+- **2.8" Snap-Fit Case 3MF Package**: Generated print-ready Bambu Studio / OrcaSlicer project `ESP32_28_Touch_Case_rev1.3mf` (1-plate, 100% support-free flat on Z=0, 0.20 mm standard layer height, 3 walls, 15% gyroid infill) for Sunton ESP32-2432S028R modules.
 - **2.8" CYD Hardware Profile & PlatformIO Target**: Added dedicated `survival-wiki-28` build environment in `platformio.ini` for Sunton 2.8" ESP32-2432S028R Cheap Yellow Display modules with ILI9341 driver and XPT2046 touch configuration (Fixes #4).
 - **Responsive 240x320 UI Engine**: Scaled touch UI across all screens (Header, Footer, 2x4 Emergency Home Grid with horizontal icon/label split, Category article lists with 6 rows/page, Settings, and Phone Access Wi-Fi QR view) to fit compact $240 \times 320$ displays natively (Fixes #4).
 - **Dynamic Multi-Target Web Flasher**: Added model selector in `docs/index.html` and `web-flasher/index.html` allowing makers to choose between 3.5" (`E32R35T`) and 2.8" (`ESP32-2432S028R`) targets before flashing in 1 click over Web Serial (Fixes #4).
