@@ -4,85 +4,86 @@
 [![3D Printable Case](https://img.shields.io/badge/3D%20Case-Snap--Fit%20(No%20Supports)-blue?style=for-the-badge&logo=bambulab)](case/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-An offline survival knowledge base, mobile captive portal, and field reference engineered for both the classic **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the larger **3.5" Hosyond Touch Display (`E32R35T`)**. 
+Hey makers! Jimmy here from BoxerDawg 3D.
 
-> [!important] Supported Hardware & Dual-Target Architecture
-> I built this firmware and companion snap-fit cases to support both popular ESP32 display form factors out of the box:
-> 
-> | Feature / Spec | 3.5" Hosyond (`E32R35T`) | 2.8" Classic CYD (`ESP32-2432S028R`) |
-> |---|---|---|
-> | **Board Model** | QDtech / LCDWiki `E32R35T` (Resistive) / `E32N35T` ([Amazon ASIN B0D93MBWC2](https://www.amazon.com/dp/B0D93MBWC2)) | Sunton `ESP32-2432S028R` (Micro-USB or Dual USB-C `CYD2USB`) |
-> | **Screen & Resolution** | 3.5" $320 \times 480$ (ST7796 SPI controller) | 2.8" $240 \times 320$ (ILI9341 SPI controller) |
-> | **Touch Panel** | XPT2046 Resistive Touch (`CS 33`, `IRQ 36` on HSPI) | XPT2046 Resistive Touch (`CS 33`, `IRQ 36` on HSPI) |
-> | **USB Ports & Power** | Centered Type-C USB (`Y = 0.00 mm` on left edge) | Micro-USB (left edge) or Micro-USB + Type-C bottom |
-> | **PCB Dimensions** | $101.50 \times 55.50\text{ mm}$ ($R3.5\text{ mm}$ corners) | $86.00 \times 50.00\text{ mm}$ ($R2.0\text{ mm}$ corners) |
-> | **Mounting / Alignment** | 4× Ø3.20 mm (M3) holes at $94.50 \times 47.90\text{ mm}$ | 4 Corner Support Bosses & Side Perimeter Snaps |
-> | **Precompiled Binary** | [`survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin) (`0x0`) | [`survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin) (`0x0`) |
-> | **Web Flasher Target** | `3.5" Display (Hosyond E32R35T)` | `2.8" Display (Classic CYD)` |
-> | **3D Printable Case** | [`case/3.5inch/`](case/3.5inch/README.md) (`ESP32_35_Touch_Case_rev2.3mf`) | [`case/2.8inch/`](case/2.8inch/README.md) (`ESP32_28_Touch_Case_rev1.3mf`) |
->
-> *(Note: The older Sunton `ESP32-3248S035` board with off-center Micro-USB has different pinouts and will not fit the 3.5" case).*
+I built the **ESP32 CYD Survival Wiki** as a 100% offline emergency knowledge base and wireless field guide you can throw in your pack or keep on your shop bench. It turns inexpensive ESP32 touchscreen display boards into dedicated, grid-down survival tools without needing cell towers, internet access, or subscriptions.
 
-- **On the Screen:** Browse 8 emergency categories and 61 illustrated emergency articles, plus the complete 233-page **US Army Survival Manual (FM 21-76)** pre-indexed across 62 paged chapters and the field guide book (rendered with native resolution layouts on both 320×480 and 240×320 screens).
-- **On Phones & Laptops:** The device hosts its own standalone Wi-Fi captive portal network (`SurvivalWiki`). Phones that join get the entire search-indexed wiki with color diagrams in their browser, plus direct PDF download access to the complete US Army FM 21-76 manual.
-- **100% Offline & Grid-Down:** No internet required, ever. Everything lives on the microSD card and runs off any 5V USB-C battery bank.
-- **Custom Snap-Fit Cases Included:** Support-free 2-piece enclosures designed specifically for each board geometry with dedicated port cutouts, cooling vents, and toolless snap tabs.
+Whether you're running the pocket-sized **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** or the larger **3.5" Hosyond Touch Display (`E32R35T`)**, you're completely covered:
+- **On the touchscreen:** Tap through 8 emergency categories, 61 illustrated field guides, and the complete 233-page **US Army Survival Manual (FM 21-76)** with smooth paging and crisp diagrams.
+- **On your phone or tablet:** Turn on the built-in Wi-Fi hotspot (`SurvivalWiki`) and anyone nearby can connect to read guides, search topics, or download the full survival PDF straight to their device.
+- **100% grid-down ready:** Everything runs off a standard FAT32 microSD card and any 5V USB battery bank or phone charger.
+- **Support-free 3D printable cases:** Custom 2-piece snap-fit cases modeled in Blender for both screen sizes—they print flat on your build plate and snap together without screws or glue.
+
+---
+
+### 📟 Supported Screens & Hardware
+
+I made sure both popular display boards work seamlessly with the 1-click web flasher, precompiled binaries, and 3D printable cases:
+
+| Screen & Board | Board Model | Resolution & Driver | Ports & Power | 3D Printable Case | Precompiled Firmware |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **3.5" Touch Display** | Hosyond / QDtech `E32R35T` ([Amazon](https://www.amazon.com/dp/B0D93MBWC2)) | $320 \times 480$ (ST7796) | Centered USB-C | [`case/3.5inch/`](case/3.5inch/README.md) (`rev2`) | [`survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin) |
+| **2.8" Cheap Yellow Display (CYD)** | Sunton `ESP32-2432S028R` | $240 \times 320$ (ILI9341) | Micro-USB & Type-C `CYD2USB` | [`case/2.8inch/`](case/2.8inch/README.md) (`rev1`) | [`survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin) |
+
+> [!tip] Note on Board Versions
+> The 3.5" case is tailored specifically for the Hosyond `E32R35T` with the centered USB-C port. Older Sunton 3.5" boards (`ESP32-3248S035`) with off-center Micro-USB use different pinouts and hole locations, so stick to the `E32R35T` board for the 3.5" print.
 
 ```
-web-flasher/     1-click browser web flasher (ESP Web Tools / Web Serial) + precompiled binaries
-firmware/        source code (PlatformIO) + bin/ ready-to-flash binaries
-sdcard/          copy the CONTENTS of this folder to the root of a FAT32 microSD card
-case/            3D printable 2-piece snap-fit case (.3mf, .stl, .blend, renders & instructions)
+web-flasher/     1-click browser web flasher (Chrome / Edge Web Serial) + precompiled binaries
+firmware/        PlatformIO source code + ready-to-flash bin/ files
+sdcard/          MicroSD card files (copy directly to root of a FAT32 card)
+case/            3D printable 2-piece snap-fit cases (.3mf, .stl, .blend, and guides)
+docs/            GitHub Pages web flasher and documentation assets
 screenshots/     UI preview screenshots
 ```
 
 ---
 
-## 🌟 Interface & Feature Spotlight
+## 🌟 What's Inside
 
-Explore the visual modules, emergency manuals, touch UI, and wireless capabilities built into the ESP32 CYD Survival Wiki:
+Here is a quick look at the features and tools packed into the Survival Wiki:
 
-### 1. Touchscreen Emergency Dashboard (Responsive 3.5" & 2.8" UI)
+### 1. Touchscreen Emergency Dashboard (3.5" & 2.8")
 [![Touch Dashboard Spotlight](docs/screenshots/01_touch_dashboard_spotlight.png)](docs/screenshots/01_touch_dashboard_spotlight.png)
-- **8 Instant Emergency Tiles**: 1-touch navigation for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
-- **Hardware Status Bar**: Displays live captive Wi-Fi state, active client counter, battery voltage, and MicroSD card status.
-- **Sub-80ms Catalog Loading**: Instant category switching reads directly from indexed TSV tables on FAT32 MicroSD cards.
-- **Dedicated Bottom Bar**: Touch-friendly navigation bar provides one-tap switching between Library reader, Wi-Fi hotspot toggle, and system settings.
+- **8 Instant Emergency Tiles**: 1-tap access for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
+- **Live Status Bar**: Shows Wi-Fi hotspot state, connected devices, battery voltage, and microSD status.
+- **Fast Card Reading**: Instant category navigation reads guides directly off your microSD card without lag.
+- **Easy Bottom Bar**: Jump between the guide reader, Wi-Fi hotspot toggle, and settings with one touch.
 
-### 2. Illustrated Field Guides & Color Diagrams
+### 2. Illustrated Field Guides & Clear Diagrams
 [![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
-- **61 Illustrated Field Articles**: Visual schematics for gravity water filtration, solar stills, wilderness traps, splinting, and shelter construction.
-- **High-Contrast Dark Theme**: Specially tuned contrast preserves readability in bright direct sunlight while preventing night blindness in dark conditions.
-- **Paged Navigation Engine**: Smooth touchscreen paging with percentage progress bar, fast-jump buttons, and instant return to category index.
-- **Immediate Trauma Access**: Rapid-access medical summaries provide step-by-step guidance for severe bleeding, hypothermia, CPR, and shock.
+- **61 Illustrated Guides**: Step-by-step visuals for water filtration, solar stills, traps, splints, and emergency shelters.
+- **High-Contrast Dark Theme**: Easy to read in direct sunlight, and preserves your night vision in the dark.
+- **Smooth Touch Paging**: Clean touch paging with percentage progress, fast-jump controls, and instant return to the index.
+- **Quick Trauma Reference**: Fast-access medical guides for severe bleeding, hypothermia, CPR, and shock.
 
-### 3. US Army Survival Manual (FM 21-76) Complete Library
+### 3. Complete US Army Survival Manual (FM 21-76)
 [![US Army Survival Manual Spotlight](docs/screenshots/03_us_army_survival_manual_spotlight.png)](docs/screenshots/03_us_army_survival_manual_spotlight.png)
-- **Complete Military Survival Doctrine**: Full 233-page field manual pre-indexed across 62 paged chapters and subchapters on MicroSD.
-- **Psychology & Survival Craft**: In-depth coverage of wilderness psychology, survival kit assembly, water procurement, and emergency firecraft.
-- **Dangerous Plants & Wildlife**: Comprehensive plant identification guide, universal edibility testing protocol, and snake venom treatment.
-- **100% Grid-Down Autonomy**: Entirely offline with zero reliance on cellular towers, satellite connections, or external APIs.
+- **Full Field Manual**: Complete 233-page survival manual split into 62 easy-reading chapters on your microSD card.
+- **Core Field Skills**: Covers survival psychology, kits, finding water, and building fires in tough conditions.
+- **Plants & Wildlife**: Plant identification guides, universal edibility testing steps, and snake bite treatment.
+- **100% Offline**: Zero cell service, Wi-Fi, or satellite connection needed.
 
-### 4. Wireless Smartphone Captive Portal & Search
+### 4. Offline Wi-Fi Hotspot for Phones & Tablets
 [![Wireless Smartphone Hub Spotlight](docs/screenshots/04_wifi_portal_search_spotlight.png)](docs/screenshots/04_wifi_portal_search_spotlight.png)
-- **Zero-Install Wi-Fi Hotspot**: Scan the device's on-screen QR code with any smartphone or tablet to instantly join the `SurvivalWiki` captive portal network.
-- **Client-Side Instant Search**: Type keywords into the local browser interface to search across all 61 guides and FM 21-76 subchapters in real time.
-- **Night-Vision Palette**: Red-light-friendly dark mode minimizes glare and light emissions during power outages or nighttime field operations.
-- **Simultaneous Multi-User Sharing**: Up to 8 connected mobile devices can read different survival manuals and emergency protocols simultaneously.
+- **No Apps Required**: Scan the on-screen QR code with your phone or tablet to join the `SurvivalWiki` hotspot.
+- **Fast Offline Search**: Search all 61 guides and FM 21-76 chapters right from your phone's browser.
+- **Night-Vision Theme**: Gentle red/dark theme won't ruin night vision during power outages.
+- **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
 
-### 5. 1-Click Browser Web Flasher via Web Serial
+### 5. 1-Click Browser Web Flasher
 [![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](docs/screenshots/05_web_serial_flasher_spotlight.png)
-- **Zero-Toolchain Turnkey Installation**: Flash the complete firmware image directly from Google Chrome or Microsoft Edge via the Web Serial API.
-- **Auto CH340 / CP2102 Detection**: Automatically connects to USB serial adapters without manual driver installation or terminal commands.
-- **Pre-Compiled Full Image**: Flashes bootloader, partition table, and the Survival Wiki OS in ~40 seconds.
-- **Single-Click Maintenance**: Effortlessly update or erase firmware directly from the web interface.
+- **No Coding Tools Needed**: Flash the full firmware directly from Chrome or Edge using USB Web Serial in about 40 seconds.
+- **Automatic USB Detection**: Plugs straight into common CH340 and CP2102 USB chips without manual driver setup.
+- **Hardware Selector**: Toggle between 3.5" and 2.8" boards with one click before flashing.
+- **Clean Install Option**: Erase and install fresh whenever you want to update.
 
-### 6. Support-Free 3D Printed Snap-Fit Case
+### 6. Support-Free Snap-Fit 3D Cases
 [![Snap-Fit Field Case Spotlight](docs/screenshots/06_snap_fit_case_spotlight.png)](docs/screenshots/06_snap_fit_case_spotlight.png)
-- **100% Support-Free Printing**: Both halves print flat on `Z = 0`; face-down top bezel takes the textured finish of your PEI build plate.
-- **Centered USB-C Recess**: Accommodates standard USB-C cables, 90-degree adapters, and allows portable battery banks to sit flush against the case.
-- **MicroSD Card Scoop & Hardware Bosses**: MicroSD card thumb scoop allows instant card swaps; 4 tapered M3 corner alignment pins secure the board without screws.
-- **Passive Thermal Ventilation**: 9 angled cooling louvers vent heat from the ESP32-WROOM module during continuous Wi-Fi hotspot operation.
+- **100% Support-Free**: Both halves print flat on your build plate. The top bezel prints face-down to pick up your textured PEI sheet.
+- **Flush USB Cutouts**: Clean cable access for standard USB-C cables, right-angle adapters, and power banks.
+- **Quick-Eject MicroSD Scoop**: Built-in thumb scoop makes swapping microSD cards effortless.
+- **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
 
 ---
 
