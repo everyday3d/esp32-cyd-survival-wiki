@@ -71,12 +71,13 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Night-Vision Theme**: Gentle red/dark theme won't ruin night vision during power outages.
 - **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
 
-### 5. 1-Click Browser Web Flasher
+### 5. 1-Click Browser Web Flasher (Now with Dual 3.5" & 2.8" Support)
 [![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](docs/screenshots/05_web_serial_flasher_spotlight.png)
-- **No Coding Tools Needed**: Flash the full firmware directly from Chrome or Edge using USB Web Serial in about 40 seconds.
-- **Automatic USB Detection**: Plugs straight into common CH340 and CP2102 USB chips without manual driver setup.
-- **Hardware Selector**: Toggle between 3.5" and 2.8" boards with one click before flashing.
-- **Clean Install Option**: Erase and install fresh whenever you want to update.
+- **Zero Software or Drivers**: Flash the full firmware directly from Chrome or Edge using USB Web Serial in about 40 seconds.
+- **Hardware Target Selector**: Pick your board with 1 click before flashing—instantly switches between **3.5" Hosyond (`E32R35T`)** and the newly added **2.8" Cheap Yellow Display (`ESP32-2432S028R`)**.
+- **Automatic USB Detection**: Plugs straight into common CH340 and CP2102 USB serial chips without manual baud rate or port setup.
+- **Precompiled Unified Binaries**: Automatically flashes the bootloader, partition table, and full Survival Wiki image cleanly at offset `0x0`.
+- **Clean Install Option**: Check **Erase Device** on fresh installs to wipe stale partitions and guarantee a fresh start.
 
 ### 6. Support-Free Snap-Fit 3D Cases
 [![Snap-Fit Field Case Spotlight](docs/screenshots/06_snap_fit_case_spotlight.png)](docs/screenshots/06_snap_fit_case_spotlight.png)
