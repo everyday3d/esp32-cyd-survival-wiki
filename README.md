@@ -4,23 +4,29 @@
 [![3D Printable Case](https://img.shields.io/badge/3D%20Case-Snap--Fit%20(No%20Supports)-blue?style=for-the-badge&logo=bambulab)](case/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-An offline survival knowledge base and field reference engineered specifically for the **Hosyond 3.5" 320x480 ESP32-32E Touchscreen Display Module** ([Amazon ASIN B0D93MBWC2](https://www.amazon.com/dp/B0D93MBWC2) — model **QDtech / LCDWiki `E32R35T` / `E32N35T`**, 3.5" Cheap Yellow Display / CYD with centered USB-C).
+An offline survival knowledge base, mobile captive portal, and field reference engineered for both the classic **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the larger **3.5" Hosyond Touch Display (`E32R35T`)**. 
 
-> [!important] Exact Target Hardware Compatibility
-> Both the firmware pinout/bus configuration and the 3D printable snap-fit case are tailored to this exact board:
-> - **Product Link:** [Amazon B0D93MBWC2 — Hosyond 3.5" ESP32 Display Module](https://www.amazon.com/dp/B0D93MBWC2)
-> - **Manufacturer / Board Model:** QDtech / LCDWiki **`E32R35T`** (Resistive Touch) / **`E32N35T`** (Non-Touch)
-> - **Dimensions:** `101.50 mm × 55.50 mm` PCB (`R 3.50 mm` corners)
-> - **Mounting Holes:** `4× Ø 3.20 mm` (M3) at `94.50 mm × 47.90 mm` pitch (`±47.25 mm, ±23.95 mm`)
-> - **Connector:** **Centered Type-C USB Port (`Y = 0.00 mm` on Left short edge)** flanked by `RESET` and `BOOT` tactile switches (`Y = ±13.72 mm`)
-> - **Display:** 3.5" $320 \times 480$ TFT LCD (ST7796U controller) with XPT2046 resistive touch panel
-> - **Storage:** Onboard MicroSD (TF) card slot on dedicated VSPI bus (`PIN_SD_CS 5`, `SCK 18`, `MISO 19`, `MOSI 23`)
-> - *(Note: Older Sunton `ESP32-3248S035` boards with off-center Micro-USB and M2 holes will NOT fit this case)*
+> [!important] Supported Hardware & Dual-Target Architecture
+> I built this firmware and companion snap-fit cases to support both popular ESP32 display form factors out of the box:
+> 
+> | Feature / Spec | 3.5" Hosyond (`E32R35T`) | 2.8" Classic CYD (`ESP32-2432S028R`) |
+> |---|---|---|
+> | **Board Model** | QDtech / LCDWiki `E32R35T` (Resistive) / `E32N35T` ([Amazon ASIN B0D93MBWC2](https://www.amazon.com/dp/B0D93MBWC2)) | Sunton `ESP32-2432S028R` (Micro-USB or Dual USB-C `CYD2USB`) |
+> | **Screen & Resolution** | 3.5" $320 \times 480$ (ST7796 SPI controller) | 2.8" $240 \times 320$ (ILI9341 SPI controller) |
+> | **Touch Panel** | XPT2046 Resistive Touch (`CS 33`, `IRQ 36` on HSPI) | XPT2046 Resistive Touch (`CS 33`, `IRQ 36` on HSPI) |
+> | **USB Ports & Power** | Centered Type-C USB (`Y = 0.00 mm` on left edge) | Micro-USB (left edge) or Micro-USB + Type-C bottom |
+> | **PCB Dimensions** | $101.50 \times 55.50\text{ mm}$ ($R3.5\text{ mm}$ corners) | $86.00 \times 50.00\text{ mm}$ ($R2.0\text{ mm}$ corners) |
+> | **Mounting / Alignment** | 4× Ø3.20 mm (M3) holes at $94.50 \times 47.90\text{ mm}$ | 4 Corner Support Bosses & Side Perimeter Snaps |
+> | **Precompiled Binary** | [`survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin) (`0x0`) | [`survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin) (`0x0`) |
+> | **Web Flasher Target** | `3.5" Display (Hosyond E32R35T)` | `2.8" Display (Classic CYD)` |
+> | **3D Printable Case** | [`case/3.5inch/`](case/3.5inch/README.md) (`ESP32_35_Touch_Case_rev2.3mf`) | [`case/2.8inch/`](case/2.8inch/README.md) (`ESP32_28_Touch_Case_rev1.3mf`) |
+>
+> *(Note: The older Sunton `ESP32-3248S035` board with off-center Micro-USB has different pinouts and will not fit the 3.5" case).*
 
-- **On the 3.5" Screen:** Browse 8 categories and 61 illustrated emergency articles, plus the complete 233-page **US Army Survival Manual (FM 21-76)** pre-indexed across 62 paged chapters and the field guide book.
+- **On the Screen:** Browse 8 emergency categories and 61 illustrated emergency articles, plus the complete 233-page **US Army Survival Manual (FM 21-76)** pre-indexed across 62 paged chapters and the field guide book (rendered with native resolution layouts on both 320×480 and 240×320 screens).
 - **On Phones & Laptops:** The device hosts its own standalone Wi-Fi captive portal network (`SurvivalWiki`). Phones that join get the entire search-indexed wiki with color diagrams in their browser, plus direct PDF download access to the complete US Army FM 21-76 manual.
 - **100% Offline & Grid-Down:** No internet required, ever. Everything lives on the microSD card and runs off any 5V USB-C battery bank.
-- **Custom Snap-Fit Case Included:** Includes 3D printable, support-free 2-piece enclosure designed specifically for the 101.50 × 55.50 mm E32R35T board with centered USB-C port and M3 alignment pins.
+- **Custom Snap-Fit Cases Included:** Support-free 2-piece enclosures designed specifically for each board geometry with dedicated port cutouts, cooling vents, and toolless snap tabs.
 
 ```
 web-flasher/     1-click browser web flasher (ESP Web Tools / Web Serial) + precompiled binaries
@@ -36,7 +42,7 @@ screenshots/     UI preview screenshots
 
 Explore the visual modules, emergency manuals, touch UI, and wireless capabilities built into the ESP32 CYD Survival Wiki:
 
-### 1. 3.5" Touchscreen Emergency Dashboard
+### 1. Touchscreen Emergency Dashboard (Responsive 3.5" & 2.8" UI)
 [![Touch Dashboard Spotlight](docs/screenshots/01_touch_dashboard_spotlight.png)](docs/screenshots/01_touch_dashboard_spotlight.png)
 - **8 Instant Emergency Tiles**: 1-touch navigation for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
 - **Hardware Status Bar**: Displays live captive Wi-Fi state, active client counter, battery voltage, and MicroSD card status.
@@ -83,13 +89,18 @@ Explore the visual modules, emergency manuals, touch UI, and wireless capabiliti
 ## ⚡ Quick Start in 3 Steps
 
 ### 1. Flash the Firmware (1-Click in Browser)
-> [!tip] Web Flasher — No Software or Toolchain Required
-> 1. Open Chrome or Edge and go to the **[ESP32 CYD Survival Wiki Web Flasher](https://everyday3d.github.io/esp32-cyd-survival-wiki/)** (or open `web-flasher/index.html` locally).
-> 2. Plug the board into your computer using a USB-C data cable.
-> 3. Click **Connect / Install**, select your serial port (`USB-SERIAL CH340` or `CP2102`), check **Erase Device** on fresh install, and let Web Serial flash the full image in ~40 seconds!
->    - *If connection fails:* Hold the **BOOT** button on the side of the board, click Connect, then release BOOT.
+> [!tip] 1-Click Web Flasher — Zero Tools or Drivers Needed
+> 1. Open Chrome or Edge and head over to the **[ESP32 CYD Survival Wiki Web Flasher](https://everyday3d.github.io/esp32-cyd-survival-wiki/)** (or open `web-flasher/index.html` locally).
+> 2. Plug your display board into your computer with a good USB data cable.
+> 3. Select your hardware target at the top of the flasher:
+>    - **3.5" Display (Hosyond E32R35T)**: $320 \times 480$ ST7796 with centered USB-C.
+>    - **2.8" Display (Classic CYD)**: $240 \times 320$ ILI9341 (`ESP32-2432S028R`).
+> 4. Click **Connect / Install**, pick your serial COM port (`USB-SERIAL CH340` or `CP2102`), check **Erase Device** on fresh install, and let Web Serial write the full unified image in ~40 seconds!
+>    - *If connection fails:* Hold down the **BOOT** button on the side of the board, click Connect, then release BOOT once connected.
 
-*Alternative manual method:* Use [esptool-js](https://espressif.github.io/esptool-js/) with `firmware/bin/survival-wiki-full.bin` at address `0x0`.
+*Alternative manual method:* Flash ready-to-flash unified binaries at offset `0x0` via [esptool-js](https://espressif.github.io/esptool-js/) or CLI `esptool.py`:
+- **3.5" Hosyond Board:** [`firmware/bin/survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin)
+- **2.8" Classic CYD Board:** [`firmware/bin/survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin)
 
 ---
 
