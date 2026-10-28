@@ -646,10 +646,27 @@ static void calibrateTouch() {
   tft.drawString("Tap each marker as it appears", SCR_W / 2, SCR_H / 2 + 6);
   delay(1500);
   uint16_t a, b, c, d, e, f;
-  if (waitTap(CAL_INSET, CAL_INSET, a, b) &&
-      waitTap(SCR_W - CAL_INSET, CAL_INSET, c, d) &&
-      waitTap(CAL_INSET, SCR_H - CAL_INSET, e, f)) {
+  bool ok = false, tapped = true;
+  for (int attempt = 0; attempt < 4 && tapped && !ok; attempt++) {
+    tapped = waitTap(CAL_INSET, CAL_INSET, a, b) &&
+             waitTap(SCR_W - CAL_INSET, CAL_INSET, c, d) &&
+             waitTap(CAL_INSET, SCR_H - CAL_INSET, e, f);
+    if (!tapped) break;
     touch28.setFromTaps(a, b, c, d, e, f);
+    // Sanity check: both axes must span a real part of the panel. A collapsed range
+    // (finger carried over, same spot tapped twice) would leave a sliver of touch area.
+    ok = (touch28.xMax - touch28.xMin) > 1500 && (touch28.yMax - touch28.yMin) > 1500 &&
+         abs((int)c - (int)a) + abs((int)d - (int)b) > 1200 &&
+         abs((int)e - (int)a) + abs((int)f - (int)b) > 1200;
+    if (!ok) {
+      tft.fillScreen(TFT_BLACK);
+      tft.setTextColor(TFT_RED);
+      tft.drawString("Taps didn't register - try again", SCR_W / 2, SCR_H / 2);
+      delay(1500);
+    }
+  }
+  if (tapped && ok) {
+    // calibration good
   } else {
     // No taps: keep the built-in defaults (the ranges from the working ESPHome CYD) and don't save.
     touch28 = Touch28();
@@ -665,6 +682,12 @@ static bool loadTouchCal() {
   if (prefs.getBytes("cal28b", cal, sizeof(cal)) != sizeof(cal) || cal[7] != 1) return false;
   touch28.swapXY = cal[0]; touch28.flipX = cal[1]; touch28.flipY = cal[2];
   touch28.xMin = cal[3]; touch28.xMax = cal[4]; touch28.yMin = cal[5]; touch28.yMax = cal[6];
+  if (touch28.xMax <= touch28.xMin || touch28.yMax <= touch28.yMin ||
+      touch28.xMax - touch28.xMin < 1500 || touch28.yMax - touch28.yMin < 1500) {
+    touch28 = Touch28();
+    touch28.begin(SCR_W, SCR_H);
+    return false;                                      // bad saved range: calibrate again
+  }
   return true;
 }
 #else
