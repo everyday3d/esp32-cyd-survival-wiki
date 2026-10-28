@@ -9,6 +9,7 @@
 #define T28_MISO 39
 #define T28_CS 33
 #define T28_IRQ 36
+#define CAL_INSET 32   // calibration markers sit this far in from the edges (panel corners are hard to reach)
 
 struct Touch28 {
   // Calibration: which raw axis is screen X, direction flags, raw range per axis.
@@ -75,8 +76,8 @@ struct Touch28 {
     flipX = trA < tlA; flipY = blB < tlB;
     xMin = min(tlA, trA); xMax = max(tlA, trA);
     yMin = min(tlB, blB); yMax = max(tlB, blB);
-    // Taps were ~12px in from the edges, so stretch the range to the full screen.
-    int ex = (xMax - xMin) * 12 / (w - 24), ey = (yMax - yMin) * 12 / (h - 24);
+    // Taps were CAL_INSET px in from the edges, so stretch the range to the full screen.
+    int ex = (xMax - xMin) * CAL_INSET / (w - 2 * CAL_INSET), ey = (yMax - yMin) * CAL_INSET / (h - 2 * CAL_INSET);
     xMin = max(0, (int)xMin - ex); xMax = min(4095, (int)xMax + ex);
     yMin = max(0, (int)yMin - ey); yMax = min(4095, (int)yMax + ey);
   }

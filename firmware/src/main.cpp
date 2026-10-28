@@ -619,16 +619,22 @@ static void touchBegin() { touch28.begin(SCR_W, SCR_H); }
 static bool touchRead(uint16_t *x, uint16_t *y) { return touch28.read(*x, *y); }
 static bool touchHeld() { return touch28.pressed(); }
 
-static void waitTap(int px, int py, uint16_t &rx, uint16_t &ry) {
+// Returns false if nothing was tapped within 15 s.
+static bool waitTap(int px, int py, uint16_t &rx, uint16_t &ry) {
   while (touch28.pressed()) delay(10);                 // wait for release
   tft.fillScreen(TFT_BLACK);
   tft.drawCircle(px, py, 10, TFT_MAGENTA);
   tft.drawFastHLine(px - 14, py, 29, TFT_MAGENTA);
   tft.drawFastVLine(px, py - 14, 29, TFT_MAGENTA);
-  while (!touch28.readRaw(rx, ry)) delay(10);
+  uint32_t t0 = millis();
+  while (!touch28.readRaw(rx, ry)) {
+    if (millis() - t0 > 15000) return false;
+    delay(10);
+  }
   delay(150);
   touch28.readRaw(rx, ry);                             // settled reading
   while (touch28.pressed()) delay(10);
+  return true;
 }
 
 static void calibrateTouch() {
@@ -640,10 +646,16 @@ static void calibrateTouch() {
   tft.drawString("Tap each marker as it appears", SCR_W / 2, SCR_H / 2 + 6);
   delay(1500);
   uint16_t a, b, c, d, e, f;
-  waitTap(12, 12, a, b);
-  waitTap(SCR_W - 12, 12, c, d);
-  waitTap(12, SCR_H - 12, e, f);
-  touch28.setFromTaps(a, b, c, d, e, f);
+  if (waitTap(CAL_INSET, CAL_INSET, a, b) &&
+      waitTap(SCR_W - CAL_INSET, CAL_INSET, c, d) &&
+      waitTap(CAL_INSET, SCR_H - CAL_INSET, e, f)) {
+    touch28.setFromTaps(a, b, c, d, e, f);
+  } else {
+    // No taps: keep the built-in defaults (the ranges from the working ESPHome CYD) and don't save.
+    touch28 = Touch28();
+    touch28.begin(SCR_W, SCR_H);
+    return;
+  }
   uint16_t cal[8] = {touch28.swapXY, touch28.flipX, touch28.flipY, touch28.xMin, touch28.xMax, touch28.yMin, touch28.yMax, 1};
   prefs.putBytes("cal28b", cal, sizeof(cal));
 }
