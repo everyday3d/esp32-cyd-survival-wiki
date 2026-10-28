@@ -1,4 +1,4 @@
-// =====================================================================
+﻿// =====================================================================
 //  Survival Wiki - offline survival reference for the ESP32 CYD
 //  Supports:
 //   - Hosyond / LCDWiki 3.5" ESP32-32E (E32R35T) [320x480 ST7796]
@@ -611,6 +611,61 @@ static void redraw() {
 }
 
 // ---------------------------------------------------------------- touch
+#if defined(BOARD_CYD_28)
+#include "touch28.h"
+static Touch28 touch28;
+
+static void touchBegin() { touch28.begin(SCR_W, SCR_H); }
+static bool touchRead(uint16_t *x, uint16_t *y) { return touch28.read(*x, *y); }
+static bool touchHeld() { return touch28.pressed(); }
+
+static void waitTap(int px, int py, uint16_t &rx, uint16_t &ry) {
+  while (touch28.pressed()) delay(10);                 // wait for release
+  tft.fillScreen(TFT_BLACK);
+  tft.drawCircle(px, py, 10, TFT_MAGENTA);
+  tft.drawFastHLine(px - 14, py, 29, TFT_MAGENTA);
+  tft.drawFastVLine(px, py - 14, 29, TFT_MAGENTA);
+  while (!touch28.readRaw(rx, ry)) delay(10);
+  delay(150);
+  touch28.readRaw(rx, ry);                             // settled reading
+  while (touch28.pressed()) delay(10);
+}
+
+static void calibrateTouch() {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextFont(2);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Touch calibration", SCR_W / 2, SCR_H / 2 - 20);
+  tft.drawString("Tap each marker as it appears", SCR_W / 2, SCR_H / 2 + 6);
+  delay(1500);
+  uint16_t a, b, c, d, e, f;
+  waitTap(12, 12, a, b);
+  waitTap(SCR_W - 12, 12, c, d);
+  waitTap(12, SCR_H - 12, e, f);
+  touch28.setFromTaps(a, b, c, d, e, f);
+  uint16_t cal[8] = {touch28.swapXY, touch28.flipX, touch28.flipY, touch28.xMin, touch28.xMax, touch28.yMin, touch28.yMax, 1};
+  prefs.putBytes("cal28b", cal, sizeof(cal));
+}
+
+static bool loadTouchCal() {
+  uint16_t cal[8];
+  if (prefs.getBytes("cal28b", cal, sizeof(cal)) != sizeof(cal) || cal[7] != 1) return false;
+  touch28.swapXY = cal[0]; touch28.flipX = cal[1]; touch28.flipY = cal[2];
+  touch28.xMin = cal[3]; touch28.xMax = cal[4]; touch28.yMin = cal[5]; touch28.yMax = cal[6];
+  return true;
+}
+#else
+static void touchBegin() {}
+static bool touchRead(uint16_t *x, uint16_t *y) { return tft.getTouch(x, y, 500); }
+static bool touchHeld() { return tft.getTouchRawZ() > 500; }
+static bool loadTouchCal() {
+  uint16_t cal[5];
+  if (prefs.getBytes("cal", cal, sizeof(cal)) != sizeof(cal)) return false;
+  tft.setTouch(cal);
+  return true;
+}
+
 static void calibrateTouch() {
   uint16_t cal[5];
   tft.fillScreen(TFT_BLACK);
@@ -625,6 +680,7 @@ static void calibrateTouch() {
   prefs.putBytes("cal", cal, sizeof(cal));
   tft.setTouch(cal);
 }
+#endif
 
 static bool startSD() {
   sdSPI.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS);
@@ -788,11 +844,10 @@ void setup() {
   tft.drawString("offline field reference", SCR_W / 2, splashCenter + (SCR_W < 300 ? 56 : 80));
   tft.drawString("hold screen to calibrate touch", SCR_W / 2, SCR_H - (SCR_W < 300 ? 24 : 40));
 
-  uint16_t cal[5];
-  bool haveCal = prefs.getBytes("cal", cal, sizeof(cal)) == sizeof(cal);
+  touchBegin();
+  bool haveCal = loadTouchCal();
   delay(1500);
-  if (!haveCal || tft.getTouchRawZ() > 500) calibrateTouch();
-  else tft.setTouch(cal);
+  if (!haveCal || touchHeld()) calibrateTouch();
 
   startup();
   lastTouchMs = millis();
@@ -801,7 +856,7 @@ void setup() {
 void loop() {
   static bool wasDown = false;
   uint16_t tx, ty;
-  bool down = tft.getTouch(&tx, &ty, 500);
+  bool down = touchRead(&tx, &ty);
   uint32_t now = millis();
 
   if (down && !wasDown) {
