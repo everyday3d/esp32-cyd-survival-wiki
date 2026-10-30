@@ -87,6 +87,9 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
 
 ### 7. New in 1.2.0 (2.8" CYD firmware)
+[![Flashlight and SOS Spotlight](docs/screenshots/07_flashlight_sos_spotlight.png)](docs/screenshots/07_flashlight_sos_spotlight.png)
+[![Settings, Backup and Night Dim Spotlight](docs/screenshots/08_settings_backup_spotlight.png)](docs/screenshots/08_settings_backup_spotlight.png)
+
 These landed in the 2.8" build first. The 3.5" build gets them in a later update.
 - **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
 - **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.

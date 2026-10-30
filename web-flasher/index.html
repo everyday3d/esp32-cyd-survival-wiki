@@ -3,520 +3,316 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESP32 CYD Survival Wiki — 1-Click Web Flasher</title>
-<meta name="description" content="Flash the ESP32 CYD Survival Wiki firmware directly to your 3.5-inch (E32R35T) or 2.8-inch (ESP32-2432S028R) ESP32 Touch Display from your browser in under 60 seconds.">
-<!-- ESP Web Tools component -->
+<title>ESP32 CYD Survival Wiki: offline survival guide for a $15 touchscreen</title>
+<meta name="description" content="A 100% offline survival wiki for ESP32 touchscreen boards. 61 illustrated guides, the US Army Survival Manual, a Wi-Fi hotspot for your phone, flashlight and SOS mode. Flash it from your browser in a minute.">
+<meta property="og:title" content="ESP32 CYD Survival Wiki">
+<meta property="og:description" content="Offline survival guides on a pocket touchscreen. Flash it from your browser.">
+<meta property="og:image" content="https://everyday3d.github.io/esp32-cyd-survival-wiki/screenshots/01_touch_dashboard_spotlight.png">
 <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 <style>
 :root {
-  --bg: #0b0f17;
-  --card: #131b26;
-  --card-hover: #192433;
-  --border: #233142;
-  --border-glow: #fd5e0244;
+  --bg: #090d14;
+  --card: #111a26;
+  --card-hi: #172334;
+  --border: #223143;
   --text: #c5d1de;
-  --text-bright: #ffffff;
+  --muted: #8da0b4;
+  --bright: #ffffff;
   --accent: #fd5e02;
-  --accent-gold: #ffb020;
-  --accent-hover: #ff7525;
-  --success: #10b981;
-  --cyan: #06b6d4;
-  --danger: #ef4444;
+  --gold: #ffb020;
+  --cyan: #22d3ee;
+  --green: #10b981;
+  --red: #ef4444;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
-  background: var(--bg);
+  background: radial-gradient(1200px 600px at 15% -10%, #1b2a3f55, transparent 60%), var(--bg);
   color: var(--text);
   font-family: var(--font);
   line-height: 1.6;
-  padding: 0 0 80px 0;
   -webkit-font-smoothing: antialiased;
 }
+a { color: var(--gold); }
+code { background: #0a1018; border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; font-size: 0.88em; color: #a5f3fc; }
+
+/* header */
 header {
-  background: rgba(19, 27, 38, 0.95);
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(9, 13, 20, 0.88);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 800;
-  color: var(--text-bright);
-  font-size: 1.3rem;
-  text-decoration: none;
-  letter-spacing: -0.3px;
-}
-.brand .badge {
-  background: linear-gradient(135deg, var(--accent), var(--accent-gold));
-  color: #0b0f17;
-  font-size: 0.72rem;
-  font-weight: 900;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.github-link {
-  color: var(--text);
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: color 0.15s ease;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-}
-.github-link:hover { color: var(--text-bright); border-color: var(--accent); }
-.container {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-.hero {
-  text-align: center;
-  margin-bottom: 40px;
-}
-.hero h1 {
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: var(--text-bright);
-  letter-spacing: -0.8px;
-  margin-bottom: 14px;
-  line-height: 1.15;
-}
-.hero h1 span {
-  background: linear-gradient(135deg, #fd5e02, #ffb020);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.hero p {
-  font-size: 1.18rem;
-  color: #94a3b8;
-  max-width: 680px;
-  margin: 0 auto 24px;
-}
-.hero-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-bright);
-}
-.hero-pill.glow {
-  border-color: var(--accent);
-  background: rgba(253, 94, 2, 0.1);
-  color: var(--accent-gold);
-}
-.flasher-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 36px;
-  margin-bottom: 32px;
-  position: relative;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-.flasher-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-gold), var(--cyan));
-}
-.flasher-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 32px;
-  align-items: center;
-}
-@media (max-width: 768px) {
-  .flasher-grid { grid-template-columns: 1fr; }
-  .hero h1 { font-size: 2.1rem; }
-}
-.flasher-action {
-  background: rgba(11, 15, 23, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-.install-btn-wrapper {
-  margin: 8px 0;
-}
-.target-btn {
-  flex: 1 1 200px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-family: var(--font);
-}
-.target-btn:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(253, 94, 2, 0.5);
-}
-.target-btn.active {
-  background: rgba(253, 94, 2, 0.12);
-  border-color: var(--accent);
-  box-shadow: 0 0 14px rgba(253, 94, 2, 0.25);
-}
-.target-btn .tb-title {
-  color: var(--text-bright);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-.target-btn.active .tb-title {
-  color: var(--accent-gold);
-}
-.target-btn .tb-sub {
-  color: #94a3b8;
-  font-size: 0.78rem;
-}
+.nav { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 22px; }
+.brand { color: var(--bright); font-weight: 800; font-size: 1.15rem; text-decoration: none; letter-spacing: -0.2px; }
+.brand b { color: var(--accent); }
+.nav-links { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.92rem; padding: 7px 12px; border-radius: 8px; }
+.nav-links a:hover { color: var(--bright); background: rgba(255,255,255,0.06); }
+.nav-links a.gh { border: 1px solid var(--border); color: var(--bright); }
+@media (max-width: 720px) { .nav-links a:not(.gh) { display: none; } }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+section { margin-top: 72px; }
+h2.sec { color: var(--bright); font-size: 1.9rem; letter-spacing: -0.5px; margin-bottom: 8px; }
+p.sec-sub { color: var(--muted); max-width: 640px; margin-bottom: 28px; font-size: 1.05rem; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 44px; align-items: center; padding-top: 56px; }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 36px; } }
+.eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 5px 14px; border-radius: 999px; border: 1px solid #fd5e0266; background: #fd5e0214; color: var(--gold); font-weight: 700; font-size: 0.82rem; margin-bottom: 18px; }
+.hero h1 { color: var(--bright); font-size: clamp(2.3rem, 5.2vw, 3.7rem); line-height: 1.05; letter-spacing: -1.5px; font-weight: 900; margin-bottom: 18px; }
+.hero h1 span { background: linear-gradient(120deg, #fd5e02, #ffb020); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.hero p.lead { font-size: 1.2rem; color: #a3b3c4; max-width: 540px; margin-bottom: 26px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 12px; font-weight: 800; font-size: 1rem; text-decoration: none; border: 1px solid transparent; transition: transform .12s ease, background .12s ease; }
+.btn:hover { transform: translateY(-2px); }
+.btn.primary { background: linear-gradient(135deg, #fd5e02, #ff8a1f); color: #fff; box-shadow: 0 8px 26px #fd5e0244; }
+.btn.ghost { color: var(--bright); border-color: var(--border); background: rgba(255,255,255,0.04); }
+.facts { display: flex; flex-wrap: wrap; gap: 10px 22px; color: var(--muted); font-size: 0.92rem; font-weight: 600; }
+.facts span::before { content: "✓ "; color: var(--green); }
+.hero-photo { position: relative; }
+.hero-photo img { width: 100%; border-radius: 22px; border: 1px solid var(--border); box-shadow: 0 24px 60px rgba(0,0,0,0.55); display: block; }
+.hero-photo .cap { position: absolute; left: 14px; bottom: 14px; background: rgba(9,13,20,0.82); border: 1px solid var(--border); padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; color: var(--bright); }
+
+/* new in */
+.newin { margin-top: 56px; background: linear-gradient(135deg, #1a2433, #151d2b); border: 1px solid #fd5e0255; border-radius: 18px; padding: 26px 28px; }
+.newin h3 { color: var(--bright); font-size: 1.2rem; margin-bottom: 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { background: linear-gradient(135deg, var(--accent), var(--gold)); color: #0b0f17; font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 999px; letter-spacing: .6px; }
+.newin p { color: var(--muted); margin-bottom: 16px; }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.chip { background: #0b121c; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.chip b { color: var(--bright); display: block; margin-bottom: 2px; }
+.chip span { color: var(--muted); font-size: 0.9rem; }
+
+/* flasher */
+.flasher { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 34px; position: relative; overflow: hidden; box-shadow: 0 16px 44px rgba(0,0,0,0.4); }
+.flasher::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--gold), var(--cyan)); }
+.flasher-grid { display: grid; grid-template-columns: 1fr 340px; gap: 30px; align-items: center; }
+@media (max-width: 800px) { .flasher-grid { grid-template-columns: 1fr; } .flasher { padding: 24px 18px; } }
+.flasher h2 { color: var(--bright); font-size: 1.6rem; margin-bottom: 14px; }
+.targets { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.target-btn { flex: 1 1 220px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 3px; font-family: var(--font); transition: all .15s ease; }
+.target-btn:hover { background: rgba(255,255,255,0.07); border-color: #fd5e0288; }
+.target-btn.active { background: #fd5e0220; border-color: var(--accent); box-shadow: 0 0 16px #fd5e0230; }
+.tb-title { color: var(--bright); font-weight: 700; font-size: 0.98rem; }
+.target-btn.active .tb-title { color: var(--gold); }
+.tb-sub { color: var(--muted); font-size: 0.8rem; }
+.target-desc p { color: var(--muted); margin-bottom: 10px; }
+.flasher-action { background: #0a1018; border: 1px solid var(--border); border-radius: 16px; padding: 26px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.flasher-action .label { font-size: 0.78rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+.erase-tip { background: #fbbf2414; border: 1px solid #fbbf2455; color: #fcd34d; border-radius: 10px; padding: 9px 12px; font-size: 0.86rem; font-weight: 600; }
+.small { color: #64748b; font-size: 0.78rem; }
 esp-web-install-button {
-  --esp-tools-button-border-radius: 10px;
+  --esp-tools-button-border-radius: 12px;
   --esp-tools-button-color: #ffffff;
   --esp-tools-button-background-color: #fd5e02;
-  --esp-tools-button-padding: 14px 28px;
+  --esp-tools-button-padding: 14px 30px;
   --esp-tools-button-font-size: 1.05rem;
-  --esp-tools-button-font-weight: 700;
+  --esp-tools-button-font-weight: 800;
   --esp-tools-button-hover-background-color: #ff7525;
 }
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  margin-bottom: 36px;
-}
-.step-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-.step-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(253, 94, 2, 0.4);
-}
-.step-num {
-  width: 34px;
-  height: 34px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-gold));
-  color: #0b0f17;
-  font-weight: 900;
-  font-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
-}
-.step-card h3 {
-  color: var(--text-bright);
-  font-size: 1.15rem;
-  margin-bottom: 8px;
-}
-.step-card p {
-  color: #94a3b8;
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-.sd-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px;
-  margin-bottom: 32px;
-}
-.sd-box h3 {
-  color: var(--text-bright);
-  font-size: 1.25rem;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sd-tree {
-  background: #070a0f;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.88rem;
-  color: #a5f3fc;
-  margin-top: 14px;
-  overflow-x: auto;
-}
-.sd-tree span.comment { color: #64748b; }
-.sd-tree span.folder { color: #facc15; font-weight: bold; }
-.case-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px;
-  margin-bottom: 32px;
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 24px;
-  align-items: center;
-}
-@media (max-width: 768px) {
-  .case-box { grid-template-columns: 1fr; }
-}
-.case-badge {
-  display: inline-block;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid var(--success);
-  color: #6ee7b7;
-  font-size: 0.78rem;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 10px;
-}
-.trouble-box {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 32px;
-}
-.trouble-box h4 {
-  color: #fca5a5;
-  margin-bottom: 8px;
-  font-size: 1rem;
-}
-.trouble-box ul {
-  padding-left: 20px;
-  color: #cbd5e1;
-  font-size: 0.92rem;
-}
-.trouble-box li { margin-bottom: 6px; }
-.footer {
-  text-align: center;
-  color: #64748b;
-  font-size: 0.88rem;
-  margin-top: 50px;
-}
-.footer a { color: var(--accent); text-decoration: none; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 22px; }
+.step { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+.step .n { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--gold)); color: #0b0f17; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.step h3 { color: var(--bright); font-size: 1.1rem; margin-bottom: 6px; }
+.step p { color: var(--muted); font-size: 0.93rem; }
+
+/* gallery */
+.gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+@media (max-width: 800px) { .gallery { grid-template-columns: 1fr; } }
+.shot { display: block; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: transform .15s ease, border-color .15s ease; }
+.shot:hover { transform: translateY(-3px); border-color: #fd5e0299; }
+.shot img { display: block; width: 100%; height: auto; }
+
+/* boxes */
+.box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+.box h3 { color: var(--bright); font-size: 1.25rem; margin-bottom: 10px; }
+.box p { color: var(--muted); }
+.tree { background: #060a10; border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.86rem; color: #a5f3fc; margin-top: 14px; overflow-x: auto; white-space: pre; }
+.tree .c { color: #64748b; }
+.tree .f { color: #facc15; font-weight: 700; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+.case { display: grid; grid-template-columns: 1fr 340px; gap: 26px; align-items: center; }
+@media (max-width: 800px) { .case { grid-template-columns: 1fr; } }
+.case img { width: 100%; border-radius: 14px; border: 1px solid var(--border); }
+.badge-ok { display: inline-block; background: #10b98122; border: 1px solid var(--green); color: #6ee7b7; font-size: 0.74rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+.trouble { background: #ef444410; border: 1px solid #ef444440; border-radius: 14px; padding: 22px 26px; }
+.trouble h3 { color: #fca5a5; margin-bottom: 8px; font-size: 1.05rem; }
+.trouble ul { padding-left: 20px; color: #cbd5e1; font-size: 0.94rem; }
+.trouble li { margin-bottom: 6px; }
+footer { text-align: center; color: #64748b; font-size: 0.88rem; margin: 70px 0 50px; }
+footer a { text-decoration: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <a href="#" class="brand">
-    <span>🧭 ESP32 CYD Survival Wiki</span>
-    <span class="badge">Web Flasher</span>
-  </a>
-  <a href="https://github.com/everyday3d/esp32-cyd-survival-wiki" target="_blank" class="github-link">
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-    GitHub Repository
-  </a>
+  <div class="nav">
+    <a href="#top" class="brand">🧭 CYD <b>Survival Wiki</b></a>
+    <nav class="nav-links">
+      <a href="#flash">Flash</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="#case">Case</a>
+      <a class="gh" href="https://github.com/everyday3d/esp32-cyd-survival-wiki" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
 </header>
 
-<div class="container">
+<div class="wrap" id="top">
 
   <div class="hero">
-    <h1>Flash <span>ESP32 CYD Survival Wiki</span></h1>
-    <p>Zero software or drivers required. Uses Web Serial in Chrome or Edge to flash your ESP32 CYD display directly over USB in under 60 seconds.</p>
-    <div class="hero-pills">
-      <span class="hero-pill glow">⚡ 1-Click Flash (&lt; 60s)</span>
-      <span class="hero-pill">🎯 Dual Target: 3.5" &amp; 2.8"</span>
-      <span class="hero-pill">📟 320x480 / 240x320</span>
-      <span class="hero-pill">📱 Standalone Wi-Fi Portal</span>
-      <span class="hero-pill">🔋 100% Offline (No Internet)</span>
-      <span class="hero-pill">🖨️ 3D Printable Snap-Fit Case</span>
-    </div>
-  </div>
-
-  <div class="flasher-card">
-    <div class="flasher-grid">
-      <div>
-        <h2 style="color:var(--text-bright); font-size:1.6rem; margin-bottom:12px;">Program Your Board Over USB</h2>
-
-        <div class="model-selector" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
-          <button type="button" id="btn-target-35" class="target-btn active" onclick="selectTarget('35')">
-            <span class="tb-title">3.5" Display (Hosyond E32R35T)</span>
-            <span class="tb-sub">320&times;480 ST7796 &bull; Centered USB-C</span>
-          </button>
-          <button type="button" id="btn-target-28" class="target-btn" onclick="selectTarget('28')">
-            <span class="tb-title">2.8" Display (Classic CYD)</span>
-            <span class="tb-sub">240&times;320 ILI9341 &bull; ESP32-2432S028R</span>
-          </button>
-        </div>
-
-        <div id="target-desc-35" class="target-desc">
-          <p style="color:#94a3b8; font-size:1rem; margin-bottom:12px;">
-            Target: <strong>Hosyond 3.5" 320x480 ESP32-32E Touchscreen Board</strong> (<a href="https://www.amazon.com/dp/B0D93MBWC2" target="_blank" style="color:var(--accent-gold);">Amazon ASIN B0D93MBWC2</a>, model <code>E32R35T</code> with centered USB-C).
-          </p>
-          <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:12px;">
-            Full 320&times;480 resolution, ST7796 driver, 8-tile emergency dashboard, and centered USB-C cutout for external battery banks.
-          </p>
-        </div>
-
-        <div id="target-desc-28" class="target-desc" style="display:none;">
-          <p style="color:#94a3b8; font-size:1rem; margin-bottom:12px;">
-            Target: <strong>Sunton 2.8" 240x320 ESP32-2432S028R Cheap Yellow Display (CYD)</strong>.
-          </p>
-          <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:12px;">
-            Compact 240&times;320 resolution, ILI9341 driver, horizontal-split emergency tiles, and native XPT2046 touch calibration.
-          </p>
-        </div>
-
-        <p style="color:#94a3b8; font-size:0.92rem;">
-          Includes bootloader, partition table, and the full ESP32 CYD Survival Wiki firmware image written at offset <code>0x0</code>.
-        </p>
-      </div>
-      <div class="flasher-action">
-        <div style="font-size:0.85rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Browser Web Flasher</div>
-        <div id="install-slot" class="install-btn-wrapper">
-          <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
-        </div>
-        <div style="font-size:0.85rem; color:#fbbf24; font-weight:600; max-width:320px; text-align:center;">Tip: tick <strong>Erase device</strong> when it asks. It is the safest choice, and it fixes most touch and calibration problems after an update.</div>
-        <div style="font-size:0.78rem; color:#64748b;">Requires Chrome, Edge, or Chromium browser with Web Serial enabled.</div>
-      </div>
-    </div>
-  </div>
-
-  <h2 style="color:var(--text-bright); font-size:1.45rem; margin-bottom:20px;">Complete 3-Step Walkthrough</h2>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <h3>Flash Firmware</h3>
-      <p>Click <strong>INSTALL</strong> above. When prompted, select your USB port. Tick <strong>Erase device</strong> (recommended every time, and always on a fresh setup). Web Tools will write the flash in ~40 seconds.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <h3>Load MicroSD Card</h3>
-      <p>Format a microSD card as <strong>FAT32</strong>. Copy the contents of the <code>sdcard/</code> folder to the root of the microSD card. Insert the card into the slot on the board.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <h3>Power On & Explore</h3>
-      <p>Press the <strong>RESET</strong> button or plug into battery power. Browse 61 illustrated emergency guides & US Army Survival Manual FM 21-76 on-screen, or connect a phone to the <code>SurvivalWiki</code> Wi-Fi network!</p>
-    </div>
-  </div>
-
-  <div class="sd-box">
-    <h3>💾 MicroSD Card File Structure</h3>
-    <p style="color:#94a3b8; font-size:0.95rem;">
-      Format your card as <strong>FAT32</strong> (cards up to 32GB work out-of-the-box; for 64GB+ cards, format with FAT32 / Rufus). Copy the files so your card matches this structure:
-    </p>
-    <div class="sd-tree">
-<span class="folder">/</span> (microSD card root)
-├── <span class="comment">config.txt</span>               <span class="comment"># Device configuration (brightness, Wi-Fi SSID)</span>
-├── <span class="folder">wiki/</span>
-│   ├── <span class="comment">categories.tsv</span>         <span class="comment"># Top-level wiki categories</span>
-│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Article catalog index (61 articles)</span>
-│   ├── <span class="comment">search.json.gz</span>         <span class="comment"># Pre-indexed search database for phone browser</span>
-│   ├── <span class="folder">articles/</span>              <span class="comment"># 61 full-text Markdown emergency guides</span>
-│   │   ├── hypothermia.md
-│   │   ├── purifying-water.md
-│   │   └── ...
-│   └── <span class="folder">img/</span>                   <span class="comment"># Illustrated diagrams (CPR, water filter, knots, etc.)</span>
-├── <span class="folder">library/</span>
-│   ├── <span class="comment">catalog.tsv</span>            <span class="comment"># Library manual index (Field Guide & FM 21-76)</span>
-│   ├── <span class="folder">field-guide/</span>          <span class="comment"># 10-part compiled offline field guide (61 articles)</span>
-│   └── <span class="folder">fm21-76/</span>              <span class="comment"># US Army Survival Manual FM 21-76 (62 chapters + PDF)</span>
-└── <span class="folder">web/</span>
-    ├── <span class="comment">index.html</span>             <span class="comment"># Mobile captive portal web app</span>
-    └── <span class="comment">index.html.gz</span>
-    </div>
-  </div>
-
-  <div class="case-box">
     <div>
-      <span class="case-badge">3D Printable Enclosure Included</span>
-      <h3 style="color:var(--text-bright); font-size:1.3rem; margin-bottom:10px;">Modern 2-Piece Snap-Fit Case</h3>
-      <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:14px;">
-        Designed specifically for this 101.50 x 55.50 mm E32R35T board. Features 100% support-free flat printing on Z=0, centered USB-C port cutout with cable overmold relief, microSD thumb scoop, M3 alignment pins, and passive cooling louvers.
-      </p>
-      <p style="color:#94a3b8; font-size:0.9rem;">
-        Included in the <code>case/</code> directory with ready-to-slice Bambu Studio <code>.3mf</code>, <code>.stl</code>, and Blender 5.2 source files.
-      </p>
+      <div class="eyebrow">New in 1.2.0 · flashlight, SOS, night dim</div>
+      <h1>The whole <span>survival library</span> in your pocket.</h1>
+      <p class="lead">An offline field guide for cheap ESP32 touchscreen boards. No signal, no subscription, no problem. Flash it from your browser in about a minute.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flash">⚡ Flash it now</a>
+        <a class="btn ghost" href="https://github.com/everyday3d/esp32-cyd-survival-wiki" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+      <div class="facts">
+        <span>61 illustrated guides</span>
+        <span>US Army FM 21-76</span>
+        <span>Wi-Fi hotspot for phones</span>
+        <span>Runs on a USB power bank</span>
+      </div>
     </div>
-    <div style="text-align:center;">
-      <img src="preview_hero_assembled_rev2.png" alt="ESP32 CYD Case" style="width:100%; max-width:240px; border-radius:10px; border:1px solid var(--border); box-shadow:0 8px 20px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+    <div class="hero-photo">
+      <img src="preview_real_hardware_in_hand.jpg" alt="The Survival Wiki running on a 3D-printed handheld case next to a power bank" width="1024" height="903">
+      <div class="cap">Real unit · 3D-printed case · power bank</div>
     </div>
   </div>
 
-  <div class="trouble-box">
-    <h4>⚠️ Troubleshooting & Connection Tips</h4>
-    <ul>
-      <li><strong>No serial port listed in browser?</strong> Make sure you're using a <em>USB-C data cable</em> (many cheap charging cables lack data lines). If on Windows, install the CH340 or CP2102 USB UART driver.</li>
-      <li><strong>Failed to connect or timed out?</strong> Hold the <strong>BOOT</strong> button on the side of the board, click the Install button in your browser, and release BOOT once connecting.</li>
-      <li><strong>"MicroSD card not detected" on screen?</strong> Ensure card is formatted FAT32 (not exFAT or NTFS). Insert card all the way until it clicks.</li>
-      <li><strong>Touch screen alignment:</strong> Resistive touch panels respond best to a stylus, fingernail, or firm finger press.</li>
-    </ul>
+  <div class="newin">
+    <h3><span class="tag">NEW</span> Version 1.2.0 for the 2.8" CYD</h3>
+    <p>Same guides, better board. These are in the 2.8" firmware now, and the 3.5" build gets them next.</p>
+    <div class="chips">
+      <div class="chip"><b>🔦 Flashlight &amp; SOS</b><span>White, red night-vision, and a flashing SOS with the board LED.</span></div>
+      <div class="chip"><b>🌙 Auto night dim</b><span>The light sensor dims the screen in a dark room.</span></div>
+      <div class="chip"><b>💾 Settings backup</b><span>Saved to the SD card and restored after any reflash.</span></div>
+      <div class="chip"><b>👆 Touch that works</b><span>Reads pressure, so it works on clone boards too.</span></div>
+    </div>
   </div>
 
-  <div class="footer">
-    <p>ESP32 CYD Survival Wiki for Hosyond / Sunton 3.5" ESP32 Touchscreen Display (E32R35T / CYD).</p>
-    <p>Case design by <a href="https://boxerdawg3d.com" target="_blank">BoxerDawg 3D</a>. Open source hardware & software reference.</p>
-  </div>
+  <section id="flash">
+    <h2 class="sec">Flash it from your browser</h2>
+    <p class="sec-sub">Pick your board, plug it in, click Install. No drivers and no software. It needs Chrome or Edge.</p>
+    <div class="flasher">
+      <div class="flasher-grid">
+        <div>
+          <h2>Program your board over USB</h2>
+          <div class="targets">
+            <button type="button" id="btn-target-35" class="target-btn active" onclick="selectTarget('35')">
+              <span class="tb-title">3.5" Display (Hosyond E32R35T)</span>
+              <span class="tb-sub">320&times;480 ST7796 &bull; Centered USB-C</span>
+            </button>
+            <button type="button" id="btn-target-28" class="target-btn" onclick="selectTarget('28')">
+              <span class="tb-title">2.8" Display (Classic CYD)</span>
+              <span class="tb-sub">240&times;320 ILI9341 &bull; ESP32-2432S028R</span>
+            </button>
+          </div>
 
+          <div id="target-desc-35" class="target-desc">
+            <p>Target: <strong>Hosyond 3.5" 320x480 ESP32-32E touchscreen board</strong> (<a href="https://www.amazon.com/dp/B0D93MBWC2" target="_blank" rel="noopener">Amazon B0D93MBWC2</a>, model <code>E32R35T</code> with centered USB-C).</p>
+            <p>Full 320&times;480 resolution, ST7796 driver, 8-tile emergency dashboard, and a centered USB-C port for battery banks.</p>
+          </div>
+          <div id="target-desc-28" class="target-desc" style="display:none;">
+            <p>Target: <strong>Sunton 2.8" 240x320 ESP32-2432S028R "Cheap Yellow Display"</strong>.</p>
+            <p>Compact 240&times;320 screen, ILI9341 driver, XPT2046 touch with a quick 3-tap calibration. Includes the 1.2.0 flashlight, night dim and settings backup.</p>
+          </div>
+          <p class="small">The image holds the bootloader, partition table and full firmware, written at offset <code>0x0</code>.</p>
+        </div>
+        <div class="flasher-action">
+          <div class="label">Browser web flasher</div>
+          <div id="install-slot"><esp-web-install-button manifest="manifest.json"></esp-web-install-button></div>
+          <div class="erase-tip">Tip: tick <strong>Erase device</strong> when it asks. It is the safest choice, and it fixes most touch and calibration problems after an update.</div>
+          <div class="small">Needs Chrome, Edge or another Chromium browser with Web Serial.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Flash the firmware</h3><p>Click <strong>Install</strong> and choose your USB port. Tick <strong>Erase device</strong>. It writes in about 40 seconds.</p></div>
+      <div class="step"><div class="n">2</div><h3>Load the SD card</h3><p>Format a microSD card as <strong>FAT32</strong> and copy everything in the <code>sdcard/</code> folder to the root of the card.</p></div>
+      <div class="step"><div class="n">3</div><h3>Power on &amp; calibrate</h3><p>Tap the markers when asked, and you are in. Tap <strong>Wi-Fi</strong> to get the QR code for your phone.</p></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2 class="sec">What you get</h2>
+    <p class="sec-sub">Straight off the 2.8" CYD, with real screenshots captured from the device.</p>
+    <div class="gallery">
+      <a class="shot" href="screenshots/01_touch_dashboard_spotlight.png"><img loading="lazy" src="screenshots/01_touch_dashboard_spotlight.png" alt="Touch dashboard with eight emergency categories and a Light button"></a>
+      <a class="shot" href="screenshots/02_field_guide_reader_spotlight.png"><img loading="lazy" src="screenshots/02_field_guide_reader_spotlight.png" alt="Illustrated field guide reader"></a>
+      <a class="shot" href="screenshots/07_flashlight_sos_spotlight.png"><img loading="lazy" src="screenshots/07_flashlight_sos_spotlight.png" alt="Flashlight and SOS mode"></a>
+      <a class="shot" href="screenshots/08_settings_backup_spotlight.png"><img loading="lazy" src="screenshots/08_settings_backup_spotlight.png" alt="Settings with auto night dim and SD backup"></a>
+      <a class="shot" href="screenshots/03_us_army_survival_manual_spotlight.png"><img loading="lazy" src="screenshots/03_us_army_survival_manual_spotlight.png" alt="US Army Survival Manual FM 21-76"></a>
+      <a class="shot" href="screenshots/04_wifi_portal_search_spotlight.png"><img loading="lazy" src="screenshots/04_wifi_portal_search_spotlight.png" alt="Phone Wi-Fi portal with offline search"></a>
+    </div>
+  </section>
+
+  <section id="setup">
+    <h2 class="sec">The SD card</h2>
+    <p class="sec-sub">Everything the wiki reads lives on a plain FAT32 card.</p>
+    <div class="box">
+      <p>Copy <strong>everything inside</strong> <code>sdcard/</code> to the root of the card (cards up to 32&nbsp;GB format as FAT32 out of the box).</p>
+      <div class="tree"><span class="f">/</span> <span class="c">(microSD root)</span>
+├── config.txt            <span class="c"># Wi-Fi name and password</span>
+├── <span class="f">wiki/</span>                <span class="c"># categories, catalog, search index, articles, images</span>
+├── <span class="f">library/</span>             <span class="c"># field guide + US Army FM 21-76 (62 parts and a PDF)</span>
+├── <span class="f">web/</span>                 <span class="c"># the phone portal</span>
+└── swiki-settings.txt    <span class="c"># your settings backup, written by the device</span></div>
+    </div>
+  </section>
+
+  <section id="case">
+    <h2 class="sec">Print the case</h2>
+    <p class="sec-sub">Two-piece snap-fit cases for both screens. No supports, no screws, no glue.</p>
+    <div class="box case">
+      <div>
+        <span class="badge-ok">Support-free</span>
+        <h3>Snap-fit cases for 3.5" and 2.8"</h3>
+        <p>Both halves print flat on the plate, with the bezel face-down on textured PEI. You get flush USB cutouts, a thumb scoop for the microSD card and angled vents to keep the ESP32 cool during long hotspot sessions. Files are in the repo under <code>case/</code> (3MF, STL and Blender).</p>
+        <p style="margin-top:12px;"><a href="https://github.com/everyday3d/esp32-cyd-survival-wiki/tree/main/case" target="_blank" rel="noopener">Get the case files →</a></p>
+      </div>
+      <img src="preview_hero_assembled_rev2.png" alt="Render of the assembled snap-fit case" loading="lazy">
+    </div>
+  </section>
+
+  <section>
+    <div class="trouble">
+      <h3>Something not working?</h3>
+      <ul>
+        <li><strong>Touch does nothing or lands in the wrong spot:</strong> re-flash with <strong>Erase device</strong> ticked, then tap the calibration markers. You can redo it later from Settings, or by holding the screen during the splash.</li>
+        <li><strong>Can't connect to the board:</strong> use a USB data cable, not a charge-only one. Hold the <strong>BOOT</strong> button while you click Connect, then let go.</li>
+        <li><strong>No port in the list:</strong> use Chrome or Edge on a computer. Phones and Firefox don't support Web Serial.</li>
+        <li><strong>"SD card not found":</strong> format the card as FAT32 and copy the <code>sdcard/</code> contents to the root.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Made by <a href="https://boxerdawg3d.com" target="_blank" rel="noopener">BoxerDawg 3D</a> · MIT licensed · <a href="https://github.com/everyday3d/esp32-cyd-survival-wiki" target="_blank" rel="noopener">Source on GitHub</a></p>
+    <p style="margin-top:6px;">This is an informational reference, not a substitute for medical advice, survival training or emergency services.</p>
+  </footer>
 </div>
 
 <script>
 function selectTarget(target) {
-  const btn35 = document.getElementById('btn-target-35');
-  const btn28 = document.getElementById('btn-target-28');
-  const desc35 = document.getElementById('target-desc-35');
-  const desc28 = document.getElementById('target-desc-28');
-  const slot = document.getElementById('install-slot');
-
-  if (target === '28') {
-    btn28.classList.add('active');
-    btn35.classList.remove('active');
-    desc28.style.display = 'block';
-    desc35.style.display = 'none';
-    slot.innerHTML = '<esp-web-install-button manifest="manifest-28.json"></esp-web-install-button>';
-  } else {
-    btn35.classList.add('active');
-    btn28.classList.remove('active');
-    desc35.style.display = 'block';
-    desc28.style.display = 'none';
-    slot.innerHTML = '<esp-web-install-button manifest="manifest.json"></esp-web-install-button>';
-  }
+  var b35 = document.getElementById('btn-target-35');
+  var b28 = document.getElementById('btn-target-28');
+  var d35 = document.getElementById('target-desc-35');
+  var d28 = document.getElementById('target-desc-28');
+  var slot = document.getElementById('install-slot');
+  var is28 = target === '28';
+  b28.classList.toggle('active', is28);
+  b35.classList.toggle('active', !is28);
+  d28.style.display = is28 ? 'block' : 'none';
+  d35.style.display = is28 ? 'none' : 'block';
+  slot.innerHTML = '<esp-web-install-button manifest="' + (is28 ? 'manifest-28.json' : 'manifest.json') + '"></esp-web-install-button>';
 }
 </script>
 </body>

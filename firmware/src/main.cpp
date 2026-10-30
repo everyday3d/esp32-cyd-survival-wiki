@@ -1132,7 +1132,58 @@ void setup() {
   lastTouchMs = millis();
 }
 
+#ifdef SHOT_SERIAL
+// Developer tool (build with -DSHOT_SERIAL=1): drive the UI and dump the screen over USB serial
+// so docs screenshots come from the real device. Not part of the release binaries.
+static void shotRow(int y) {
+  static uint8_t row[SCR_W * 3];
+  static char line[SCR_W * 6 + 16];
+  tft.readRectRGB(0, y, SCR_W, 1, row);
+  int n = snprintf(line, sizeof(line), "R%03d:", y);
+  for (int x = 0; x < SCR_W * 3; x++) n += snprintf(line + n, sizeof(line) - n, "%02X", row[x]);
+  line[n++] = '\n';
+  for (int i = 0; i < n; i += 32) {            // small paced chunks: the CH340 drops bytes if flooded
+    Serial.write((uint8_t *)line + i, min(32, n - i));
+    Serial.flush();
+    delay(3);
+  }
+}
+
+// 'p' dumps every row as an ASCII line; 'r' + 3 digits re-sends a single row (the USB link drops
+// bytes at this size, so the host re-requests damaged rows).
+static void shotDump() {
+  Serial.printf("SHOT %d %d\n", SCR_W, SCR_H);
+  for (int y = 0; y < SCR_H; y++) shotRow(y);
+  Serial.println("SHOTEND");
+}
+
+static void shotCommand(char c) {
+  switch (c) {
+    case 'p': shotDump(); break;
+    case 'r': {                                   // followed by three digits: re-send that row
+      char d[4] = {0};
+      for (int i = 0; i < 3; i++) { uint32_t t0 = millis(); while (!Serial.available() && millis() - t0 < 200) {} d[i] = Serial.available() ? Serial.read() : '0'; }
+      shotRow(atoi(d));
+      break;
+    }
+    case 'H': goBack(); screen = SC_HOME; redraw(); break;
+    case 'S': screen = SC_SETTINGS; redraw(); break;
+    case 'W': screen = SC_WIFI; redraw(); break;
+    case 'L': enterLight(); break;
+    case 'T': lightTap(); break;
+    case 'G': goodBoy(); break;
+    case 'B': listPage = 0; loadLibraryList(); screen = SC_LIBRARY; redraw(); break;
+    case 'C': curCat = 1; listPage = 0; loadCategoryList(curCat); screen = SC_CATEGORY; redraw(); break;
+    case 'A': if (!list.empty()) openArticle(list[0]); break;
+    case 'D': if (!list.empty()) { scrollY = 0; scrollDoc(1); } break;
+  }
+}
+#endif
+
 void loop() {
+#ifdef SHOT_SERIAL
+  while (Serial.available()) shotCommand(Serial.read());
+#endif
   static bool wasDown = false;
   uint16_t tx, ty;
   bool down = touchRead(&tx, &ty);
