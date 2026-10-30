@@ -72,7 +72,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
 
 ### 5. 1-Click Browser Web Flasher (Now with Dual 3.5" & 2.8" Support)
-[![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](docs/screenshots/05_web_serial_flasher_spotlight.png)
+[![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](https://everyday3d.github.io/esp32-cyd-survival-wiki/)
 - **Zero Software or Drivers**: Flash the full firmware directly from Chrome or Edge using USB Web Serial in about 40 seconds.
 - **Hardware Target Selector**: Pick your board with 1 click before flashing—instantly switches between **3.5" Hosyond (`E32R35T`)** and the newly added **2.8" Cheap Yellow Display (`ESP32-2432S028R`)**.
 - **Automatic USB Detection**: Plugs straight into common CH340 and CP2102 USB serial chips without manual baud rate or port setup.
