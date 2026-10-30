@@ -403,7 +403,7 @@ esp-web-install-button {
         </div>
 
         <p style="color:#94a3b8; font-size:0.92rem;">
-          Includes bootloader, partition table, and the full ESP32 CYD Survival Wiki v1.1.0 firmware image written at offset <code>0x0</code>.
+          Includes bootloader, partition table, and the full ESP32 CYD Survival Wiki firmware image written at offset <code>0x0</code>.
         </p>
       </div>
       <div class="flasher-action">
@@ -411,6 +411,7 @@ esp-web-install-button {
         <div id="install-slot" class="install-btn-wrapper">
           <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
         </div>
+        <div style="font-size:0.85rem; color:#fbbf24; font-weight:600; max-width:320px; text-align:center;">Tip: tick <strong>Erase device</strong> when it asks. It is the safest choice, and it fixes most touch and calibration problems after an update.</div>
         <div style="font-size:0.78rem; color:#64748b;">Requires Chrome, Edge, or Chromium browser with Web Serial enabled.</div>
       </div>
     </div>
@@ -421,7 +422,7 @@ esp-web-install-button {
     <div class="step-card">
       <div class="step-num">1</div>
       <h3>Flash Firmware</h3>
-      <p>Click <strong>INSTALL</strong> above. When prompted, select your USB port. Select <strong>Erase Device</strong> if this is a fresh setup. Web Tools will write the flash in ~40 seconds.</p>
+      <p>Click <strong>INSTALL</strong> above. When prompted, select your USB port. Tick <strong>Erase device</strong> (recommended every time, and always on a fresh setup). Web Tools will write the flash in ~40 seconds.</p>
     </div>
     <div class="step-card">
       <div class="step-num">2</div>
