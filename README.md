@@ -77,7 +77,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Hardware Target Selector**: Pick your board with 1 click before flashing—instantly switches between **3.5" Hosyond (`E32R35T`)** and the newly added **2.8" Cheap Yellow Display (`ESP32-2432S028R`)**.
 - **Automatic USB Detection**: Plugs straight into common CH340 and CP2102 USB serial chips without manual baud rate or port setup.
 - **Precompiled Unified Binaries**: Automatically flashes the bootloader, partition table, and full Survival Wiki image cleanly at offset `0x0`.
-- **Clean Install Option**: Check **Erase Device** on fresh installs to wipe stale partitions and guarantee a fresh start.
+- **Clean Install Option**: Tick **Erase Device** when prompted. It's the safest choice every time, and it fixes most touch and calibration problems after an update.
 
 ### 6. Support-Free Snap-Fit 3D Cases
 [![Snap-Fit Field Case Spotlight](docs/screenshots/06_snap_fit_case_spotlight.png)](docs/screenshots/06_snap_fit_case_spotlight.png)
@@ -85,6 +85,14 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Flush USB Cutouts**: Clean cable access for standard USB-C cables, right-angle adapters, and power banks.
 - **Quick-Eject MicroSD Scoop**: Built-in thumb scoop makes swapping microSD cards effortless.
 - **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
+
+### 7. New in 1.2.0 (2.8" CYD firmware)
+These landed in the 2.8" build first. The 3.5" build gets them in a later update.
+- **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
+- **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.
+- **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
+- **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
+- **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
 
 ---
 
@@ -97,7 +105,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 > 3. Select your hardware target at the top of the flasher:
 >    - **3.5" Display (Hosyond E32R35T)**: $320 \times 480$ ST7796 with centered USB-C.
 >    - **2.8" Display (Classic CYD)**: $240 \times 320$ ILI9341 (`ESP32-2432S028R`).
-> 4. Click **Connect / Install**, pick your serial COM port (`USB-SERIAL CH340` or `CP2102`), check **Erase Device** on fresh install, and let Web Serial write the full unified image in ~40 seconds!
+> 4. Click **Connect / Install**, pick your serial COM port (`USB-SERIAL CH340` or `CP2102`), tick **Erase Device** (recommended every time), and let Web Serial write the full unified image in ~40 seconds!
 >    - *If connection fails:* Hold down the **BOOT** button on the side of the board, click Connect, then release BOOT once connected.
 
 *Alternative manual method:* Flash ready-to-flash unified binaries at offset `0x0` via [esptool-js](https://espressif.github.io/esptool-js/) or CLI `esptool.py`:
@@ -132,7 +140,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 
 ### 3. Power On & Calibrate Touch
 1. Power the board from any USB-C phone charger or power bank.
-2. On first boot, the board prompts for **touchscreen calibration**: tap the 4 corner arrows as they appear (using a fingernail, pen tip, or stylus for best precision).
+2. On first boot, the board prompts for **touchscreen calibration**: tap each marker as it appears (using a fingernail, pen tip, or stylus for best precision). The 2.8" CYD shows 3 markers, set in from the edges; the 3.5" shows 4 corner arrows. To redo it later, hold the screen during the splash or use **Settings → Touch calibration**.
 3. The home screen loads! Tap **Wi-Fi** to display the QR code for phones to scan.
 
 ---
@@ -214,9 +222,10 @@ pio run -e survival-wiki-28 -t upload
 |---|---|---|
 | **LCD SPI** | SCK 14, MOSI 13, MISO 12 | ILI9341 controller ($240 \times 320$), 40MHz SPI |
 | **LCD Control** | CS 15, DC 2, Backlight 21 | PWM backlight control |
-| **Touch SPI** | CS 33, IRQ 36 | XPT2046 resistive touch (HSPI) |
+| **Touch SPI** | CLK 25, MOSI 32, MISO 39, CS 33, IRQ 36 | XPT2046 resistive touch on its **own** pins (separate from the display bus), read in software. Presses are detected by pressure, so the IRQ pin is optional. |
 | **MicroSD SPI** | CS 5, SCK 18, MISO 19, MOSI 23 | VSPI bus |
 | **RGB LED** | Red 4, Green 16, Blue 17 | Active LOW |
+| **Light Sensor** | GPIO 34 (analog) | Reads about 0 in bright light, higher in the dark. Used by Auto night dim. |
 | **Audio** | DAC 26 | Speaker output |
 
 ---
