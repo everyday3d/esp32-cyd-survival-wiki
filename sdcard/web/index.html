@@ -179,7 +179,8 @@ function tsv(text){return text.split(/\r?\n/).filter(function(l){return l&&l[0]!
 // ---------------------------------------------------------------- data
 function loadAll(){
   return Promise.all([get('/wiki/categories.tsv'),get('/wiki/catalog.tsv')]).then(function(r){
-    cats=tsv(r[0]).map(function(p){return{id:p[0],name:p[1],color:p[2]||'#666',desc:p[3]||''};});
+    cats=tsv(r[0]).map(function(p){return{id:p[0],name:p[1],color:p[2]||'#666',desc:p[3]||''};})
+      .filter(function(c){return c.id!=='goodboy'||location.hash==='#goodboy';});   // easter egg: hidden unless asked for
     arts=tsv(r[1]).map(function(p){return{id:p[0],cat:p[1],title:p[2]};});
     arts.forEach(function(a){byId[a.id]=a;});
   });

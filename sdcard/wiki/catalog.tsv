@@ -60,3 +60,10 @@ sos-signals	signals	SOS, Whistle, Fire and Smoke
 emergency-radio	signals	Radio and Phone Tips
 night-signals	signals	Signaling at Night
 helping-searchers	signals	Helping Searchers Find You
+goodboy-heat	goodboy	Heatstroke
+goodboy-toxic	goodboy	Poisons and Toxic Foods
+goodboy-choking	goodboy	Choking
+goodboy-wounds	goodboy	Cuts, Bleeding, and Paws
+goodboy-cpr	goodboy	CPR for Dogs
+goodboy-cold	goodboy	Cold Weather
+goodboy-pack	goodboy	Dog Go-Bag Checklist

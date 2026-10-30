@@ -9,6 +9,7 @@
 #define T28_MISO 39
 #define T28_CS 33
 #define T28_IRQ 36
+#define T28_PRESS_MIN 400   // pressure reading that counts as a touch
 #define CAL_INSET 32   // calibration markers sit this far in from the edges (panel corners are hard to reach)
 
 struct Touch28 {
@@ -42,13 +43,20 @@ struct Touch28 {
     return (v >> 3) & 0x0FFF;
   }
 
+  // Touch pressure from the chip itself. Some clone boards don't wire the IRQ pin, so presses
+  // are detected from this instead of the interrupt line.
+  int pressure() {
+    int z1 = xfer(0xB0), z2 = xfer(0xC0);
+    return z1 + 4095 - z2;
+  }
+
   // Raw reading (axes as the chip reports them). Returns false when not pressed.
   bool readRaw(uint16_t &rx, uint16_t &ry) {
-    if (digitalRead(T28_IRQ) == HIGH) return false;
+    if (pressure() < T28_PRESS_MIN) return false;
     uint32_t sx = 0, sy = 0;
     for (int i = 0; i < 4; i++) { sx += xfer(0xD0); sy += xfer(0x90); }
     rx = sx / 4; ry = sy / 4;
-    return digitalRead(T28_IRQ) == LOW && rx > 100 && ry > 100;
+    return pressure() >= T28_PRESS_MIN && rx > 100 && ry > 100;
   }
 
   static int scale(int v, int lo, int hi, int span, bool flip) {
@@ -66,7 +74,7 @@ struct Touch28 {
     return true;
   }
 
-  bool pressed() { return digitalRead(T28_IRQ) == LOW; }
+  bool pressed() { return pressure() >= T28_PRESS_MIN; }
 
   // Work out axis order and direction from three taps: top-left, top-right, bottom-left.
   void setFromTaps(uint16_t tlx, uint16_t tly, uint16_t trx, uint16_t try_, uint16_t blx, uint16_t bly) {

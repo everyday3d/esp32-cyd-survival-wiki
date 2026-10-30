@@ -1,4 +1,4 @@
-﻿// =====================================================================
+// =====================================================================
 //  Survival Wiki - offline survival reference for the ESP32 CYD
 //  Supports:
 //   - Hosyond / LCDWiki 3.5" ESP32-32E (E32R35T) [320x480 ST7796]
@@ -35,7 +35,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -48,13 +48,21 @@ static const char *TIMEOUT_NAMES[] = {"Never", "1 min", "3 min", "5 min", "10 mi
 static bool invertColors = false;
 static bool wifiOn = true;
 static bool sleeping = false;
+static bool nightAuto = false;       // dim the backlight when the room is dark (CYD light sensor)
+static bool nightNow = false;        // currently dimmed by night mode
+static uint8_t lightMode = 0;        // flashlight: 0 white, 1 red, 2 SOS strobe
+static bool sdUp = false;
+static int goodboyIdx = -1;          // index of the hidden "goodboy" category, -1 if absent
 static uint32_t lastTouchMs = 0, lastStatusMs = 0;
+static void saveBackup();            // settings backup to the SD card (defined below)
+static void restoreBackup();
 static int lastClients = -1;
 
 // ---------------------------------------------------------------- buttons
 enum BtnId : uint16_t {
   B_NONE = 0, B_BACK, B_UP, B_DOWN, B_PREV, B_NEXT, B_LIBRARY, B_WIFI, B_SETTINGS,
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
+  B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
   B_TILE = 100, B_ROW = 200
 };
 enum Icon : uint8_t { I_NONE, I_UP, I_DOWN, I_LEFT, I_RIGHT };
@@ -142,6 +150,8 @@ static void loadCatalog() {
     }
     f.close();
   }
+  goodboyIdx = -1;
+  for (int i = 0; i < nCats; i++) if (cats[i].id == "goodboy") goodboyIdx = i;
   f = SD.open(F_CATALOG, FILE_READ);
   if (f) {
     while (f.available()) {
@@ -331,6 +341,7 @@ static void drawHome() {
   int tw = (SCR_W - gap * (cols + 1)) / cols;
   int th = (CONTENT_H - gap * (rows + 1)) / rows;
   for (int i = 0; i < nCats && i < cols * rows; i++) {
+    if (i == goodboyIdx) continue;     // easter egg: not shown on the home grid
     int x = gap + (i % cols) * (tw + gap);
     int y = CONTENT_Y + gap + (i / cols) * (th + gap);
     btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)(B_TILE + i), "", I_NONE, true});
@@ -362,8 +373,9 @@ static void drawHome() {
     tft.drawString("No articles found on the SD card.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 90 : 150));
     tft.drawString("Copy the 'sdcard' folder contents to it.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 112 : 172));
   }
-  FootDef f[] = {{B_LIBRARY, "Library", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true}, {B_SETTINGS, "Settings", I_NONE, true}};
-  drawFooter(f, 3);
+  FootDef f[] = {{B_LIBRARY, "Library", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true},
+                 {B_LIGHT, "Light", I_NONE, true}, {B_SETTINGS, SCR_W < 300 ? "Set" : "Settings", I_NONE, true}};
+  drawFooter(f, 4);
 }
 
 static void drawList(const String &title, bool books) {
@@ -524,25 +536,28 @@ static void drawWifi() {
   lastClients = webClientCount();
 }
 
+static int settingRowH() { return (SCR_W < 300) ? 32 : 48; }
+
 static void drawSettingRow(int y, const char *name, const String &value) {
+  int rh = settingRowH();
   if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSans9pt7b);
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(C_TEXT);
-  tft.drawString(name, 12, y + (SCR_W < 300 ? 18 : 24));
+  tft.drawString(name, 12, y + rh / 2);
   tft.setTextColor(C_ACCENT);
   tft.setTextDatum(MR_DATUM);
   int btnW = (SCR_W < 300) ? 80 : 98;
-  if (value.length()) tft.drawString(value, SCR_W - btnW - 14, y + (SCR_W < 300 ? 18 : 24));
-  tft.drawFastHLine(8, y + (SCR_W < 300 ? 37 : 51), SCR_W - 16, C_LINE);
+  if (value.length()) tft.drawString(value, SCR_W - btnW - 14, y + rh / 2);
+  tft.drawFastHLine(8, y + rh - 1, SCR_W - 16, C_LINE);
 }
 
 static void drawSettings() {
   btns.clear();
   tft.fillScreen(C_BG);
   drawHeader("Settings", true);
-  int y = CONTENT_Y + 4;
-  int rowStep = (SCR_W < 300) ? 38 : 52;
-  int btnH = (SCR_W < 300) ? 32 : 44;
+  int y = CONTENT_Y + 2;
+  int rowStep = settingRowH();
+  int btnH = rowStep - 4;
   int btnW = (SCR_W < 300) ? 80 : 98;
   int halfBtnW = (btnW - 6) / 2;
 
@@ -559,23 +574,33 @@ static void drawSettings() {
   addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_INVERT, invertColors ? "On" : "Off");
   y += rowStep;
 
+#if PIN_LDR >= 0
+  drawSettingRow(y, "Auto night dim", "");
+  addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_NIGHT, nightAuto ? "On" : "Off");
+  y += rowStep;
+#endif
+
   drawSettingRow(y, "Touch calibration", "");
   addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_CALIB, "Redo");
-  y += (SCR_W < 300 ? 46 : 64);
+  y += rowStep;
+
+  drawSettingRow(y, "SD backup", "");
+  addBtn(SCR_W - btnW - 6, y + 2, halfBtnW, btnH, B_BACKUP_SAVE, "Save");
+  addBtn(SCR_W - halfBtnW - 4, y + 2, halfBtnW, btnH, B_BACKUP_LOAD, "Load");
+  y += rowStep + 6;
 
   tft.setTextFont(SCR_W < 300 ? 1 : 2);
   tft.setTextDatum(TL_DATUM);
   tft.setTextColor(C_MUTED);
   uint32_t totalMB = SD.totalBytes() / (1024 * 1024), usedMB = SD.usedBytes() / (1024 * 1024);
-  int lineH = (SCR_W < 300 ? 15 : 20);
+  int lineH = (SCR_W < 300 ? 12 : 18);
+  int shownCats = nCats - (goodboyIdx >= 0 ? 1 : 0);
   tft.drawString("Survival Wiki " FW_VERSION " (" BOARD_NAME ")", 12, y);
-  tft.drawString(String(nArticles) + " articles in " + nCats + " categories", 12, y + lineH);
+  tft.drawString(String(nArticles) + " articles in " + shownCats + " categories", 12, y + lineH);
   tft.drawString("SD card: " + String(usedMB) + " MB used of " + totalMB + " MB", 12, y + lineH * 2);
-  tft.drawString("Free RAM: " + String(ESP.getFreeHeap() / 1024) + " KB", 12, y + lineH * 3);
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
   drawFooter(f, 1);
 }
-
 static void drawNoSD() {
   btns.clear();
   tft.fillScreen(C_BG);
@@ -718,9 +743,10 @@ static void calibrateTouch() {
 #endif
 
 static bool startSD() {
+  if (sdUp) return true;
   sdSPI.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS);
   for (int i = 0; i < 3; i++) {
-    if (SD.begin(PIN_SD_CS, sdSPI, 20000000)) return true;
+    if (SD.begin(PIN_SD_CS, sdSPI, 20000000)) { sdUp = true; return true; }
     delay(200);
   }
   return false;
@@ -754,6 +780,184 @@ static void goBack() {
     case SC_BOOK: doc.free(); screen = SC_LIBRARY; break;
     default: list.clear(); screen = SC_HOME; break;
   }
+  redraw();
+}
+
+// ---------------------------------------------------------------- flashlight + SOS
+// Tap cycles white light -> red light (keeps night vision) -> SOS strobe -> exit.
+static const uint8_t SOS_UNITS[] = {1,1, 1,1, 1,3,  3,1, 3,1, 3,3,  1,1, 1,1, 1,7};   // on,off,on,off... in units
+static const int SOS_UNIT_MS = 220;
+static int sosIdx = 0;
+static uint32_t sosNextMs = 0;
+static bool sosOn = false;
+
+static void setRgbLed(bool on) {
+  digitalWrite(PIN_LED_R, on ? LOW : HIGH);
+  digitalWrite(PIN_LED_G, on ? LOW : HIGH);
+  digitalWrite(PIN_LED_B, on ? LOW : HIGH);
+}
+
+static void drawLight() {
+  static const char *HINTS[] = {"Tap: red light", "Tap: SOS strobe", "Tap: exit"};
+  uint16_t bg = (lightMode == 1) ? TFT_RED : TFT_WHITE;
+  if (lightMode == 2) bg = TFT_BLACK;                  // SOS starts dark and flashes
+  tft.fillScreen(bg);
+  tft.setTextFont(2);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(lightMode == 1 ? TFT_BLACK : (lightMode == 2 ? TFT_DARKGREY : TFT_BLACK), bg);
+  tft.drawString(HINTS[lightMode], SCR_W / 2, SCR_H - 16);
+  sosIdx = 0;
+  sosOn = false;
+  sosNextMs = millis();
+}
+
+static void enterLight() {
+  screen = SC_LIGHT;
+  lightMode = 0;
+  btns.clear();
+  setBacklight(255);
+  drawLight();
+}
+
+static void exitLight() {
+  setRgbLed(false);
+  setBacklight(brightness);
+  screen = SC_HOME;
+  redraw();
+}
+
+static void lightTap() {
+  lightMode++;
+  setRgbLed(false);
+  if (lightMode > 2) { exitLight(); return; }
+  drawLight();
+}
+
+static void lightLoop(uint32_t now) {
+  if (lightMode != 2 || (int32_t)(now - sosNextMs) < 0) return;
+  sosOn = (sosIdx % 2 == 0);                           // even steps are "on"
+  tft.fillScreen(sosOn ? TFT_WHITE : TFT_BLACK);
+  setRgbLed(sosOn);
+  sosNextMs = now + (uint32_t)SOS_UNITS[sosIdx] * SOS_UNIT_MS;
+  sosIdx = (sosIdx + 1) % (int)(sizeof(SOS_UNITS));
+}
+
+// ---------------------------------------------------------------- night dim (light sensor)
+#if PIN_LDR >= 0
+// Measured on the board: ~0 in bright light, ~60 in a lit room, ~270 with a finger over it (higher = darker).
+#define LDR_DARK_ADC   200     // dim the screen above this
+#define LDR_LIGHT_ADC  120     // back to normal below this
+static int ldrRead() {
+  long sum = 0;
+  for (int i = 0; i < 8; i++) sum += analogRead(PIN_LDR);
+  return sum / 8;
+}
+
+static void nightLoop(uint32_t now) {
+  static uint32_t next = 0;
+  static uint32_t logMs = 0;
+  if ((int32_t)(now - next) < 0) return;
+  next = now + 500;
+  int v = ldrRead();
+  if (now - logMs > 3000) { logMs = now; Serial.printf("[ldr] %d\n", v); }
+  if (!nightAuto || sleeping || screen == SC_LIGHT) return;
+  bool wasNight = nightNow;
+  if (!nightNow && v > LDR_DARK_ADC) nightNow = true;
+  else if (nightNow && v < LDR_LIGHT_ADC) nightNow = false;
+  if (nightNow != wasNight) setBacklight(nightNow ? min<int>(brightness, 25) : brightness);
+}
+#else
+static void nightLoop(uint32_t) {}
+#endif
+
+// ---------------------------------------------------------------- settings backup on the SD card
+#define F_BACKUP "/swiki-settings.txt"
+#if defined(BOARD_CYD_28)
+  #define CAL_KEY "cal28b"
+  #define CAL_N 8
+#else
+  #define CAL_KEY "cal"
+  #define CAL_N 5
+#endif
+
+static void saveBackup() {
+  if (!sdUp) return;
+  SD.remove(F_BACKUP);
+  File f = SD.open(F_BACKUP, FILE_WRITE);
+  if (!f) return;
+  f.println("# Survival Wiki settings backup (restored automatically after a fresh flash)");
+  f.printf("bright=%u\n", brightness);
+  f.printf("tmo=%u\n", timeoutIdx);
+  f.printf("inv=%d\n", invertColors ? 1 : 0);
+  f.printf("wifi=%d\n", wifiOn ? 1 : 0);
+  f.printf("night=%d\n", nightAuto ? 1 : 0);
+  uint16_t cal[CAL_N];
+  if (prefs.getBytes(CAL_KEY, cal, sizeof(cal)) == sizeof(cal)) {
+    f.print("cal=");
+    for (int i = 0; i < CAL_N; i++) f.printf(i ? ",%u" : "%u", cal[i]);
+    f.println();
+  }
+  f.close();
+}
+
+static void restoreBackup() {
+  if (!sdUp) return;
+  File f = SD.open(F_BACKUP, FILE_READ);
+  if (!f) return;
+  while (f.available()) {
+    String l = readLine(f);
+    l.trim();
+    int eq = l.indexOf('=');
+    if (l.isEmpty() || l[0] == '#' || eq < 0) continue;
+    String k = l.substring(0, eq), v = l.substring(eq + 1);
+    if (k == "bright") prefs.putUChar("bright", constrain(v.toInt(), 20, 255));
+    else if (k == "tmo") prefs.putUChar("tmo", v.toInt() % 5);
+    else if (k == "inv") prefs.putBool("inv", v.toInt() != 0);
+    else if (k == "wifi") prefs.putBool("wifi", v.toInt() != 0);
+    else if (k == "night") prefs.putBool("night", v.toInt() != 0);
+    else if (k == "cal") {
+      uint16_t cal[CAL_N];
+      int n = 0, start = 0;
+      while (n < CAL_N && start <= (int)v.length()) {
+        int comma = v.indexOf(',', start);
+        if (comma < 0) comma = v.length();
+        cal[n++] = (uint16_t)v.substring(start, comma).toInt();
+        start = comma + 1;
+      }
+      if (n == CAL_N) prefs.putBytes(CAL_KEY, cal, sizeof(cal));
+    }
+  }
+  f.close();
+}
+
+// ---------------------------------------------------------------- easter egg
+static void goodBoy() {
+  tft.fillScreen(C_BG);
+  int cx = SCR_W / 2, cy = SCR_H / 2 - 20;
+  uint16_t pad = C_ACCENT;
+  tft.fillEllipse(cx, cy + 22, 34, 26, pad);                 // big pad
+  tft.fillEllipse(cx - 44, cy - 14, 11, 15, pad);            // toes
+  tft.fillEllipse(cx - 16, cy - 36, 11, 15, pad);
+  tft.fillEllipse(cx + 16, cy - 36, 11, 15, pad);
+  tft.fillEllipse(cx + 44, cy - 14, 11, 15, pad);
+  tft.setFreeFont(SCR_W < 300 ? &FreeSansBold12pt7b : &FreeSansBold18pt7b);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(C_TEXT);
+  tft.drawString("Good boy!", cx, cy + 80);
+  if (goodboyIdx < 0) {                                       // dog guides not on the SD card yet
+    tft.setTextFont(2);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("Copy the newest sdcard files", cx, cy + 112);
+    tft.drawString("to unlock the dog first aid.", cx, cy + 132);
+    delay(2500);
+    redraw();
+    return;
+  }
+  delay(1400);
+  curCat = goodboyIdx;
+  listPage = 0;
+  loadCategoryList(curCat);
+  screen = SC_CATEGORY;
   redraw();
 }
 
@@ -793,23 +997,50 @@ static void onButton(uint16_t id) {
     case B_LIBRARY: listPage = 0; loadLibraryList(); screen = SC_LIBRARY; redraw(); break;
     case B_WIFI: screen = SC_WIFI; redraw(); break;
     case B_SETTINGS: screen = SC_SETTINGS; redraw(); break;
+    case B_LIGHT: enterLight(); break;
+    case B_NIGHT:
+      nightAuto = !nightAuto;
+      prefs.putBool("night", nightAuto);
+      if (!nightAuto && nightNow) { nightNow = false; setBacklight(brightness); }
+      saveBackup();
+      redraw();
+      break;
+    case B_BACKUP_SAVE: saveBackup(); showLoading("Saved to SD card"); delay(900); redraw(); break;
+    case B_BACKUP_LOAD:
+      if (!sdUp || !SD.exists(F_BACKUP)) { showLoading("No backup on the SD card"); delay(1200); redraw(); break; }
+      restoreBackup();
+      showLoading("Restored - restarting...");
+      delay(900);
+      ESP.restart();
+      break;
     case B_WIFI_TOGGLE:
       wifiOn = !wifiOn;
       prefs.putBool("wifi", wifiOn);
+      saveBackup();
       showLoading(wifiOn ? "Starting hotspot..." : "Stopping hotspot...");
       if (wifiOn) webStart(wcfg); else webStop();
       redraw();
       break;
-    case B_BRIGHT_DN: brightness = max(20, brightness - 30); setBacklight(brightness); prefs.putUChar("bright", brightness); redraw(); break;
-    case B_BRIGHT_UP: brightness = min(255, brightness + 30); setBacklight(brightness); prefs.putUChar("bright", brightness); redraw(); break;
-    case B_TIMEOUT: timeoutIdx = (timeoutIdx + 1) % 5; prefs.putUChar("tmo", timeoutIdx); redraw(); break;
-    case B_INVERT: invertColors = !invertColors; tft.invertDisplay(invertColors); prefs.putBool("inv", invertColors); redraw(); break;
-    case B_CALIB: calibrateTouch(); redraw(); break;
+    case B_BRIGHT_DN: brightness = max(20, brightness - 30); setBacklight(nightNow ? min<int>(brightness, 25) : brightness); prefs.putUChar("bright", brightness); saveBackup(); redraw(); break;
+    case B_BRIGHT_UP: brightness = min(255, brightness + 30); setBacklight(nightNow ? min<int>(brightness, 25) : brightness); prefs.putUChar("bright", brightness); saveBackup(); redraw(); break;
+    case B_TIMEOUT: timeoutIdx = (timeoutIdx + 1) % 5; prefs.putUChar("tmo", timeoutIdx); saveBackup(); redraw(); break;
+    case B_INVERT: invertColors = !invertColors; tft.invertDisplay(invertColors); prefs.putBool("inv", invertColors); saveBackup(); redraw(); break;
+    case B_CALIB: calibrateTouch(); saveBackup(); redraw(); break;
     case B_RETRY: startup(); break;
   }
 }
 
 static void handleTap(int x, int y) {
+  if (screen == SC_LIGHT) { lightTap(); return; }
+  // Easter egg: tap the title on the home screen five times.
+  if (screen == SC_HOME && y < HEADER_H && x < SCR_W - 70) {
+    static uint8_t eggTaps = 0;
+    static uint32_t eggT0 = 0;
+    uint32_t now = millis();
+    if (now - eggT0 > 3000) eggTaps = 0;
+    if (eggTaps == 0) eggT0 = now;
+    if (++eggTaps >= 5) { eggTaps = 0; goodBoy(); return; }
+  }
   for (size_t i = 0; i < btns.size(); i++) {
     Btn b = btns[i];
     if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) {
@@ -849,11 +1080,22 @@ void setup() {
   digitalWrite(TOUCH_CS, HIGH);
 #endif
 
+#if PIN_LDR >= 0
+  pinMode(PIN_LDR, INPUT);
+  analogSetPinAttenuation(PIN_LDR, ADC_11db);
+#endif
+
   prefs.begin("swiki", false);
+  // Fresh flash (no saved settings): bring them back from the SD card backup if there is one.
+  if (!prefs.isKey("bright")) {
+    if (startSD() && SD.exists(F_BACKUP)) { restoreBackup(); Serial.println("[backup] settings restored from SD"); }
+    if (!prefs.isKey("bright")) prefs.putUChar("bright", 200);
+  }
   brightness = prefs.getUChar("bright", 200);
   timeoutIdx = prefs.getUChar("tmo", 2) % 5;
   invertColors = prefs.getBool("inv", false);
   wifiOn = prefs.getBool("wifi", true);
+  nightAuto = prefs.getBool("night", false);
 
   tft.init();
   tft.setRotation(0);
@@ -882,9 +1124,11 @@ void setup() {
   touchBegin();
   bool haveCal = loadTouchCal();
   delay(1500);
-  if (!haveCal || touchHeld()) calibrateTouch();
+  bool justCalibrated = false;
+  if (!haveCal || touchHeld()) { calibrateTouch(); justCalibrated = true; }
 
   startup();
+  if (justCalibrated) saveBackup();
   lastTouchMs = millis();
 }
 
@@ -905,6 +1149,9 @@ void loop() {
   }
   if (down) lastTouchMs = now;
   wasDown = down;
+
+  if (screen == SC_LIGHT) { lastTouchMs = now; lightLoop(now); }   // flashlight keeps the screen awake
+  nightLoop(now);
 
   uint16_t tmo = TIMEOUTS_S[timeoutIdx];
   if (!sleeping && tmo && now - lastTouchMs > (uint32_t)tmo * 1000) {

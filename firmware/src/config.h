@@ -4,7 +4,7 @@
 //  - Sunton 2.8" ESP32-2432S028R CYD, ILI9341 + XPT2046 resistive touch (240x320)
 #pragma once
 
-#define FW_VERSION "1.1.0"
+#define FW_VERSION "1.2.0"
 
 // ---- Hardware Profile ----
 #if defined(BOARD_CYD_28)
@@ -20,6 +20,7 @@
   #define PIN_LED_G       16
   #define PIN_LED_B       17
   #define PIN_AUDIO_EN    -1   // No external amp enable (GPIO 26 DAC audio out)
+  #define PIN_LDR         34   // light sensor (input only)
   #define HEADER_H        36
   #define FOOTER_H        38
   #define ROW_H           38
@@ -37,6 +38,7 @@
   #define PIN_LED_G       16
   #define PIN_LED_B       17
   #define PIN_AUDIO_EN     4   // speaker amp enable, LOW = on (kept off)
+  #define PIN_LDR         -1   // no light sensor wired on this board
   #define HEADER_H        44
   #define FOOTER_H        52
   #define ROW_H           48
