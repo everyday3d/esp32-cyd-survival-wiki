@@ -36,7 +36,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -57,6 +57,9 @@ static bool meshEnabled = true;      // ESP-NOW text messaging between boards
 static String kbBuf;                 // text being typed on the on-screen keyboard
 static uint8_t kbTarget = 0;         // 0 = new message, 1 = this board's mesh name
 static bool kbShift = false;
+static int mapZ = 13, mapMinZ = 8, mapMaxZ = 16;   // current / allowed zoom levels
+static int32_t mapCx = 0, mapCy = 0;                // map centre, in world pixels at zoom mapZ
+static bool mapReady = false;                       // /maps/center.txt was found
 static uint32_t ledOffMs = 0;        // green "message received" blink
 static int goodboyIdx = -1;         // index of the hidden "goodboy" category, -1 if absent
 static uint32_t lastTouchMs = 0, lastStatusMs = 0;
@@ -70,7 +73,7 @@ enum BtnId : uint16_t {
   B_NONE = 0, B_BACK, B_UP, B_DOWN, B_PREV, B_NEXT, B_LIBRARY, B_WIFI, B_SETTINGS,
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
   B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
-  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_KB_DEL, B_KB_SHIFT, B_KB_SEND,
+  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT,
   B_QUICK_BASE = 60,           // 60..69: quick messages
   B_TILE = 100, B_ROW = 200,
   B_KEY_BASE = 1000            // 1000 + character: on-screen keyboard keys
@@ -387,8 +390,8 @@ static void drawHome() {
   snprintf(meshLabel, sizeof(meshLabel), meshUnread() > 0 ? "Mesh*" : "Mesh");
   FootDef f[] = {{B_LIBRARY, "Books", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true},
                  {B_LIGHT, "Light", I_NONE, true}, {B_MESH, meshLabel, I_NONE, true},
-                 {B_SETTINGS, "Setup", I_NONE, true}};
-  drawFooter(f, 5);
+                 {B_MAP, "Map", I_NONE, true}, {B_SETTINGS, "Set", I_NONE, true}};
+  drawFooter(f, 6);
 }
 
 static void drawList(const String &title, bool books) {
@@ -694,7 +697,8 @@ static void drawMesh() {
   int ry = top;
   for (int i = first; i < n; i++) {
     const MeshMsg &m = meshAt(i);
-    String line = (m.mine ? String("me") : String(m.from)) + ": " + m.text;
+    bool me = m.mine && strcmp(m.from, meshName()) == 0;       // sent from a phone: show the phone's name
+    String line = (me ? String("me") : String(m.from)) + ": " + m.text;
     String ln[2];
     int cnt = wrapLines(line, SCR_W - 52, ln, 2);
     tft.setTextDatum(TL_DATUM);
@@ -703,12 +707,74 @@ static void drawMesh() {
     tft.setTextDatum(TR_DATUM);
     tft.setTextColor(C_MUTED);
     tft.drawString(ageText(m.ms), SCR_W - 6, ry + 2);
+    if (m.mine) {                                              // like "Read": how many boards said they got it
+      tft.setTextFont(1);
+      tft.setTextColor(m.ackN ? 0x07E0 : C_MUTED);
+      tft.drawString(m.ackN ? "heard " + String(m.ackN) : String("sent"), SCR_W - 6, ry + 18);
+      tft.setTextFont(2);
+    }
     tft.drawFastHLine(8, ry + rh - 2, SCR_W - 16, C_LINE);
     ry += rh;
   }
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_MESH_QUICK, "Quick", I_NONE, meshActive()},
-                 {B_MESH_TYPE, "Type", I_NONE, meshActive()}, {B_MESH_NAME, "Name", I_NONE, true}};
-  drawFooter(f, 4);
+                 {B_MESH_TYPE, "Type", I_NONE, meshActive()}, {B_MESH_NAME, "Name", I_NONE, true},
+                 {B_MESH_NEAR, "Near", I_NONE, meshActive()}};
+  drawFooter(f, 5);
+}
+
+// Nearby boards with signal bars and a rough distance. Signal strength is only a guess at range.
+static String distText(int rssi) {
+  float d = meshDistanceM(rssi);
+  if (d < 0) return "n/a";                              // no signal reading (hotspot on, or only heard via a relay)
+  if (d < 10) return "~" + String((int)(d + 0.5f)) + " m";
+  if (d < 100) return "~" + String((int)(d / 5 + 0.5f) * 5) + " m";
+  return "~" + String((int)(d / 10 + 0.5f) * 10) + " m";
+}
+
+static void drawNear() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Nearby", true);
+  MeshPeer pl[8];
+  int n = meshPeerList(pl, 8);
+  int rh = (SCR_W < 300) ? 40 : 48;
+  int y = CONTENT_Y + 6;
+  tft.setTextFont(2);
+  if (n == 0) {
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("No boards heard yet.", SCR_W / 2, y + 50);
+    tft.drawString("Boards say hello every 30 s.", SCR_W / 2, y + 70);
+  }
+  for (int i = 0; i < n; i++) {
+    tft.setTextDatum(ML_DATUM);
+    tft.setTextColor(C_TEXT);
+    tft.drawString(fitText(pl[i].name, SCR_W / 2 - 40), 10, y + 14);
+    tft.setTextColor(C_MUTED);
+    tft.drawString(String(pl[i].rssi ? String((int)pl[i].rssi) + " dBm" : String("-")) + "  " +
+                   (pl[i].ageS < 5 ? String("now") : String(pl[i].ageS) + "s ago"), 10, y + 31);
+    // signal bars
+    int bars = meshBars(pl[i].rssi);
+    int bx = SCR_W / 2 + 6;
+    for (int b = 0; b < 4; b++) {
+      int bh = 6 + b * 5;
+      uint16_t col = (b < bars) ? (bars >= 3 ? 0x07E0 : (bars == 2 ? 0xFFE0 : C_ACCENT)) : C_LINE;
+      tft.fillRect(bx + b * 8, y + 26 - bh, 6, bh, col);
+    }
+    tft.setTextDatum(MR_DATUM);
+    tft.setTextColor(C_ACCENT);
+    tft.drawString(distText(pl[i].rssi), SCR_W - 10, y + 20);
+    tft.drawFastHLine(8, y + rh - 3, SCR_W - 16, C_LINE);
+    y += rh;
+  }
+  tft.setTextFont(1);
+  tft.setTextDatum(BC_DATUM);
+  tft.setTextColor(C_MUTED);
+  // The signal listener can't run while the hotspot is on (phones couldn't join), so say why there is no distance.
+  tft.drawString(webRunning() ? "Turn Wi-Fi off to see distance" : "Distance is a rough guess from signal strength",
+                 SCR_W / 2, SCR_H - FOOTER_H - 4);
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
+  drawFooter(f, 1);
 }
 
 static void drawQuick() {
@@ -772,8 +838,129 @@ static void drawKeys() {
   drawFooter(f, 2);
 }
 
+// ---------------------------------------------------------------- offline map viewer
+// Tiles live on the SD card as /maps/{zoom}/{x}/{y}.jpg (256x256, standard "slippy map" layout),
+// made by scripts/get-map-tiles.ps1. /maps/center.txt holds: lat lon startZoom minZoom maxZoom.
+static double mapWorld(int z) { return 256.0 * (double)(1UL << z); }
+
+static void mapLatLonToPx(double lat, double lon, int z, int32_t &px, int32_t &py) {
+  double n = mapWorld(z), r = lat * M_PI / 180.0;
+  px = (int32_t)((lon + 180.0) / 360.0 * n);
+  py = (int32_t)((1.0 - log(tan(r) + 1.0 / cos(r)) / M_PI) / 2.0 * n);
+}
+
+static void mapPxToLatLon(int32_t px, int32_t py, int z, double &lat, double &lon) {
+  double n = mapWorld(z);
+  lon = px / n * 360.0 - 180.0;
+  lat = atan(sinh(M_PI * (1.0 - 2.0 * py / n))) * 180.0 / M_PI;
+}
+
+static bool mapLoadCenter() {
+  mapReady = false;
+  if (!sdUp) return false;
+  File f = SD.open("/maps/center.txt", FILE_READ);
+  if (!f) return false;
+  String l = readLine(f);
+  f.close();
+  double lat, lon;
+  int z, zmin, zmax;
+  if (sscanf(l.c_str(), "%lf %lf %d %d %d", &lat, &lon, &z, &zmin, &zmax) != 5) return false;
+  mapMinZ = constrain(zmin, 0, 18);
+  mapMaxZ = constrain(zmax, mapMinZ, 18);
+  mapZ = constrain(z, mapMinZ, mapMaxZ);
+  mapLatLonToPx(lat, lon, mapZ, mapCx, mapCy);
+  mapReady = true;
+  return true;
+}
+
+static int mapClipX0, mapClipY0, mapClipX1, mapClipY1;
+static bool mapJpgOut(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bmp) {
+  int x0 = max<int>(x, mapClipX0), y0 = max<int>(y, mapClipY0);
+  int x1 = min<int>(x + w, mapClipX1), y1 = min<int>(y + h, mapClipY1);
+  if (x1 <= x0 || y1 <= y0) return true;                    // block is outside the map area
+  for (int yy = y0; yy < y1; yy++) tft.pushImage(x0, yy, x1 - x0, 1, bmp + (yy - y) * w + (x0 - x));
+  return true;
+}
+
+static void mapDrawTiles() {
+  mapClipX0 = 0; mapClipX1 = SCR_W;
+  mapClipY0 = CONTENT_Y; mapClipY1 = CONTENT_Y + CONTENT_H;
+  tft.fillRect(0, CONTENT_Y, SCR_W, CONTENT_H, C_PANEL);
+  int32_t left = mapCx - SCR_W / 2, top = mapCy - CONTENT_H / 2;
+  int tiles = 1 << mapZ;
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setCallback(mapJpgOut);
+  for (int ty = (int)floor(top / 256.0); ty <= (int)floor((top + CONTENT_H - 1) / 256.0); ty++) {
+    for (int tx = (int)floor(left / 256.0); tx <= (int)floor((left + SCR_W - 1) / 256.0); tx++) {
+      if (tx < 0 || ty < 0 || tx >= tiles || ty >= tiles) continue;
+      char path[40];
+      snprintf(path, sizeof(path), "/maps/%d/%d/%d.jpg", mapZ, tx, ty);
+      TJpgDec.drawFsJpg(tx * 256 - left, CONTENT_Y + ty * 256 - top, path, SD);   // a missing tile just stays grey
+    }
+  }
+  // crosshair at the centre and the centre's coordinates
+  int cx = SCR_W / 2, cy = CONTENT_Y + CONTENT_H / 2;
+  tft.drawCircle(cx, cy, 7, TFT_RED);
+  tft.drawFastHLine(cx - 11, cy, 23, TFT_RED);
+  tft.drawFastVLine(cx, cy - 11, 23, TFT_RED);
+  double lat, lon;
+  mapPxToLatLon(mapCx, mapCy, mapZ, lat, lon);
+  char buf[40];
+  snprintf(buf, sizeof(buf), "%.4f, %.4f  z%d", lat, lon, mapZ);
+  tft.setTextFont(1);
+  tft.setTextDatum(BL_DATUM);
+  int tw = tft.textWidth(buf) + 6;
+  tft.fillRect(0, CONTENT_Y + CONTENT_H - 12, tw, 12, C_BG);
+  tft.setTextColor(C_TEXT);
+  tft.drawString(buf, 3, CONTENT_Y + CONTENT_H - 2);
+}
+
+static void drawMap() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Map", true);
+  if (!mapReady) {
+    tft.setTextFont(2);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(C_ACCENT);
+    tft.drawString("No maps on the SD card", SCR_W / 2, CONTENT_Y + 50);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("Run scripts/get-map-tiles.ps1", SCR_W / 2, CONTENT_Y + 80);
+    tft.drawString("on a PC, then copy the", SCR_W / 2, CONTENT_Y + 100);
+    tft.drawString("maps folder to the card.", SCR_W / 2, CONTENT_Y + 120);
+  } else {
+    mapDrawTiles();
+  }
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_MAP_OUT, "-", I_NONE, mapReady && mapZ > mapMinZ},
+                 {B_MAP_IN, "+", I_NONE, mapReady && mapZ < mapMaxZ}};
+  drawFooter(f, 3);
+}
+
+// Drag to pan: the map jumps to the new spot when you lift your finger.
+static void mapTouch(bool down, int tx, int ty) {
+  static bool dragging = false;
+  static int sx, sy, lx, ly;
+  if (down) {
+    if (!dragging) {
+      if (ty < CONTENT_Y || ty >= CONTENT_Y + CONTENT_H) return;   // started on a button
+      dragging = true; sx = tx; sy = ty;
+    }
+    lx = tx; ly = ty;
+  } else if (dragging) {
+    dragging = false;
+    int dx = lx - sx, dy = ly - sy;
+    if (abs(dx) + abs(dy) < 8 || !mapReady) return;
+    double n = mapWorld(mapZ);
+    mapCx = constrain((int32_t)(mapCx - dx), 0, (int32_t)n - 1);
+    mapCy = constrain((int32_t)(mapCy - dy), 0, (int32_t)n - 1);
+    mapDrawTiles();
+  }
+}
+
 static void redraw() {
   switch (screen) {
+    case SC_MAP: drawMap(); break;
+    case SC_NEAR: drawNear(); break;
     case SC_MESH: meshMarkRead(); drawMesh(); break;
     case SC_QUICK: drawQuick(); break;
     case SC_KEYS: drawKeys(); break;
@@ -944,6 +1131,7 @@ static void goBack() {
     case SC_ARTICLE: doc.free(); screen = SC_CATEGORY; break;
     case SC_BOOK: doc.free(); screen = SC_LIBRARY; break;
     case SC_QUICK:
+    case SC_NEAR:
     case SC_KEYS: screen = SC_MESH; break;
     default: list.clear(); screen = sdUp ? SC_HOME : SC_NOSD; break;
   }
@@ -1196,6 +1384,14 @@ static void onButton(uint16_t id) {
       redraw();
       break;
     case B_MESH_QUICK: screen = SC_QUICK; redraw(); break;
+    case B_MESH_NEAR: screen = SC_NEAR; redraw(); break;
+    case B_MAP: if (!mapReady) mapLoadCenter(); screen = SC_MAP; redraw(); break;
+    case B_MAP_IN:
+      if (mapZ < mapMaxZ) { mapZ++; mapCx *= 2; mapCy *= 2; redraw(); }
+      break;
+    case B_MAP_OUT:
+      if (mapZ > mapMinZ) { mapZ--; mapCx /= 2; mapCy /= 2; redraw(); }
+      break;
     case B_MESH_TYPE: kbTarget = 0; kbBuf = ""; kbShift = false; screen = SC_KEYS; redraw(); break;
     case B_MESH_NAME: kbTarget = 1; kbBuf = meshName(); kbShift = false; screen = SC_KEYS; redraw(); break;
     case B_KB_DEL: if (kbBuf.length()) kbBuf.remove(kbBuf.length() - 1); drawKbText(); break;
@@ -1393,6 +1589,10 @@ static void shotCommand(char c) {
     case 'F': meshDemo(); break;
     case 'Z': { bool ok = meshSend("Hello from the bench board"); Serial.printf("[mesh] sent test message: %s\n", ok ? "ok" : "FAILED (mesh off or rate limit)"); break; }
     case 'M': screen = SC_MESH; redraw(); break;
+    case 'N': screen = SC_NEAR; redraw(); break;
+    case 'P': if (!mapReady) mapLoadCenter(); screen = SC_MAP; redraw(); break;
+    case 'I': onButton(B_MAP_IN); break;
+    case 'O': onButton(B_MAP_OUT); break;
     case 'Q': screen = SC_QUICK; redraw(); break;
     case 'K': kbTarget = 0; kbBuf = "Water found at the creek"; screen = SC_KEYS; redraw(); break;
     case 'T': lightTap(); break;
@@ -1413,6 +1613,7 @@ void loop() {
   uint16_t tx, ty;
   bool down = touchRead(&tx, &ty);
   uint32_t now = millis();
+  if (screen == SC_MAP) mapTouch(down, tx, ty);
 
   if (down && !wasDown) {
     lastTouchMs = now;
@@ -1430,6 +1631,11 @@ void loop() {
   nightLoop(now);
 
   meshLoop();
+  {                                                    // a message sent from a phone changes the list too
+    static uint32_t lastSeq = 0;
+    uint32_t sq = meshChangeCount();                   // also changes when a "got it" reply arrives
+    if (sq != lastSeq) { lastSeq = sq; if (screen == SC_MESH && !sleeping) redraw(); }
+  }
   if (meshTakeNew()) {                                 // a message arrived from another board
     if (sleeping) { sleeping = false; setBacklight(nightNow ? min<int>(brightness, 25) : brightness); }
     lastTouchMs = now;
@@ -1440,6 +1646,10 @@ void loop() {
     if (screen == SC_MESH || screen == SC_HOME) redraw();
   }
   if (ledOffMs && (int32_t)(now - ledOffMs) >= 0) { digitalWrite(PIN_LED_G, HIGH); ledOffMs = 0; }
+  if (screen == SC_NEAR && !sleeping) {                // keep the signal bars live
+    static uint32_t nearMs = 0;
+    if (now - nearMs > 2000) { nearMs = now; drawNear(); }
+  }
 
   uint16_t tmo = TIMEOUTS_S[timeoutIdx];
   if (!sleeping && tmo && now - lastTouchMs > (uint32_t)tmo * 1000) {

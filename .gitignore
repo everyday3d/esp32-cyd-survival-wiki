@@ -29,3 +29,6 @@ MW_*
 tools/
 *ESP32_35*rev1*
 
+
+# Downloaded offline map tiles (large, made with scripts/get-map-tiles.ps1)
+sdcard/maps/

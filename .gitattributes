@@ -1,0 +1,11 @@
+# Keep binary files byte-for-byte. Without this, git on Windows can mistake a PDF for text
+# and rewrite its line endings on checkout, which corrupts it.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gz binary
+*.bin binary
+*.3mf binary
+*.stl binary
+*.blend binary

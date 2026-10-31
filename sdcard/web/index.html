@@ -47,6 +47,9 @@ button{font:inherit;color:inherit}
 .search:focus-within{border-color:var(--blaze)}
 .search input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:17px var(--body);padding:12px 14px;outline:none}
 .search button{border:0;background:transparent;padding:0 14px;color:var(--ink-2);cursor:pointer}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tools a{flex:1;text-align:center;text-decoration:none;color:var(--head-ink);background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.35);border-radius:10px;padding:9px 8px;font:600 15px var(--body)}
+.tools a:active,.tools a:hover{background:rgba(255,255,255,.26)}
 .crumbs{position:relative;max-width:720px;margin:10px auto 0;font-size:14px}
 .crumbs a{color:var(--head-ink);opacity:.85}
 
@@ -126,12 +129,13 @@ mark{background:transparent;color:inherit;font-weight:700;text-decoration:underl
       <input id="q" type="search" placeholder="Search: water, bleeding, fire, north..." autocomplete="off" aria-label="Search the wiki">
       <button type="submit" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     </form>
+    <div class="tools"><a href="/mesh">&#128225; Mesh chat</a><a href="/map">&#128506; Map</a></div>
   </div>
   <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
 </header>
 <main id="view"><p class="empty">Loading the wiki...</p></main>
 <footer class="foot">
-  <a href="#/">Home</a><a href="#/library">Library</a><a href="#/about">About this device</a>
+  <a href="#/">Home</a><a href="#/library">Library</a><a href="/mesh">Mesh chat</a><a href="/map">Map</a><a href="#/about">About this device</a>
   <button type="button" id="themeBtn">Switch to night colors</button>
 </footer>
 <script>
