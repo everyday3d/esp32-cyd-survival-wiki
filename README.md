@@ -48,7 +48,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **8 Instant Emergency Tiles**: 1-tap access for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
 - **Live Status Bar**: Shows Wi-Fi hotspot state, connected devices, battery voltage, and microSD status.
 - **Fast Card Reading**: Instant category navigation reads guides directly off your microSD card without lag.
-- **Easy Bottom Bar**: Jump between the guide reader, Wi-Fi hotspot toggle, and settings with one touch.
+- **Easy Bottom Bar**: Jump between Books, the Wi-Fi hotspot, the flashlight, Mesh messaging, and Setup with one touch.
 
 ### 2. Illustrated Field Guides & Clear Diagrams
 [![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
@@ -96,6 +96,17 @@ These landed in the 2.8" build first. The 3.5" build gets them in a later update
 - **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
 - **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
 - **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
+
+### 8. New in 1.3.0: Mesh Text Messaging (2.8" CYD firmware)
+[![Mesh Messaging Spotlight](docs/screenshots/09_mesh_messaging_spotlight.png)](docs/screenshots/09_mesh_messaging_spotlight.png)
+- **Talk Between Boards With No Signal**: Two or more Survival Wiki units can text each other over ESP-NOW. No router, no phone, no internet. Tap **Mesh** on the home bar.
+- **One-Tap Quick Messages**: OK, Need help, Heading out, At camp, Water found, Come to me. Or type your own (up to 50 characters) on the on-screen keyboard.
+- **Messages Hop**: Every board that hears a message passes it on, up to 4 hops, so a message can reach a unit that's out of direct range. Duplicates are dropped.
+- **Who's Nearby**: Boards say hello every 30 seconds, so the Mesh screen shows how many are in range before anyone types.
+- **Name Your Board**: Tap **Name** to set the name your messages go out under.
+- **Works With the Hotspot**: Mesh shares the radio channel with the `SurvivalWiki` hotspot (channel 6 by default). Every board needs the same channel, so leave `config.txt` alone or change it on all of them.
+- **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
+- **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
 
 ---
 

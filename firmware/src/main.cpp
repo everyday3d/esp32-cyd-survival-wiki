@@ -17,6 +17,7 @@
 #include "config.h"
 #include "doc.h"
 #include "web.h"
+#include "mesh.h"
 #include "qrcodegen.h"
 
 TFT_eSPI tft;
@@ -35,7 +36,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -52,8 +53,14 @@ static bool nightAuto = false;       // dim the backlight when the room is dark 
 static bool nightNow = false;        // currently dimmed by night mode
 static uint8_t lightMode = 0;        // flashlight: 0 white, 1 red, 2 SOS strobe
 static bool sdUp = false;
-static int goodboyIdx = -1;          // index of the hidden "goodboy" category, -1 if absent
+static bool meshEnabled = true;      // ESP-NOW text messaging between boards
+static String kbBuf;                 // text being typed on the on-screen keyboard
+static uint8_t kbTarget = 0;         // 0 = new message, 1 = this board's mesh name
+static bool kbShift = false;
+static uint32_t ledOffMs = 0;        // green "message received" blink
+static int goodboyIdx = -1;         // index of the hidden "goodboy" category, -1 if absent
 static uint32_t lastTouchMs = 0, lastStatusMs = 0;
+static void startMesh();             // (re)start mesh messaging on the right radio channel (defined below)
 static void saveBackup();            // settings backup to the SD card (defined below)
 static void restoreBackup();
 static int lastClients = -1;
@@ -63,7 +70,10 @@ enum BtnId : uint16_t {
   B_NONE = 0, B_BACK, B_UP, B_DOWN, B_PREV, B_NEXT, B_LIBRARY, B_WIFI, B_SETTINGS,
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
   B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
-  B_TILE = 100, B_ROW = 200
+  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_KB_DEL, B_KB_SHIFT, B_KB_SEND,
+  B_QUICK_BASE = 60,           // 60..69: quick messages
+  B_TILE = 100, B_ROW = 200,
+  B_KEY_BASE = 1000            // 1000 + character: on-screen keyboard keys
 };
 enum Icon : uint8_t { I_NONE, I_UP, I_DOWN, I_LEFT, I_RIGHT };
 struct Btn { int16_t x, y, w, h; uint16_t id; String label; uint8_t icon; bool enabled; };
@@ -373,9 +383,12 @@ static void drawHome() {
     tft.drawString("No articles found on the SD card.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 90 : 150));
     tft.drawString("Copy the 'sdcard' folder contents to it.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 112 : 172));
   }
-  FootDef f[] = {{B_LIBRARY, "Library", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true},
-                 {B_LIGHT, "Light", I_NONE, true}, {B_SETTINGS, SCR_W < 300 ? "Set" : "Settings", I_NONE, true}};
-  drawFooter(f, 4);
+  static char meshLabel[12];
+  snprintf(meshLabel, sizeof(meshLabel), meshUnread() > 0 ? "Mesh*" : "Mesh");
+  FootDef f[] = {{B_LIBRARY, "Books", I_NONE, true}, {B_WIFI, "Wi-Fi", I_NONE, true},
+                 {B_LIGHT, "Light", I_NONE, true}, {B_MESH, meshLabel, I_NONE, true},
+                 {B_SETTINGS, "Setup", I_NONE, true}};
+  drawFooter(f, 5);
 }
 
 static void drawList(const String &title, bool books) {
@@ -613,12 +626,157 @@ static void drawNoSD() {
   tft.setTextColor(C_MUTED);
   tft.drawString("Insert the micro SD card (FAT32)", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 100 : 150));
   tft.drawString("with the Survival Wiki files, then tap Retry.", SCR_W / 2, CONTENT_Y + (SCR_W < 300 ? 120 : 170));
-  FootDef f[] = {{B_RETRY, "Retry", I_NONE, true}};
+  // The flashlight and mesh messaging don't need the card, so keep them reachable.
+  FootDef f[] = {{B_RETRY, "Retry", I_NONE, true}, {B_LIGHT, "Light", I_NONE, true}, {B_MESH, "Mesh", I_NONE, true}};
+  drawFooter(f, 3);
+}
+
+// ---------------------------------------------------------------- mesh messaging screens
+// Greedy word wrap of s into at most `lines` lines no wider than maxW pixels (current font).
+static int wrapLines(const String &s, int maxW, String *out, int lines) {
+  int n = 0;
+  String cur;
+  int i = 0;
+  while (i < (int)s.length() && n < lines) {
+    int sp = s.indexOf(' ', i);
+    String word = (sp < 0) ? s.substring(i) : s.substring(i, sp);
+    String trial = cur.length() ? cur + " " + word : word;
+    if (tft.textWidth(trial) <= maxW) cur = trial;
+    else if (cur.length()) { out[n++] = cur; cur = ""; if (n >= lines) break; continue; }
+    else {                                           // a single word wider than the line: cut it
+      int k = word.length();
+      while (k > 1 && tft.textWidth(word.substring(0, k)) > maxW) k--;
+      out[n++] = word.substring(0, k);
+      cur = "";
+      i += k;
+      continue;
+    }
+    i = (sp < 0) ? s.length() : sp + 1;
+  }
+  if (cur.length() && n < lines) out[n++] = cur;
+  return n;
+}
+
+static String ageText(uint32_t ms) {
+  uint32_t s = (millis() - ms) / 1000;
+  if (s < 60) return "now";
+  if (s < 3600) return String(s / 60) + "m";
+  return String(s / 3600) + "h";
+}
+
+static void drawMesh() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Mesh", true);
+  int y = CONTENT_Y + 3;
+  tft.setTextFont(2);
+  tft.setTextDatum(ML_DATUM);
+  tft.setTextColor(meshActive() ? C_ACCENT : C_MUTED);
+  String st = String(meshName()) + (meshActive() ? "  " + String(meshPeersHeard()) + " heard" : "  off");
+  tft.drawString(fitText(st, SCR_W - 76), 8, y + 11);
+  addBtn(SCR_W - 66, y, 60, 22, B_MESH_TOGGLE, meshActive() ? "Off" : "On");
+  int top = y + 28, bottom = SCR_H - FOOTER_H - 2;
+  int rh = (SCR_W < 300) ? 36 : 44;
+  int rows = (bottom - top) / rh;
+  int n = meshCount();
+  if (!meshActive()) {
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("Mesh is off. Tap On to talk to", SCR_W / 2, top + 40);
+    tft.drawString("nearby boards.", SCR_W / 2, top + 58);
+  } else if (n == 0) {
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("No messages yet.", SCR_W / 2, top + 40);
+    tft.drawString("Tap Quick or Type to send one.", SCR_W / 2, top + 58);
+  }
+  int first = max(0, n - rows);
+  int ry = top;
+  for (int i = first; i < n; i++) {
+    const MeshMsg &m = meshAt(i);
+    String line = (m.mine ? String("me") : String(m.from)) + ": " + m.text;
+    String ln[2];
+    int cnt = wrapLines(line, SCR_W - 52, ln, 2);
+    tft.setTextDatum(TL_DATUM);
+    tft.setTextColor(m.mine ? C_ACCENT : C_TEXT);
+    for (int k = 0; k < cnt; k++) tft.drawString(ln[k], 8, ry + 2 + k * 16);
+    tft.setTextDatum(TR_DATUM);
+    tft.setTextColor(C_MUTED);
+    tft.drawString(ageText(m.ms), SCR_W - 6, ry + 2);
+    tft.drawFastHLine(8, ry + rh - 2, SCR_W - 16, C_LINE);
+    ry += rh;
+  }
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_MESH_QUICK, "Quick", I_NONE, meshActive()},
+                 {B_MESH_TYPE, "Type", I_NONE, meshActive()}, {B_MESH_NAME, "Name", I_NONE, true}};
+  drawFooter(f, 4);
+}
+
+static void drawQuick() {
+  static const char *QUICK[] = {"OK", "Need help", "Heading out", "At camp", "Water found", "Come to me"};
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Quick message", true);
+  int y = CONTENT_Y + 4;
+  for (int i = 0; i < 6; i++) {
+    addBtn(8, y, SCR_W - 16, ROW_H - 4, B_QUICK_BASE + i, QUICK[i]);
+    y += ROW_H;
+  }
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
   drawFooter(f, 1);
+}
+
+#define KB_MAX_MSG  50
+static int kbMax() { return kbTarget == 0 ? KB_MAX_MSG : MESH_NAME_LEN - 1; }
+
+static void drawKbText() {
+  int bx = 6, by = CONTENT_Y + 4, bw = SCR_W - 12, bh = 44;
+  tft.fillRoundRect(bx, by, bw, bh, 6, C_PANEL);
+  tft.drawRoundRect(bx, by, bw, bh, 6, C_LINE);
+  tft.setTextFont(2);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(C_TEXT);
+  String ln[2];
+  int cnt = wrapLines(kbBuf + "_", bw - 12, ln, 2);
+  for (int k = 0; k < cnt; k++) tft.drawString(ln[k], bx + 6, by + 5 + k * 17);
+  tft.setTextDatum(BR_DATUM);
+  tft.setTextColor(C_MUTED);
+  tft.drawString(String(kbBuf.length()) + "/" + kbMax(), bx + bw - 4, by + bh - 2);
+}
+
+static void drawKeys() {
+  static const char *ROWS[] = {"1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm"};
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader(kbTarget == 0 ? "New message" : "Your name", true);
+  drawKbText();
+  int kw = SCR_W / 10;
+  int top = CONTENT_Y + 54;
+  int kh = (SCR_H - FOOTER_H - 4 - top) / 5;
+  for (int r = 0; r < 4; r++) {
+    int len = strlen(ROWS[r]);
+    int x0 = (SCR_W - len * kw) / 2;
+    if (r == 3) x0 = kw / 2;                         // leave room for delete on the right
+    for (int c = 0; c < len; c++) {
+      char ch = ROWS[r][c];
+      String label = String(kbShift && isalpha(ch) ? (char)toupper(ch) : ch);
+      addBtn(x0 + c * kw, top + r * kh, kw, kh, B_KEY_BASE + ch, label);
+    }
+    if (r == 3) addBtn(x0 + len * kw, top + r * kh, SCR_W - (x0 + len * kw), kh, B_KB_DEL, "<-");
+  }
+  int y = top + 4 * kh;
+  addBtn(0, y, kw * 2, kh, B_KB_SHIFT, kbShift ? "ABC" : "abc");
+  addBtn(kw * 2, y, kw * 4, kh, B_KEY_BASE + ' ', "space");
+  addBtn(kw * 6, y, kw * 2, kh, B_KEY_BASE + '.', ".");
+  addBtn(kw * 8, y, SCR_W - kw * 8, kh, B_KEY_BASE + '?', "?");
+  FootDef f[] = {{B_BACK, "Cancel", I_NONE, true}, {B_KB_SEND, kbTarget == 0 ? "Send" : "Save", I_NONE, true}};
+  drawFooter(f, 2);
 }
 
 static void redraw() {
   switch (screen) {
+    case SC_MESH: meshMarkRead(); drawMesh(); break;
+    case SC_QUICK: drawQuick(); break;
+    case SC_KEYS: drawKeys(); break;
     case SC_HOME: drawHome(); break;
     case SC_CATEGORY: drawList(cats[curCat].name, false); break;
     case SC_LIBRARY: drawList("Library", true); break;
@@ -753,11 +911,18 @@ static bool startSD() {
 }
 
 static void startup() {
-  if (!startSD()) { Serial.println("[sd] card NOT found"); screen = SC_NOSD; redraw(); return; }
+  if (!startSD()) {
+    Serial.println("[sd] card NOT found");
+    startMesh();                                       // mesh works without a card (radio only, no hotspot)
+    screen = SC_NOSD;
+    redraw();
+    return;
+  }
   loadConfig();
   loadCatalog();
   Serial.printf("[sd] OK: %d categories, %d articles\n", nCats, nArticles);
   if (wifiOn) webStart(wcfg);
+  startMesh();
   screen = SC_HOME;
   redraw();
 }
@@ -778,7 +943,9 @@ static void goBack() {
   switch (screen) {
     case SC_ARTICLE: doc.free(); screen = SC_CATEGORY; break;
     case SC_BOOK: doc.free(); screen = SC_LIBRARY; break;
-    default: list.clear(); screen = SC_HOME; break;
+    case SC_QUICK:
+    case SC_KEYS: screen = SC_MESH; break;
+    default: list.clear(); screen = sdUp ? SC_HOME : SC_NOSD; break;
   }
   redraw();
 }
@@ -822,7 +989,7 @@ static void enterLight() {
 static void exitLight() {
   setRgbLed(false);
   setBacklight(brightness);
-  screen = SC_HOME;
+  screen = sdUp ? SC_HOME : SC_NOSD;
   redraw();
 }
 
@@ -891,6 +1058,8 @@ static void saveBackup() {
   f.printf("inv=%d\n", invertColors ? 1 : 0);
   f.printf("wifi=%d\n", wifiOn ? 1 : 0);
   f.printf("night=%d\n", nightAuto ? 1 : 0);
+  f.printf("mesh=%d\n", meshEnabled ? 1 : 0);
+  f.printf("nick=%s\n", meshName());
   uint16_t cal[CAL_N];
   if (prefs.getBytes(CAL_KEY, cal, sizeof(cal)) == sizeof(cal)) {
     f.print("cal=");
@@ -915,6 +1084,8 @@ static void restoreBackup() {
     else if (k == "inv") prefs.putBool("inv", v.toInt() != 0);
     else if (k == "wifi") prefs.putBool("wifi", v.toInt() != 0);
     else if (k == "night") prefs.putBool("night", v.toInt() != 0);
+    else if (k == "mesh") prefs.putBool("mesh", v.toInt() != 0);
+    else if (k == "nick" && v.length()) prefs.putString("nick", v.substring(0, MESH_NAME_LEN - 1));
     else if (k == "cal") {
       uint16_t cal[CAL_N];
       int n = 0, start = 0;
@@ -961,7 +1132,25 @@ static void goodBoy() {
   redraw();
 }
 
+static void startMesh() {
+  if (meshEnabled) meshBegin(wcfg.channel, webRunning());
+}
+
 static void onButton(uint16_t id) {
+  if (id >= B_KEY_BASE) {                              // on-screen keyboard character
+    char c = (char)(id - B_KEY_BASE);
+    if (kbShift && isalpha(c)) c = toupper(c);
+    if ((int)kbBuf.length() < kbMax()) kbBuf += c;
+    drawKbText();
+    return;
+  }
+  if (id >= B_QUICK_BASE && id < B_QUICK_BASE + 10) {  // quick message
+    static const char *QUICK[] = {"OK", "Need help", "Heading out", "At camp", "Water found", "Come to me"};
+    if (id - B_QUICK_BASE < 6) meshSend(QUICK[id - B_QUICK_BASE]);
+    screen = SC_MESH;
+    redraw();
+    return;
+  }
   if (id >= B_ROW) {
     int idx = id - B_ROW;
     if (idx >= (int)list.size()) return;
@@ -998,6 +1187,31 @@ static void onButton(uint16_t id) {
     case B_WIFI: screen = SC_WIFI; redraw(); break;
     case B_SETTINGS: screen = SC_SETTINGS; redraw(); break;
     case B_LIGHT: enterLight(); break;
+    case B_MESH: screen = SC_MESH; redraw(); break;
+    case B_MESH_TOGGLE:
+      meshEnabled = !meshEnabled;
+      prefs.putBool("mesh", meshEnabled);
+      if (meshEnabled) startMesh(); else meshEnd();
+      saveBackup();
+      redraw();
+      break;
+    case B_MESH_QUICK: screen = SC_QUICK; redraw(); break;
+    case B_MESH_TYPE: kbTarget = 0; kbBuf = ""; kbShift = false; screen = SC_KEYS; redraw(); break;
+    case B_MESH_NAME: kbTarget = 1; kbBuf = meshName(); kbShift = false; screen = SC_KEYS; redraw(); break;
+    case B_KB_DEL: if (kbBuf.length()) kbBuf.remove(kbBuf.length() - 1); drawKbText(); break;
+    case B_KB_SHIFT: kbShift = !kbShift; drawKeys(); break;
+    case B_KB_SEND:
+      if (kbTarget == 0) {
+        kbBuf.trim();
+        if (kbBuf.length()) meshSend(kbBuf.c_str());
+      } else {
+        meshSetName(kbBuf.c_str());
+        prefs.putString("nick", meshName());
+        saveBackup();
+      }
+      screen = SC_MESH;
+      redraw();
+      break;
     case B_NIGHT:
       nightAuto = !nightAuto;
       prefs.putBool("night", nightAuto);
@@ -1018,7 +1232,9 @@ static void onButton(uint16_t id) {
       prefs.putBool("wifi", wifiOn);
       saveBackup();
       showLoading(wifiOn ? "Starting hotspot..." : "Stopping hotspot...");
+      meshEnd();                                        // the radio is reconfigured; mesh restarts after
       if (wifiOn) webStart(wcfg); else webStop();
+      startMesh();
       redraw();
       break;
     case B_BRIGHT_DN: brightness = max(20, brightness - 30); setBacklight(nightNow ? min<int>(brightness, 25) : brightness); prefs.putUChar("bright", brightness); saveBackup(); redraw(); break;
@@ -1045,7 +1261,9 @@ static void handleTap(int x, int y) {
     Btn b = btns[i];
     if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) {
       if (!b.enabled) return;
-      if (b.id >= B_TILE) {             // tiles and list rows: quick highlight frame
+      if (b.id >= B_KEY_BASE) {
+        // keyboard keys: no highlight, the text box updates instead
+      } else if (b.id >= B_TILE) {      // tiles and list rows: quick highlight frame
         tft.drawRoundRect(b.x, b.y, b.w, b.h, 8, C_ACCENT);
         tft.drawRoundRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 8, C_ACCENT);
       } else if (!(b.y == 0 && b.id == B_BACK)) {
@@ -1096,6 +1314,8 @@ void setup() {
   invertColors = prefs.getBool("inv", false);
   wifiOn = prefs.getBool("wifi", true);
   nightAuto = prefs.getBool("night", false);
+  meshEnabled = prefs.getBool("mesh", true);
+  if (prefs.isKey("nick")) meshSetName(prefs.getString("nick").c_str());
 
   tft.init();
   tft.setRotation(0);
@@ -1170,6 +1390,11 @@ static void shotCommand(char c) {
     case 'S': screen = SC_SETTINGS; redraw(); break;
     case 'W': screen = SC_WIFI; redraw(); break;
     case 'L': enterLight(); break;
+    case 'F': meshDemo(); break;
+    case 'Z': { bool ok = meshSend("Hello from the bench board"); Serial.printf("[mesh] sent test message: %s\n", ok ? "ok" : "FAILED (mesh off or rate limit)"); break; }
+    case 'M': screen = SC_MESH; redraw(); break;
+    case 'Q': screen = SC_QUICK; redraw(); break;
+    case 'K': kbTarget = 0; kbBuf = "Water found at the creek"; screen = SC_KEYS; redraw(); break;
     case 'T': lightTap(); break;
     case 'G': goodBoy(); break;
     case 'B': listPage = 0; loadLibraryList(); screen = SC_LIBRARY; redraw(); break;
@@ -1203,6 +1428,18 @@ void loop() {
 
   if (screen == SC_LIGHT) { lastTouchMs = now; lightLoop(now); }   // flashlight keeps the screen awake
   nightLoop(now);
+
+  meshLoop();
+  if (meshTakeNew()) {                                 // a message arrived from another board
+    if (sleeping) { sleeping = false; setBacklight(nightNow ? min<int>(brightness, 25) : brightness); }
+    lastTouchMs = now;
+    if (screen != SC_LIGHT) {
+      digitalWrite(PIN_LED_G, LOW);                    // brief green blink
+      ledOffMs = now + 300;
+    }
+    if (screen == SC_MESH || screen == SC_HOME) redraw();
+  }
+  if (ledOffMs && (int32_t)(now - ledOffMs) >= 0) { digitalWrite(PIN_LED_G, HIGH); ledOffMs = 0; }
 
   uint16_t tmo = TIMEOUTS_S[timeoutIdx];
   if (!sleeping && tmo && now - lastTouchMs > (uint32_t)tmo * 1000) {
