@@ -33,7 +33,67 @@ Works on the **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the **3.5" Ho
 
 ---
 
-### 📟 Supported Screens & Hardware
+## 🆕 What's New
+
+### New in 1.6.0: Triage, Map Waypoints and 12 New Guides (2.8" and 3.5" firmware)
+- **Triage Assistant**: a red **Triage** tile first on the home screen. Tap what is wrong (someone hurt, a storm, trouble at home or in the car, lost, a child or older adult) and two or three taps take you straight to the right guide. **Back** inside a guide returns to the triage menu.
+- **Map Waypoints**: on the **Map** screen, centre the crosshair on a spot and tap **Mark** to save it. **Pts** lists your waypoints with distance and direction, and tapping one jumps the map to it. Saved to `maps/waypoints.txt` on the SD card.
+- **GPS Track and Position on the Map** (needs a GPS module, see `case/2.8inch-gps/WIRING.md`): a breadcrumb trail, a green dot for you, and yellow dots for mesh boards that share their position. **Me** centres the map on you. GPS features are new and have not been tested on real hardware yet.
+- **GPS Position Sharing and Radar** (2.8" with GPS): boards can share their position over the mesh, and a radar screen shows where they are. Sharing is off until you turn it on, and positions are not encrypted.
+- **12 New Guides, 118 in All**: drowning, electric shock, poisoning and overdose, diabetic emergency, stroke and heart attack, spinal injury, snow cave, wet-weather fire, food safety after an outage, the 72-hour kit, plus a new **Hygiene & Sanitation** category with an emergency toilet and handwashing with little water.
+- **To get the new guides**, copy the repo's `sdcard/wiki/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
+
+<details>
+<summary><b>Earlier versions (1.5.0 and older)</b></summary>
+
+### New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" and 3.5" firmware)
+- **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
+- **Vehicles & Roads**: stranded in winter, breakdowns, changing a tire, jump-starting, vehicle fire, a car in water, a car emergency kit.
+- **Home & Utilities**: gas leaks, house fires, burst pipes, carbon monoxide, generator safety, utility shutoffs, downed power lines.
+- **Radio & Comms**: choosing a radio, FRS/GMRS walkie-talkies, ham radio, making a Mayday call, NOAA weather radio, using the mesh, getting more range.
+- **Kids & Family**: child first aid, fever, caring for a baby without power, helping kids cope, a family plan, lost children, older adults and special needs.
+- **Paged Home Screen**: when there are more than 8 categories, arrows and a page number appear under the tiles.
+- **Map Downloader App**: `scripts/map-downloader.bat` on Windows.
+- **To get the new guides**, copy the contents of the repo's `sdcard/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
+
+### New in 1.4.0: Phone Chat, Offline Maps and "Heard by" (2.8" CYD firmware)
+- **Chat From Your Phone**: Join the `SurvivalWiki` hotspot and tap **Mesh chat** on the main page (or open `http://192.168.4.1/mesh`). Pick a name, tap a quick message or type your own, and the board sends it out to the other boards. You see messages as they arrive and who is nearby.
+- **"Heard by" Status**: Like "Read" on a phone. Under each message you send you see **Sent**, then **Heard by Sam, Alex** as other boards confirm they got it. The board's own Mesh screen shows "heard 2" beside your messages. Boards on older firmware can't confirm, so update every unit.
+- **Offline Maps**: USGS topo maps from the SD card. On a Windows PC, double-click `scripts/map-downloader.bat`: search for a place, pick a radius and zoom, check the size, and save straight to your SD card (US only, zoom 10 to 16). Prefer the command line? `scripts/get-map-tiles.ps1` does the same. Either way the tiles end up in a `maps` folder at the root of the card. Tap **Map** on the board to drag and zoom, or open `http://192.168.4.1/map` on your phone for pinch-zoom on a bigger screen.
+- **Your Position on the Phone Map**: Tap **My GPS**. Phones only share their location on secure pages, so the page switches to `https://192.168.4.1/map`. Your phone shows a one-time certificate warning, because the board makes its own certificate: choose **Advanced**, then **Continue**. You can also tap **Set my spot** and tap the map.
+- **Nearby and Distance**: **Near** on the Mesh screen lists boards with signal bars and a rough distance. It only works while the hotspot is **off**, because the signal listener stops phones from joining. Treat the distance as a rough guess.
+- **Nuclear Emergency Guides**: Three new guides in First Steps: get inside, stay inside, stay tuned; cleaning up after fallout; and how long to stay.
+
+> [!note] Map tiles
+> Use the script for map tiles. It uses the USGS service, which allows downloads. Don't bulk-download tiles from OpenStreetMap's own servers: their usage policy forbids it.
+
+---
+
+### New in 1.3.0: Mesh Text Messaging (2.8" CYD firmware)
+[![Mesh Messaging Spotlight](docs/screenshots/09_mesh_messaging_spotlight.png)](docs/screenshots/09_mesh_messaging_spotlight.png)
+- **Talk Between Boards With No Signal**: Two or more Survival Wiki units can text each other over ESP-NOW. No router, no phone, no internet. Tap **Mesh** on the home bar.
+- **One-Tap Quick Messages**: OK, Need help, Heading out, At camp, Water found, Come to me. Or type your own (up to 50 characters) on the on-screen keyboard.
+- **Messages Hop**: Every board that hears a message passes it on, up to 4 hops, so a message can reach a unit that's out of direct range. Duplicates are dropped.
+- **Who's Nearby**: Boards say hello every 30 seconds, so the Mesh screen shows how many are in range before anyone types.
+- **Name Your Board**: Tap **Name** to set the name your messages go out under.
+- **Works With the Hotspot**: Mesh shares the radio channel with the `SurvivalWiki` hotspot (channel 6 by default). Every board needs the same channel, so leave `config.txt` alone or change it on all of them.
+- **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
+- **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
+
+### New in 1.2.0 (2.8" CYD firmware)
+[![Flashlight and SOS Spotlight](docs/screenshots/07_flashlight_sos_spotlight.png)](docs/screenshots/07_flashlight_sos_spotlight.png)
+[![Settings, Backup and Night Dim Spotlight](docs/screenshots/08_settings_backup_spotlight.png)](docs/screenshots/08_settings_backup_spotlight.png)
+
+These landed in the 2.8" build first. The 3.5" build gets them in a later update.
+- **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
+- **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.
+- **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
+- **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
+- **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
+
+</details>
+
+## 📟 Supported Screens & Hardware
 
 I made sure both popular display boards work seamlessly with the 1-click web flasher, precompiled binaries, and 3D printable cases:
 
@@ -102,58 +162,6 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Flush USB Cutouts**: Clean cable access for standard USB-C cables, right-angle adapters, and power banks.
 - **Quick-Eject MicroSD Scoop**: Built-in thumb scoop makes swapping microSD cards effortless.
 - **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
-
-### New in 1.6.0: Triage, Map Waypoints and 12 New Guides (2.8" and 3.5" firmware)
-- **Triage Assistant**: a red **Triage** tile first on the home screen. Tap what is wrong (someone hurt, a storm, trouble at home or in the car, lost, a child or older adult) and two or three taps take you straight to the right guide. **Back** inside a guide returns to the triage menu.
-- **Map Waypoints**: on the **Map** screen, centre the crosshair on a spot and tap **Mark** to save it. **Pts** lists your waypoints with distance and direction, and tapping one jumps the map to it. Saved to `maps/waypoints.txt` on the SD card.
-- **GPS Track and Position on the Map** (needs a GPS module, see `case/2.8inch-gps/WIRING.md`): a breadcrumb trail, a green dot for you, and yellow dots for mesh boards that share their position. **Me** centres the map on you. GPS features are new and have not been tested on real hardware yet.
-- **GPS Position Sharing and Radar** (2.8" with GPS): boards can share their position over the mesh, and a radar screen shows where they are. Sharing is off until you turn it on, and positions are not encrypted.
-- **12 New Guides, 118 in All**: drowning, electric shock, poisoning and overdose, diabetic emergency, stroke and heart attack, spinal injury, snow cave, wet-weather fire, food safety after an outage, the 72-hour kit, plus a new **Hygiene & Sanitation** category with an emergency toilet and handwashing with little water.
-- **To get the new guides**, copy the repo's `sdcard/wiki/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
-### New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" and 3.5" firmware)
-- **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
-- **Vehicles & Roads**: stranded in winter, breakdowns, changing a tire, jump-starting, vehicle fire, a car in water, a car emergency kit.
-- **Home & Utilities**: gas leaks, house fires, burst pipes, carbon monoxide, generator safety, utility shutoffs, downed power lines.
-- **Radio & Comms**: choosing a radio, FRS/GMRS walkie-talkies, ham radio, making a Mayday call, NOAA weather radio, using the mesh, getting more range.
-- **Kids & Family**: child first aid, fever, caring for a baby without power, helping kids cope, a family plan, lost children, older adults and special needs.
-- **Paged Home Screen**: when there are more than 8 categories, arrows and a page number appear under the tiles.
-- **Map Downloader App**: `scripts/map-downloader.bat` on Windows.
-- **To get the new guides**, copy the contents of the repo's `sdcard/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
-
-### New in 1.4.0: Phone Chat, Offline Maps and "Heard by" (2.8" CYD firmware)
-- **Chat From Your Phone**: Join the `SurvivalWiki` hotspot and tap **Mesh chat** on the main page (or open `http://192.168.4.1/mesh`). Pick a name, tap a quick message or type your own, and the board sends it out to the other boards. You see messages as they arrive and who is nearby.
-- **"Heard by" Status**: Like "Read" on a phone. Under each message you send you see **Sent**, then **Heard by Sam, Alex** as other boards confirm they got it. The board's own Mesh screen shows "heard 2" beside your messages. Boards on older firmware can't confirm, so update every unit.
-- **Offline Maps**: USGS topo maps from the SD card. On a Windows PC, double-click `scripts/map-downloader.bat`: search for a place, pick a radius and zoom, check the size, and save straight to your SD card (US only, zoom 10 to 16). Prefer the command line? `scripts/get-map-tiles.ps1` does the same. Either way the tiles end up in a `maps` folder at the root of the card. Tap **Map** on the board to drag and zoom, or open `http://192.168.4.1/map` on your phone for pinch-zoom on a bigger screen.
-- **Your Position on the Phone Map**: Tap **My GPS**. Phones only share their location on secure pages, so the page switches to `https://192.168.4.1/map`. Your phone shows a one-time certificate warning, because the board makes its own certificate: choose **Advanced**, then **Continue**. You can also tap **Set my spot** and tap the map.
-- **Nearby and Distance**: **Near** on the Mesh screen lists boards with signal bars and a rough distance. It only works while the hotspot is **off**, because the signal listener stops phones from joining. Treat the distance as a rough guess.
-- **Nuclear Emergency Guides**: Three new guides in First Steps: get inside, stay inside, stay tuned; cleaning up after fallout; and how long to stay.
-
-> [!note] Map tiles
-> Use the script for map tiles. It uses the USGS service, which allows downloads. Don't bulk-download tiles from OpenStreetMap's own servers: their usage policy forbids it.
-
----
-
-### New in 1.3.0: Mesh Text Messaging (2.8" CYD firmware)
-[![Mesh Messaging Spotlight](docs/screenshots/09_mesh_messaging_spotlight.png)](docs/screenshots/09_mesh_messaging_spotlight.png)
-- **Talk Between Boards With No Signal**: Two or more Survival Wiki units can text each other over ESP-NOW. No router, no phone, no internet. Tap **Mesh** on the home bar.
-- **One-Tap Quick Messages**: OK, Need help, Heading out, At camp, Water found, Come to me. Or type your own (up to 50 characters) on the on-screen keyboard.
-- **Messages Hop**: Every board that hears a message passes it on, up to 4 hops, so a message can reach a unit that's out of direct range. Duplicates are dropped.
-- **Who's Nearby**: Boards say hello every 30 seconds, so the Mesh screen shows how many are in range before anyone types.
-- **Name Your Board**: Tap **Name** to set the name your messages go out under.
-- **Works With the Hotspot**: Mesh shares the radio channel with the `SurvivalWiki` hotspot (channel 6 by default). Every board needs the same channel, so leave `config.txt` alone or change it on all of them.
-- **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
-- **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
-
-### New in 1.2.0 (2.8" CYD firmware)
-[![Flashlight and SOS Spotlight](docs/screenshots/07_flashlight_sos_spotlight.png)](docs/screenshots/07_flashlight_sos_spotlight.png)
-[![Settings, Backup and Night Dim Spotlight](docs/screenshots/08_settings_backup_spotlight.png)](docs/screenshots/08_settings_backup_spotlight.png)
-
-These landed in the 2.8" build first. The 3.5" build gets them in a later update.
-- **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
-- **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.
-- **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
-- **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
-- **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
 
 ## ⚡ Quick Start in 3 Steps
 
