@@ -1,6 +1,6 @@
 # GPS wiring how-to (2.8" CYD + ATGM336H)
 
-This covers wiring the Teyleten ATGM336H GPS module and its ceramic antenna into the [2.8" GPS case](README.md). It is hardware only: the firmware does not read the GPS yet. That is tracked in [#12](https://github.com/everyday3d/esp32-cyd-survival-wiki/issues/12). The wiring below follows that plan, and the pin labels should be confirmed on your own board before power-up (see the check list at the end).
+This covers wiring the Teyleten ATGM336H GPS module and its ceramic antenna into the [2.8" GPS case](README.md). The firmware (1.6.0 and later, 2.8" board) reads the GPS and uses it for the map, the track and the radar screen, but none of that has been tried on real hardware yet. It is tracked in [#12](https://github.com/everyday3d/esp32-cyd-survival-wiki/issues/12). The pin labels should be confirmed on your own board before power-up (see the check list at the end).
 
 ## What you need
 - Sunton `ESP32-2432S028R` (2.8" CYD) in the printed GPS case
@@ -47,8 +47,9 @@ The antenna is a passive ceramic one. It has no power wire; it plugs into the sm
 - Nothing is shorted: with a meter on continuity, check 3V3 to GND shows no beep.
 - The antenna plug is seated, and the antenna faces up toward the lid roof.
 
-## 6. First run, once the firmware supports it
+## 6. First run
 - Take the device outside with a clear view of the sky. A first fix can take a few minutes.
+- Open the **Map** and tap **Me** once it has a fix, or turn on position sharing in Settings to use the radar.
 - The module's small LED blinks when it has a fix (some boards also provide a PPS pin; it is not needed).
 
 ## Notes
