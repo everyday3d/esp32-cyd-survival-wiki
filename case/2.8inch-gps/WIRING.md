@@ -4,7 +4,7 @@ This covers wiring the Teyleten ATGM336H GPS module and its ceramic antenna into
 
 ## What you need
 - Sunton `ESP32-2432S028R` (2.8" CYD) in the printed GPS case
-- Teyleten ATGM336H module (about 16 x 13 mm) and its ceramic antenna (19 x 6 x 6.5 mm, 100 mm cable, 3 x 3 mm IPEX plug)
+- Teyleten ATGM336H module ([Amazon affiliate link](https://link.amazon/B066Kz9AX), about 16 x 13 mm) and its ceramic antenna (19 x 6 x 6.5 mm, 100 mm cable, 3 x 3 mm IPEX plug)
 - A 4-pin 1.25 mm cable for the CYD's **CN1** connector (the board's pre-crimped "speaker/extension" style leads work), or 3 thin wires and a soldering iron
 - Soldering iron, flux, thin solder, small tweezers, tape
 

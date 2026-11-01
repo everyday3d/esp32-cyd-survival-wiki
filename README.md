@@ -99,10 +99,14 @@ I made sure both popular display boards work seamlessly with the 1-click web fla
 
 | Screen & Board | Board Model | Resolution & Driver | Ports & Power | 3D Printable Case | Precompiled Firmware |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **3.5" Touch Display** | Hosyond / QDtech `E32R35T` ([Amazon](https://www.amazon.com/dp/B0D93MBWC2)) | $320 \times 480$ (ST7796) | Centered USB-C | [`case/3.5inch/`](case/3.5inch/README.md) (`rev2`) | [`survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin) |
-| **2.8" Cheap Yellow Display (CYD)** | Sunton `ESP32-2432S028R` | $240 \times 320$ (ILI9341) | Micro-USB & Type-C `CYD2USB` | [`case/2.8inch/`](case/2.8inch/README.md) (`rev1`) | [`survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin) |
+| **3.5" Touch Display** | Hosyond / QDtech `E32R35T` ([Amazon](https://link.amazon/B0dBAeAXP)) | $320 \times 480$ (ST7796) | Centered USB-C | [`case/3.5inch/`](case/3.5inch/README.md) (`rev2`) | [`survival-wiki-full.bin`](firmware/bin/survival-wiki-full.bin) |
+| **2.8" Cheap Yellow Display (CYD)** | Sunton `ESP32-2432S028R` ([Amazon](https://link.amazon/B0fETEIFF)) | $240 \times 320$ (ILI9341) | Micro-USB & Type-C `CYD2USB` | [`case/2.8inch/`](case/2.8inch/README.md) (`rev1`) | [`survival-wiki-28-full.bin`](firmware/bin/survival-wiki-28-full.bin) |
 
 > [!tip] Note on Board Versions
+> **Optional GPS module:** Teyleten ATGM336H with ceramic antenna ([Amazon](https://link.amazon/B066Kz9AX)), used by the [2.8" GPS case](case/2.8inch-gps/README.md).
+>
+> Amazon links on this page are affiliate links: as an Amazon Associate I earn from qualifying purchases, at no extra cost to you.
+
 > The 3.5" case is tailored specifically for the Hosyond `E32R35T` with the centered USB-C port. Older Sunton 3.5" boards (`ESP32-3248S035`) with off-center Micro-USB use different pinouts and hole locations, so stick to the `E32R35T` board for the 3.5" print.
 
 ```
