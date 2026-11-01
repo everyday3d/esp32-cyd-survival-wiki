@@ -25,7 +25,7 @@ No internet. No cell service. No subscription. Power it up and tap.
 | 💬 **Mesh chat** | Text other boards with no router and no towers. Messages hop from board to board, and you see who heard you. |
 | 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom on the screen. Mark waypoints and see how far away they are. |
 | 📍 **GPS (optional)** | With a GPS module: your position and a breadcrumb track on the map, positions shared over the mesh, and a radar screen. New, still being tested. |
-| 📱 **Phone hotspot** | The board makes its own Wi-Fi network, so anyone nearby can read, search and chat from a phone. |
+| 📱 **Phone hotspot** | The board makes its own Wi-Fi network, so anyone nearby can read, search and chat from a phone. Add it to your home screen, or tap **Save to my phone** to keep every guide on the phone with no Wi-Fi. |
 | 🔦 **Flashlight and SOS** | White light, red light to keep your night vision, and a Morse SOS strobe. |
 | 🖨️ **Printable cases** | Snap-fit cases for both screen sizes, plus a 2.8" GPS case. No supports and no screws. |
 
@@ -153,6 +153,8 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Fast Offline Search**: Search all 118 guides and FM 21-76 chapters right from your phone's browser.
 - **Night-Vision Theme**: Gentle red/dark theme won't ruin night vision during power outages.
 - **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
+- **Save to My Phone**: tap the button at the bottom of the page to download one file with all the guides, pictures and search. It opens on your phone with no Wi-Fi, even far from the board. Mesh chat and the map still need the board.
+- **Add to Home Screen**: the page has an app icon and name, so it sits on your phone like an app.
 
 ### 5. 1-Click Browser Web Flasher (Now with Dual 3.5" & 2.8" Support)
 [![Web Serial Flasher Spotlight](docs/screenshots/05_web_serial_flasher_spotlight.png)](https://everyday3d.github.io/esp32-cyd-survival-wiki/)
