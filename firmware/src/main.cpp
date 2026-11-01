@@ -38,7 +38,7 @@ static std::vector<Entry> list;   // current category's articles, or the library
 // ---------------------------------------------------------------- state
 enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP };
 static Screen screen = SC_HOME;
-static int curCat = 0, listPage = 0, scrollY = 0;
+static int curCat = 0, listPage = 0, scrollY = 0, homePage = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
 static String articleTitle;
 
@@ -350,13 +350,26 @@ static void drawHome() {
   btns.clear();
   tft.fillScreen(C_BG);
   drawHeader("SURVIVAL WIKI", false);
-  const int cols = 2, rows = 4, gap = TILE_GAP;
+  const int cols = 2, rows = 4, gap = TILE_GAP, perPage = cols * rows;
+  int vis[MAX_CATEGORIES], nVis = 0;
+  for (int i = 0; i < nCats; i++) if (i != goodboyIdx) vis[nVis++] = i;   // goodboy is the hidden easter egg
+  int pages = max(1, (nVis + perPage - 1) / perPage);
+  if (homePage >= pages) homePage = pages - 1;
+  const int strip = pages > 1 ? (SCR_W < 300 ? 26 : 34) : 0;   // page switcher under the tiles
   int tw = (SCR_W - gap * (cols + 1)) / cols;
-  int th = (CONTENT_H - gap * (rows + 1)) / rows;
-  for (int i = 0; i < nCats && i < cols * rows; i++) {
-    if (i == goodboyIdx) continue;     // easter egg: not shown on the home grid
-    int x = gap + (i % cols) * (tw + gap);
-    int y = CONTENT_Y + gap + (i / cols) * (th + gap);
+  int th = (CONTENT_H - strip - gap * (rows + 1)) / rows;
+  if (strip) {
+    int sy = SCR_H - FOOTER_H - strip;
+    char pg[12]; snprintf(pg, sizeof(pg), "%d / %d", homePage + 1, pages);
+    addBtn(gap, sy, SCR_W / 3 - gap, strip - 2, B_PREV, "", I_LEFT, homePage > 0);
+    addBtn(SCR_W - SCR_W / 3, sy, SCR_W / 3 - gap, strip - 2, B_NEXT, "", I_RIGHT, homePage < pages - 1);
+    tft.setTextFont(2); tft.setTextDatum(MC_DATUM); tft.setTextColor(C_MUTED);
+    tft.drawString(pg, SCR_W / 2, sy + strip / 2 - 1);
+  }
+  for (int k = homePage * perPage; k < nVis && k < (homePage + 1) * perPage; k++) {
+    int i = vis[k], slot = k - homePage * perPage;
+    int x = gap + (slot % cols) * (tw + gap);
+    int y = CONTENT_Y + gap + (slot / cols) * (th + gap);
     btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)(B_TILE + i), "", I_NONE, true});
     tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), cats[i].color);
     if (SCR_W < 300) {
@@ -1369,8 +1382,14 @@ static void onButton(uint16_t id) {
       if (screen == SC_ARTICLE || screen == SC_BOOK) scrollDoc(1);
       else if ((listPage + 1) * ROWS_PER_PAGE < (int)list.size()) { listPage++; redraw(); }
       break;
-    case B_PREV: if (bookPart > 1) { bookPart--; openBookPart(false); } break;
-    case B_NEXT: if (bookPart < bookParts) { bookPart++; openBookPart(false); } break;
+    case B_PREV:
+      if (screen == SC_HOME) { if (homePage > 0) { homePage--; redraw(); } }
+      else if (bookPart > 1) { bookPart--; openBookPart(false); }
+      break;
+    case B_NEXT:
+      if (screen == SC_HOME) { homePage++; redraw(); }   // drawHome clamps to the last page
+      else if (bookPart < bookParts) { bookPart++; openBookPart(false); }
+      break;
     case B_LIBRARY: listPage = 0; loadLibraryList(); screen = SC_LIBRARY; redraw(); break;
     case B_WIFI: screen = SC_WIFI; redraw(); break;
     case B_SETTINGS: screen = SC_SETTINGS; redraw(); break;
