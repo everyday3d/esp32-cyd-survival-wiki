@@ -136,7 +136,7 @@ mark{background:transparent;color:inherit;font-weight:700;text-decoration:underl
       <input id="q" type="search" placeholder="Search: water, bleeding, fire, north..." autocomplete="off" aria-label="Search the wiki">
       <button type="submit" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     </form>
-    <div class="tools"><a href="/mesh">&#128225; Mesh chat</a><a href="/map">&#128506; Map</a></div>
+    <div class="tools"><a href="/mesh">&#128225; Mesh chat</a><a href="/map">&#128506; Map</a><a href="/tools">&#129517; Tools</a></div>
   </div>
   <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
 </header>
@@ -414,7 +414,7 @@ function imgSrc(p){return (window.OFFLINE_IMG&&window.OFFLINE_IMG[p])||p;}
       return Promise.all([nextPic(),nextPic(),nextPic()]);
     }).then(function(){return get('/');}).then(function(src){
       var inj='<script>window.OFFLINE='+JSON.stringify(data).replace(/</g,'\\u003c')+';window.OFFLINE_IMG='+JSON.stringify(imgs)+';<\/script>\n';
-      var css='<style>.tools,a[href="/mesh"],a[href="/map"]{display:none!important}</style>';
+      var css='<style>.tools,a[href="/mesh"],a[href="/map"],a[href="/tools"]{display:none!important}</style>';
       src=src.replace('</head>',css+'</head>');
       var i=src.indexOf('<script>');
       src=src.slice(0,i)+inj+src.slice(i);

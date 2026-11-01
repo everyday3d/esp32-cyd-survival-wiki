@@ -694,7 +694,7 @@ static void drawSettings() {
   if (gpsPresent()) {
     GpsFix g = gpsGet();
     String gl = g.sentences == 0 ? String("GPS: no data (check wiring)")
-              : g.valid ? "GPS: " + String(g.lat, 5) + ", " + String(g.lon, 5) + " (" + g.sats + " sats)"
+              : g.valid ? "GPS: " + String(g.lat, 5) + ", " + String(g.lon, 5) + (g.phone ? String(" (phone)") : " (" + String(g.sats) + " sats)")
               : "GPS: searching, " + String(g.sats) + " sats";
     tft.drawString(gl, 12, y + lineH * 3);
   }
@@ -898,9 +898,9 @@ static void drawRadar() {
   tft.drawString("N", cx, cy - R + 2);
   if (!g.valid) {
     tft.setTextFont(2); tft.setTextDatum(MC_DATUM); tft.setTextColor(C_ACCENT);
-    tft.drawString(g.sentences == 0 ? "No GPS data" : "Waiting for GPS fix", cx, cy - 8);
+    tft.drawString(PIN_GPS_RX < 0 ? "Waiting for the phone" : (g.sentences == 0 ? "No GPS data" : "Waiting for GPS fix"), cx, cy - 8);
     tft.setTextColor(C_MUTED);
-    tft.drawString(g.sentences == 0 ? "check the wiring" : String(g.sats) + " satellites, go outside", cx, cy + 10);
+    tft.drawString(PIN_GPS_RX < 0 ? "keep the phone map page open" : (g.sentences == 0 ? "check the wiring" : String(g.sats) + " satellites, go outside"), cx, cy + 10);
   } else {
     double maxD = 0;
     double dist[8], brg[8];

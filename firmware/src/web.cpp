@@ -4,6 +4,8 @@
 #include "meshpage.h"
 #include "mappage.h"
 #include "httpscert.h"
+#include "gps.h"
+#include "toolspage.h"
 #include <esp_https_server.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -81,6 +83,11 @@ static String jsonEsc(const char *s) {
 static void handleMapPage() {
   server.sendHeader("Cache-Control", "no-cache");
   server.send_P(200, "text/html", MAP_PAGE);
+}
+
+static void handleToolsPage() {
+  server.sendHeader("Cache-Control", "no-cache");
+  server.send_P(200, "text/html", TOOLS_PAGE);
 }
 
 static void handleMeshPage() {
@@ -172,6 +179,7 @@ static esp_err_t sslMapPage(httpd_req_t *req) {
   return sslText(req, "text/html", MAP_PAGE);
 }
 static esp_err_t sslMeshPage(httpd_req_t *req) { return sslText(req, "text/html", MESH_PAGE); }
+static esp_err_t sslToolsPage(httpd_req_t *req) { return sslText(req, "text/html", TOOLS_PAGE); }
 
 static esp_err_t sslRoot(httpd_req_t *req) {           // the wiki itself is on plain http
   httpd_resp_set_status(req, "302 Found");
@@ -213,6 +221,23 @@ static esp_err_t sslMeshSend(httpd_req_t *req) {
   return sslText(req, "application/json", ok ? "{\"ok\":true}" : "{\"ok\":false}");
 }
 
+// The phone's map page posts its GPS position here so the board can use it (map, radar, mesh sharing).
+static esp_err_t sslPos(httpd_req_t *req) {
+  char body[96], a[24] = "", b[24] = "", c[12] = "";
+  int len = req->content_len < sizeof(body) - 1 ? req->content_len : sizeof(body) - 1;
+  int r = len > 0 ? httpd_req_recv(req, body, len) : 0;
+  bool ok = false;
+  if (r > 0) {
+    body[r] = 0;
+    bool hasLat = httpd_query_key_value(body, "lat", a, sizeof(a)) == ESP_OK;
+    bool hasLon = httpd_query_key_value(body, "lon", b, sizeof(b)) == ESP_OK;
+    httpd_query_key_value(body, "acc", c, sizeof(c));
+    double lat = atof(a), lon = atof(b);
+    ok = hasLat && hasLon && fabs(lat) <= 90.0 && fabs(lon) <= 180.0 && !(lat == 0.0 && lon == 0.0);
+    if (ok) gpsSetPhone(lat, lon, (float)atof(c));
+  }
+  return sslText(req, "application/json", ok ? "{\"ok\":true}" : "{\"ok\":false}");
+}
 // /maps/{z}/{x}/{y}.jpg and /maps/center.txt, streamed from the SD card in small pieces.
 static esp_err_t sslMapFile(httpd_req_t *req) {
   char path[72];
@@ -259,8 +284,10 @@ static void sslStart() {
     {"/", HTTP_GET, sslRoot, nullptr},
     {"/map", HTTP_GET, sslMapPage, nullptr},
     {"/mesh", HTTP_GET, sslMeshPage, nullptr},
+    {"/tools", HTTP_GET, sslToolsPage, nullptr},
     {"/api/mesh", HTTP_GET, sslMeshApi, nullptr},
     {"/api/mesh/send", HTTP_POST, sslMeshSend, nullptr},
+    {"/api/pos", HTTP_POST, sslPos, nullptr},
     {"/maps/*", HTTP_GET, sslMapFile, nullptr},
   };
   for (const httpd_uri_t &r : routes) httpd_register_uri_handler(sslServer, &r);
@@ -334,6 +361,7 @@ void webStart(const WifiConfig &cfg) {
   server.on("/index.html", handleIndex);
   server.on("/api/status", handleStatus);
   server.on("/mesh", handleMeshPage);
+  server.on("/tools", handleToolsPage);
   server.on("/map", handleMapPage);
   server.serveStatic("/maps", SD, "/maps", "max-age=86400");
   server.on("/api/mesh", handleMeshApi);

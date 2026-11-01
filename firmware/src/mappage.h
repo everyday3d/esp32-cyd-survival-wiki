@@ -27,11 +27,11 @@ footer{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);ba
 footer button{flex:1;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font-size:.95rem}
 footer button.on{background:var(--acc);color:#111;border-color:var(--acc)}
 </style></head><body>
-<header><b>&#128506; Map</b><a href="/mesh">Chat</a><a class="r" href="/">Wiki</a></header>
+<header><b>&#128506; Map</b><a href="/mesh">Chat</a><a href="/tools">Tools</a><a class="r" href="/">Wiki</a></header>
 <div id="view"><div id="layer"></div><div id="cross"></div><div id="info"></div><div id="msg"></div></div>
 <footer>
 <button id="zo">&minus;</button><button id="zi">+</button>
-<button id="loc">&#128205; My GPS</button><button id="set">Set my spot</button>
+<button id="loc">&#128205; My GPS</button><button id="set">Set my spot</button><button id="share">&#128225; Share GPS</button>
 </footer>
 <script>
 var T=256,z=13,zmin=8,zmax=16,cx=0,cy=0,me=null,setting=false;
@@ -94,5 +94,31 @@ fetch('/maps/center.txt').then(function(r){if(!r.ok)throw 0;return r.text()}).th
   var a=t.trim().split(/\s+/).map(Number);zmin=a[3];zmax=a[4];z=Math.max(zmin,Math.min(zmax,a[2]));var w=wp(a[0],a[1],z);cx=w.x;cy=w.y;draw();
   if(location.search.indexOf('gps=1')>=0)document.getElementById('loc').onclick()   // we were sent here to ask for the location
 }).catch(function(){info.textContent='No maps on the SD card';say('No maps found. Make them with scripts/get-map-tiles.ps1 and copy the maps folder to the card.')});
+// Share this phone's GPS with the board: the board then uses it for its own map dot, radar and mesh position sharing.
+var watchId=null,lastSend=0,lastPos=null,keep=null,wake=null;
+function sendPos(p,force){
+  lastPos=p;var now=Date.now();if(!force&&now-lastSend<4000)return;lastSend=now;
+  fetch('/api/pos',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'lat='+p.coords.latitude.toFixed(6)+'&lon='+p.coords.longitude.toFixed(6)+'&acc='+Math.round(p.coords.accuracy||0)}).catch(function(){})}
+function toggleShare(){
+  var b=document.getElementById('share');
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(keep);if(wake){try{wake.release()}catch(e){}wake=null}
+    b.className='';b.innerHTML='&#128225; Share GPS';say('Stopped sharing.');return}
+  if(location.protocol==='http:'){
+    say('Opening the secure page. Your phone will warn about the certificate: choose Advanced, then Continue. You only do this once.');
+    setTimeout(function(){location.href='https://'+location.hostname+'/map?share=1'},2500);return}
+  if(!navigator.geolocation){say('This browser can not give a location.');return}
+  say('Asking the phone for its location. Keep this page open while sharing.');
+  watchId=navigator.geolocation.watchPosition(function(p){
+    me={lat:p.coords.latitude,lon:p.coords.longitude};sendPos(p,false);
+    var b2=document.getElementById('share');b2.className='on';b2.innerHTML='&#128225; Sharing';
+    say('');draw()},
+    function(e){say('The phone would not share its location ('+(e&&e.message?e.message:'blocked')+').');if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}},
+    {enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  keep=setInterval(function(){if(lastPos)sendPos(lastPos,true)},15000);   // the board forgets a position after 45 s
+  if(navigator.wakeLock){navigator.wakeLock.request('screen').then(function(w){wake=w}).catch(function(){})}
+}
+document.getElementById('share').onclick=toggleShare;
+if(location.search.indexOf('share=1')>=0)setTimeout(toggleShare,400);
 window.onresize=draw;
 </script></body></html>)HTML";

@@ -1,6 +1,28 @@
 #include "gps.h"
 #include "config.h"
 
+// ---- a position sent by the phone's browser (web.cpp, /api/pos). Used when no GPS module has a fix. ----
+#define PHONE_FRESH_MS 45000
+static struct { double lat, lon; float acc; uint32_t ms; } phoneFix = {};
+static portMUX_TYPE phoneMux = portMUX_INITIALIZER_UNLOCKED;
+
+void gpsSetPhone(double lat, double lon, float accM) {
+  portENTER_CRITICAL(&phoneMux);
+  phoneFix.lat = lat; phoneFix.lon = lon; phoneFix.acc = accM;
+  phoneFix.ms = millis() | 1;                        // never 0, 0 means "never"
+  portEXIT_CRITICAL(&phoneMux);
+}
+
+static bool phoneFresh(GpsFix *out) {
+  portENTER_CRITICAL(&phoneMux);
+  double lat = phoneFix.lat, lon = phoneFix.lon;
+  uint32_t ms = phoneFix.ms;
+  portEXIT_CRITICAL(&phoneMux);
+  if (!ms || millis() - ms > PHONE_FRESH_MS) return false;
+  if (out) { out->valid = true; out->lat = lat; out->lon = lon; out->phone = true; out->fixMs = ms; }
+  return true;
+}
+
 #if PIN_GPS_RX >= 0
 static GpsFix fix = {};
 static char line[100];
@@ -68,12 +90,24 @@ void gpsLoop() {
 }
 
 bool gpsPresent() { return true; }
-GpsFix gpsGet() { return fix; }
-uint32_t gpsFixAgeS() { return fix.fixMs ? (millis() - fix.fixMs) / 1000 : 0xFFFFFFFF; }
+GpsFix gpsGet() {
+  GpsFix f = fix;
+  if (f.valid) return f;                              // the module has a fix: it wins
+  GpsFix p = f;
+  if (phoneFresh(&p)) return p;                       // otherwise use the phone's position
+  return f;
+}
+uint32_t gpsFixAgeS() {
+  GpsFix g = gpsGet();
+  return g.fixMs ? (millis() - g.fixMs) / 1000 : 0xFFFFFFFF;
+}
 #else
 void gpsBegin() {}
 void gpsLoop() {}
-bool gpsPresent() { return false; }
-GpsFix gpsGet() { return GpsFix{}; }
-uint32_t gpsFixAgeS() { return 0xFFFFFFFF; }
+bool gpsPresent() { return phoneFresh(nullptr); }
+GpsFix gpsGet() { GpsFix g{}; phoneFresh(&g); g.sentences = g.valid ? 1 : 0; return g; }
+uint32_t gpsFixAgeS() {
+  GpsFix g = gpsGet();
+  return g.fixMs ? (millis() - g.fixMs) / 1000 : 0xFFFFFFFF;
+}
 #endif
