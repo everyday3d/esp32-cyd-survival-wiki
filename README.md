@@ -108,6 +108,16 @@ These landed in the 2.8" build first. The 3.5" build gets them in a later update
 - **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
 - **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
 
+### 10. New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" CYD firmware)
+- **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
+- **Vehicles & Roads**: stranded in winter, breakdowns, changing a tire, jump-starting, vehicle fire, a car in water, a car emergency kit.
+- **Home & Utilities**: gas leaks, house fires, burst pipes, carbon monoxide, generator safety, utility shutoffs, downed power lines.
+- **Radio & Comms**: choosing a radio, FRS/GMRS walkie-talkies, ham radio, making a Mayday call, NOAA weather radio, using the mesh, getting more range.
+- **Kids & Family**: child first aid, fever, caring for a baby without power, helping kids cope, a family plan, lost children, older adults and special needs.
+- **Paged Home Screen**: when there are more than 8 categories, arrows and a page number appear under the tiles.
+- **Map Downloader App**: `scripts/map-downloader.bat` on Windows.
+- **To get the new guides**, copy the contents of the repo's `sdcard/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
+
 ### 9. New in 1.4.0: Phone Chat, Offline Maps and "Heard by" (2.8" CYD firmware)
 - **Chat From Your Phone**: Join the `SurvivalWiki` hotspot and tap **Mesh chat** on the main page (or open `http://192.168.4.1/mesh`). Pick a name, tap a quick message or type your own, and the board sends it out to the other boards. You see messages as they arrive and who is nearby.
 - **"Heard by" Status**: Like "Read" on a phone. Under each message you send you see **Sent**, then **Heard by Sam, Alex** as other boards confirm they got it. The board's own Mesh screen shows "heard 2" beside your messages. Boards on older firmware can't confirm, so update every unit.
