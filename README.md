@@ -86,29 +86,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Quick-Eject MicroSD Scoop**: Built-in thumb scoop makes swapping microSD cards effortless.
 - **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
 
-### 7. New in 1.2.0 (2.8" CYD firmware)
-[![Flashlight and SOS Spotlight](docs/screenshots/07_flashlight_sos_spotlight.png)](docs/screenshots/07_flashlight_sos_spotlight.png)
-[![Settings, Backup and Night Dim Spotlight](docs/screenshots/08_settings_backup_spotlight.png)](docs/screenshots/08_settings_backup_spotlight.png)
-
-These landed in the 2.8" build first. The 3.5" build gets them in a later update.
-- **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
-- **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.
-- **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
-- **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
-- **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
-
-### 8. New in 1.3.0: Mesh Text Messaging (2.8" CYD firmware)
-[![Mesh Messaging Spotlight](docs/screenshots/09_mesh_messaging_spotlight.png)](docs/screenshots/09_mesh_messaging_spotlight.png)
-- **Talk Between Boards With No Signal**: Two or more Survival Wiki units can text each other over ESP-NOW. No router, no phone, no internet. Tap **Mesh** on the home bar.
-- **One-Tap Quick Messages**: OK, Need help, Heading out, At camp, Water found, Come to me. Or type your own (up to 50 characters) on the on-screen keyboard.
-- **Messages Hop**: Every board that hears a message passes it on, up to 4 hops, so a message can reach a unit that's out of direct range. Duplicates are dropped.
-- **Who's Nearby**: Boards say hello every 30 seconds, so the Mesh screen shows how many are in range before anyone types.
-- **Name Your Board**: Tap **Name** to set the name your messages go out under.
-- **Works With the Hotspot**: Mesh shares the radio channel with the `SurvivalWiki` hotspot (channel 6 by default). Every board needs the same channel, so leave `config.txt` alone or change it on all of them.
-- **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
-- **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
-
-### 10. New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" CYD firmware)
+### New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" and 3.5" firmware)
 - **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
 - **Vehicles & Roads**: stranded in winter, breakdowns, changing a tire, jump-starting, vehicle fire, a car in water, a car emergency kit.
 - **Home & Utilities**: gas leaks, house fires, burst pipes, carbon monoxide, generator safety, utility shutoffs, downed power lines.
@@ -118,7 +96,7 @@ These landed in the 2.8" build first. The 3.5" build gets them in a later update
 - **Map Downloader App**: `scripts/map-downloader.bat` on Windows.
 - **To get the new guides**, copy the contents of the repo's `sdcard/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
 
-### 9. New in 1.4.0: Phone Chat, Offline Maps and "Heard by" (2.8" CYD firmware)
+### New in 1.4.0: Phone Chat, Offline Maps and "Heard by" (2.8" CYD firmware)
 - **Chat From Your Phone**: Join the `SurvivalWiki` hotspot and tap **Mesh chat** on the main page (or open `http://192.168.4.1/mesh`). Pick a name, tap a quick message or type your own, and the board sends it out to the other boards. You see messages as they arrive and who is nearby.
 - **"Heard by" Status**: Like "Read" on a phone. Under each message you send you see **Sent**, then **Heard by Sam, Alex** as other boards confirm they got it. The board's own Mesh screen shows "heard 2" beside your messages. Boards on older firmware can't confirm, so update every unit.
 - **Offline Maps**: USGS topo maps from the SD card. On a Windows PC, double-click `scripts/map-downloader.bat`: search for a place, pick a radius and zoom, check the size, and save straight to your SD card (US only, zoom 10 to 16). Prefer the command line? `scripts/get-map-tiles.ps1` does the same. Either way the tiles end up in a `maps` folder at the root of the card. Tap **Map** on the board to drag and zoom, or open `http://192.168.4.1/map` on your phone for pinch-zoom on a bigger screen.
@@ -130,6 +108,28 @@ These landed in the 2.8" build first. The 3.5" build gets them in a later update
 > Use the script for map tiles. It uses the USGS service, which allows downloads. Don't bulk-download tiles from OpenStreetMap's own servers: their usage policy forbids it.
 
 ---
+
+### New in 1.3.0: Mesh Text Messaging (2.8" CYD firmware)
+[![Mesh Messaging Spotlight](docs/screenshots/09_mesh_messaging_spotlight.png)](docs/screenshots/09_mesh_messaging_spotlight.png)
+- **Talk Between Boards With No Signal**: Two or more Survival Wiki units can text each other over ESP-NOW. No router, no phone, no internet. Tap **Mesh** on the home bar.
+- **One-Tap Quick Messages**: OK, Need help, Heading out, At camp, Water found, Come to me. Or type your own (up to 50 characters) on the on-screen keyboard.
+- **Messages Hop**: Every board that hears a message passes it on, up to 4 hops, so a message can reach a unit that's out of direct range. Duplicates are dropped.
+- **Who's Nearby**: Boards say hello every 30 seconds, so the Mesh screen shows how many are in range before anyone types.
+- **Name Your Board**: Tap **Name** to set the name your messages go out under.
+- **Works With the Hotspot**: Mesh shares the radio channel with the `SurvivalWiki` hotspot (channel 6 by default). Every board needs the same channel, so leave `config.txt` alone or change it on all of them.
+- **No SD Card Needed**: The flashlight and mesh work even if the card is missing or broken.
+- **Heads Up, It's Not Private**: Messages are not encrypted. Anyone in range running this firmware can read them.
+
+### New in 1.2.0 (2.8" CYD firmware)
+[![Flashlight and SOS Spotlight](docs/screenshots/07_flashlight_sos_spotlight.png)](docs/screenshots/07_flashlight_sos_spotlight.png)
+[![Settings, Backup and Night Dim Spotlight](docs/screenshots/08_settings_backup_spotlight.png)](docs/screenshots/08_settings_backup_spotlight.png)
+
+These landed in the 2.8" build first. The 3.5" build gets them in a later update.
+- **Flashlight & SOS Mode**: Tap **Light** on the home bar. Tap the screen to cycle a full-brightness white light, a red light that keeps your night vision, and a flashing SOS signal (the board's RGB LED flashes along with it). One more tap exits. The screen never sleeps while the light is on.
+- **Auto Night Dim**: The CYD has a light sensor on the back. Turn on **Auto night dim** in Settings and the screen drops to a low glow in a dark room, then comes back up when the lights do.
+- **Settings Backup on the SD Card**: Brightness, sleep timeout, invert colors, Wi-Fi state, auto night dim, and your touch calibration are saved to the SD card automatically. Reflash the board and everything is restored on first boot, with no re-calibrating. **Settings → SD backup** has manual **Save** and **Load** buttons too.
+- **Touch That Works on More Boards**: Touch presses are now detected by reading pressure from the touch chip, so it works on clone boards that don't wire up the touch interrupt pin. The calibration screen is easier too: three markers set well in from the screen edges, with a retry if the taps don't register.
+- **A Hidden Surprise for Dog People**: There's an easter egg tucked in the home screen. Copy the latest `sdcard/` files to your card, and keep poking at the title.
 
 ## ⚡ Quick Start in 3 Steps
 
