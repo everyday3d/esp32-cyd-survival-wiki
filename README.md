@@ -9,7 +9,7 @@ Hey makers! Jimmy here from BoxerDawg 3D.
 I built the **ESP32 CYD Survival Wiki** as a 100% offline emergency knowledge base and wireless field guide you can throw in your pack or keep on your shop bench. It turns inexpensive ESP32 touchscreen display boards into dedicated, grid-down survival tools without needing cell towers, internet access, or subscriptions.
 
 Whether you're running the pocket-sized **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** or the larger **3.5" Hosyond Touch Display (`E32R35T`)**, you're completely covered:
-- **On the touchscreen:** Tap through 8 emergency categories, 64 illustrated field guides, and the complete 233-page **US Army Survival Manual (FM 21-76)** with smooth paging and crisp diagrams.
+- **On the touchscreen:** Tap through 11 emergency categories, 85 illustrated field guides, and the complete 233-page **US Army Survival Manual (FM 21-76)** with smooth paging and crisp diagrams.
 - **On your phone or tablet:** Turn on the built-in Wi-Fi hotspot (`SurvivalWiki`) and anyone nearby can connect to read guides, search topics, or download the full survival PDF straight to their device.
 - **100% grid-down ready:** Everything runs off a standard FAT32 microSD card and any 5V USB battery bank or phone charger.
 - **Support-free 3D printable cases:** Custom 2-piece snap-fit cases modeled in Blender for both screen sizes—they print flat on your build plate and snap together without screws or glue.
@@ -52,7 +52,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 
 ### 2. Illustrated Field Guides & Clear Diagrams
 [![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
-- **64 Illustrated Guides**: Step-by-step visuals for water filtration, solar stills, traps, splints, and emergency shelters.
+- **85 Illustrated Guides**: Step-by-step visuals for water filtration, solar stills, traps, splints, and emergency shelters.
 - **High-Contrast Dark Theme**: Easy to read in direct sunlight, and preserves your night vision in the dark.
 - **Smooth Touch Paging**: Clean touch paging with percentage progress, fast-jump controls, and instant return to the index.
 - **Quick Trauma Reference**: Fast-access medical guides for severe bleeding, hypothermia, CPR, and shock.
@@ -67,7 +67,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 ### 4. Offline Wi-Fi Hotspot for Phones & Tablets
 [![Wireless Smartphone Hub Spotlight](docs/screenshots/04_wifi_portal_search_spotlight.png)](docs/screenshots/04_wifi_portal_search_spotlight.png)
 - **No Apps Required**: Scan the on-screen QR code with your phone or tablet to join the `SurvivalWiki` hotspot.
-- **Fast Offline Search**: Search all 64 guides and FM 21-76 chapters right from your phone's browser.
+- **Fast Offline Search**: Search all 85 guides and FM 21-76 chapters right from your phone's browser.
 - **Night-Vision Theme**: Gentle red/dark theme won't ruin night vision during power outages.
 - **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
 

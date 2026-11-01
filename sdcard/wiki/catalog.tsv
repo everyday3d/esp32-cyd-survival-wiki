@@ -70,3 +70,24 @@ goodboy-wounds	goodboy	Cuts, Bleeding, and Paws
 goodboy-cpr	goodboy	CPR for Dogs
 goodboy-cold	goodboy	Cold Weather
 goodboy-pack	goodboy	Dog Go-Bag Checklist
+tornado	weather	Tornado Safety
+flood	weather	Floods and Flash Floods
+hurricane	weather	Hurricanes and Storm Surge
+wildfire	weather	Wildfire and Smoke
+blizzard	weather	Blizzards and Ice Storms
+earthquake	weather	Earthquakes
+extreme-heat	weather	Extreme Heat Waves
+stranded-winter	vehicles	Stranded in Your Car in Winter
+car-breakdown	vehicles	Breakdown on the Road
+flat-tire	vehicles	Changing a Flat Tire
+jump-start	vehicles	Jump-Starting a Car
+car-fire	vehicles	Vehicle Fire
+car-in-water	vehicles	Car in Water
+car-kit	vehicles	Car Emergency Kit
+gas-leak	home	Gas Leak
+house-fire	home	House Fire: Get Out
+burst-pipe	home	Burst and Frozen Pipes
+carbon-monoxide	home	Carbon Monoxide
+generator-safety	home	Generator Safety
+utility-shutoffs	home	Utility Shutoffs
+downed-power-lines	home	Downed Power Lines

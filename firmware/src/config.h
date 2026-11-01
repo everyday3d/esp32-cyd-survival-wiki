@@ -71,7 +71,7 @@
 #define F_WEB_INDEX  "/web/index.html"
 
 // ---- Limits (no PSRAM on this board: keep RAM use modest) ----
-#define MAX_CATEGORIES   12
+#define MAX_CATEGORIES   16
 #define MAX_ARTICLES    400
 #define MAX_BOOKS        40
 #define MAX_DOC_BYTES  24576   // largest article / book part loaded at once

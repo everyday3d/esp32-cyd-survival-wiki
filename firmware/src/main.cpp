@@ -337,6 +337,23 @@ static void drawCatIcon(const String &id, int cx, int cy) {
   } else if (id == "signals") {
     tft.fillCircle(cx, cy, 3, w);
     for (int r = 7; r <= 13; r += 6) tft.drawCircle(cx, cy, r, w);
+  } else if (id == "weather") {          // cloud with a lightning bolt
+    tft.fillCircle(cx - 6, cy - 3, 6, w);
+    tft.fillCircle(cx + 3, cy - 6, 7, w);
+    tft.fillCircle(cx + 9, cy - 1, 5, w);
+    tft.fillRect(cx - 9, cy - 3, 22, 7, w);
+    tft.fillTriangle(cx + 1, cy + 1, cx - 5, cy + 11, cx + 1, cy + 8, TFT_YELLOW);
+    tft.fillTriangle(cx - 2, cy + 6, cx + 5, cy + 6, cx - 1, cy + 14, TFT_YELLOW);
+  } else if (id == "vehicles") {          // car
+    tft.fillRoundRect(cx - 12, cy - 1, 25, 9, 3, w);
+    tft.fillTriangle(cx - 8, cy - 1, cx - 4, cy - 8, cx + 4, cy - 8, w);
+    tft.fillTriangle(cx - 8, cy - 1, cx + 4, cy - 8, cx + 8, cy - 1, w);
+    tft.fillCircle(cx - 7, cy + 8, 3, C_BG); tft.drawCircle(cx - 7, cy + 8, 3, w);
+    tft.fillCircle(cx + 7, cy + 8, 3, C_BG); tft.drawCircle(cx + 7, cy + 8, 3, w);
+  } else if (id == "home") {              // house with a door
+    tft.fillTriangle(cx - 13, cy - 1, cx + 13, cy - 1, cx, cy - 12, w);
+    tft.fillRect(cx - 9, cy - 1, 19, 12, w);
+    tft.fillRect(cx - 2, cy + 4, 5, 7, C_BG);
   } else if (id == "basics") {
     tft.drawCircle(cx, cy, 11, w);
     tft.fillRect(cx - 1, cy - 7, 3, 9, w);
