@@ -54,16 +54,25 @@
 #define MARGIN       8
 
 // ---- Colors (RGB565) ----
-#define C_BG        0x0861   // near-black blue
-#define C_PANEL     0x18E3   // dark grey
-#define C_HEADER    0x2124
-#define C_TEXT      0xFFFF
-#define C_MUTED     0xAD55
-#define C_ACCENT    0xFD20   // safety orange
-#define C_WARN_BG   0x4A00   // dark amber
-#define C_WARN_BAR  0xFD20
-#define C_LINE      0x3186
-#define C_PRESS     0x4A69
+// Night mode (2.8" light sensor): every UI color goes through NC(), which maps it to a dim red
+// shade of the same brightness so the screen keeps your night vision.
+extern bool gNightUI;
+static inline uint16_t NC(uint16_t c) {
+  if (!gNightUI) return c;
+  uint16_t r = (c >> 8) & 0xF8, g = (c >> 3) & 0xFC, b = (c << 3) & 0xF8;
+  uint16_t l = (r * 77 + g * 150 + b * 29) >> 8;     // 0..255 luma
+  return (l & 0xF8) << 8;
+}
+#define C_BG        NC(0x0861)   // near-black blue
+#define C_PANEL     NC(0x18E3)   // dark grey
+#define C_HEADER    NC(0x2124)
+#define C_TEXT      NC(0xFFFF)
+#define C_MUTED     NC(0xAD55)
+#define C_ACCENT    NC(0xFD20)   // safety orange
+#define C_WARN_BG   NC(0x4A00)   // dark amber
+#define C_WARN_BAR  NC(0xFD20)
+#define C_LINE      NC(0x3186)
+#define C_PRESS     NC(0x4A69)
 
 // ---- Files on the SD card ----
 #define F_CONFIG     "/config.txt"

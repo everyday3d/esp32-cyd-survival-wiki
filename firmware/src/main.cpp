@@ -52,6 +52,7 @@ static bool wifiOn = true;
 static bool sleeping = false;
 static bool gpsShare = false;        // send our GPS position to nearby boards (off until the user turns it on)
 static bool nightAuto = false;       // dim the backlight when the room is dark (CYD light sensor)
+bool gNightUI = false;                 // night palette active (see NC() in config.h)
 static bool nightNow = false;        // currently dimmed by night mode
 static uint8_t lightMode = 0;        // flashlight: 0 white, 1 red, 2 SOS strobe
 static bool sdUp = false;
@@ -90,7 +91,7 @@ static const int ROWS_PER_PAGE = CONTENT_H / ROW_H;
 static uint16_t hexColor(const String &h) {
   if (h.length() < 7 || h[0] != '#') return C_ACCENT;
   long v = strtol(h.c_str() + 1, nullptr, 16);
-  return tft.color565((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF);
+  return NC(tft.color565((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF));
 }
 
 static int splitTabs(const String &line, String *out, int maxParts) {
@@ -276,7 +277,7 @@ static void drawWifiBadge() {
   tft.fillRect(x, y, bw, HEADER_H, C_HEADER);
   int cx = x + (SCR_W < 300 ? 12 : 16);
   int cy = (SCR_W < 300 ? 22 : 30);
-  uint16_t col = wifiOn ? 0x07E9 : C_LINE;
+  uint16_t col = wifiOn ? NC(0x07E9) : C_LINE;
   int rStart = (SCR_W < 300) ? 3 : 4;
   int rEnd = (SCR_W < 300) ? 11 : 14;
   int rStep = (SCR_W < 300) ? 4 : 5;
@@ -315,7 +316,7 @@ static void drawHeader(const String &title, bool back) {
 }
 
 static void drawCatIcon(const String &id, int cx, int cy) {
-  uint16_t w = TFT_WHITE;
+  uint16_t w = NC(TFT_WHITE);
   if (id == "water") {
     tft.fillCircle(cx, cy + 4, 8, w);
     tft.fillTriangle(cx - 8, cy + 2, cx + 8, cy + 2, cx, cy - 12, w);
@@ -334,7 +335,7 @@ static void drawCatIcon(const String &id, int cx, int cy) {
     tft.fillTriangle(cx + 7, cy, cx + 14, cy - 7, cx + 14, cy + 7, w);
   } else if (id == "navigation") {
     tft.drawCircle(cx, cy, 11, w);
-    tft.fillTriangle(cx - 4, cy, cx + 4, cy, cx, cy - 9, TFT_RED);
+    tft.fillTriangle(cx - 4, cy, cx + 4, cy, cx, cy - 9, NC(TFT_RED));
     tft.fillTriangle(cx - 4, cy, cx + 4, cy, cx, cy + 9, w);
   } else if (id == "signals") {
     tft.fillCircle(cx, cy, 3, w);
@@ -344,8 +345,8 @@ static void drawCatIcon(const String &id, int cx, int cy) {
     tft.fillCircle(cx + 3, cy - 6, 7, w);
     tft.fillCircle(cx + 9, cy - 1, 5, w);
     tft.fillRect(cx - 9, cy - 3, 22, 7, w);
-    tft.fillTriangle(cx + 1, cy + 1, cx - 5, cy + 11, cx + 1, cy + 8, TFT_YELLOW);
-    tft.fillTriangle(cx - 2, cy + 6, cx + 5, cy + 6, cx - 1, cy + 14, TFT_YELLOW);
+    tft.fillTriangle(cx + 1, cy + 1, cx - 5, cy + 11, cx + 1, cy + 8, NC(TFT_YELLOW));
+    tft.fillTriangle(cx - 2, cy + 6, cx + 5, cy + 6, cx - 1, cy + 14, NC(TFT_YELLOW));
   } else if (id == "vehicles") {          // car
     tft.fillRoundRect(cx - 12, cy - 1, 25, 9, 3, w);
     tft.fillTriangle(cx - 8, cy - 1, cx - 4, cy - 8, cx + 4, cy - 8, w);
@@ -633,7 +634,7 @@ static void drawSettings() {
   y += rowStep;
 
 #if PIN_LDR >= 0
-  drawSettingRow(y, "Auto night dim", "");
+  drawSettingRow(y, "Auto night mode", "");
   addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_NIGHT, nightAuto ? "On" : "Off");
   y += rowStep;
 #endif
@@ -758,7 +759,7 @@ static void drawMesh() {
     tft.drawString(ageText(m.ms), SCR_W - 6, ry + 2);
     if (m.mine) {                                              // like "Read": how many boards said they got it
       tft.setTextFont(1);
-      tft.setTextColor(m.ackN ? 0x07E0 : C_MUTED);
+      tft.setTextColor(m.ackN ? NC(0x07E0) : C_MUTED);
       tft.drawString(m.ackN ? "heard " + String(m.ackN) : String("sent"), SCR_W - 6, ry + 18);
       tft.setTextFont(2);
     }
@@ -807,7 +808,7 @@ static void drawNear() {
     int bx = SCR_W / 2 + 6;
     for (int b = 0; b < 4; b++) {
       int bh = 6 + b * 5;
-      uint16_t col = (b < bars) ? (bars >= 3 ? 0x07E0 : (bars == 2 ? 0xFFE0 : C_ACCENT)) : C_LINE;
+      uint16_t col = (b < bars) ? (bars >= 3 ? NC(0x07E0) : (bars == 2 ? NC(0xFFE0) : C_ACCENT)) : C_LINE;
       tft.fillRect(bx + b * 8, y + 26 - bh, 6, bh, col);
     }
     tft.setTextDatum(MR_DATUM);
@@ -877,7 +878,7 @@ static void drawRadar() {
     static const int STEPS[] = {100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000};
     int ring = STEPS[9];
     for (int s : STEPS) if (maxD <= s) { ring = s; break; }
-    tft.fillCircle(cx, cy, 4, 0x07E0);                         // you
+    tft.fillCircle(cx, cy, 4, NC(0x07E0));                         // you
     tft.setTextFont(1); tft.setTextDatum(TL_DATUM);
     for (int i = 0; i < n; i++) {
       if (!pl[i].hasPos) continue;
@@ -1007,6 +1008,7 @@ static bool mapJpgOut(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bm
   int x0 = max<int>(x, mapClipX0), y0 = max<int>(y, mapClipY0);
   int x1 = min<int>(x + w, mapClipX1), y1 = min<int>(y + h, mapClipY1);
   if (x1 <= x0 || y1 <= y0) return true;                    // block is outside the map area
+  if (gNightUI) for (int i = 0; i < w * h; i++) bmp[i] = NC(bmp[i]);   // keep tiles red at night
   for (int yy = y0; yy < y1; yy++) tft.pushImage(x0, yy, x1 - x0, 1, bmp + (yy - y) * w + (x0 - x));
   return true;
 }
@@ -1029,9 +1031,9 @@ static void mapDrawTiles() {
   }
   // crosshair at the centre and the centre's coordinates
   int cx = SCR_W / 2, cy = CONTENT_Y + CONTENT_H / 2;
-  tft.drawCircle(cx, cy, 7, TFT_RED);
-  tft.drawFastHLine(cx - 11, cy, 23, TFT_RED);
-  tft.drawFastVLine(cx, cy - 11, 23, TFT_RED);
+  tft.drawCircle(cx, cy, 7, NC(TFT_RED));
+  tft.drawFastHLine(cx - 11, cy, 23, NC(TFT_RED));
+  tft.drawFastVLine(cx, cy - 11, 23, NC(TFT_RED));
   double lat, lon;
   mapPxToLatLon(mapCx, mapCy, mapZ, lat, lon);
   char buf[40];
@@ -1350,7 +1352,11 @@ static void nightLoop(uint32_t now) {
   bool wasNight = nightNow;
   if (!nightNow && v > LDR_DARK_ADC) nightNow = true;
   else if (nightNow && v < LDR_LIGHT_ADC) nightNow = false;
-  if (nightNow != wasNight) setBacklight(nightNow ? min<int>(brightness, 25) : brightness);
+  if (nightNow != wasNight) {
+    setBacklight(nightNow ? min<int>(brightness, 25) : brightness);
+    gNightUI = nightNow;
+    redraw();
+  }
 }
 #else
 static void nightLoop(uint32_t) {}
@@ -1550,7 +1556,7 @@ static void onButton(uint16_t id) {
     case B_NIGHT:
       nightAuto = !nightAuto;
       prefs.putBool("night", nightAuto);
-      if (!nightAuto && nightNow) { nightNow = false; setBacklight(brightness); }
+      if (!nightAuto && nightNow) { nightNow = false; gNightUI = false; setBacklight(brightness); }
       saveBackup();
       redraw();
       break;
