@@ -49,7 +49,7 @@ The antenna is a passive ceramic one. It has no power wire; it plugs into the sm
 
 ## 6. First run
 - Take the device outside with a clear view of the sky. A first fix can take a few minutes.
-- Open the **Map** and tap **Me** once it has a fix, or turn on position sharing in Settings to use the radar.
+- Open the **Map** and tap **Me** once it has a fix, or go to Mesh, then Nearby, then Radar. The **Share** button there turns on sharing your position with nearby boards.
 - The module's small LED blinks when it has a fix (some boards also provide a PPS pin; it is not needed).
 
 ## Notes
