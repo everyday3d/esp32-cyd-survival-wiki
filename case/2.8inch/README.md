@@ -84,3 +84,6 @@ I dialed this in on my Bambu Lab printers (X1-Carbon and A1 Mini), but any moder
 
 rev2 fixes the fit found in print tests: walls 2.4 mm taller, 0.5 mm lid lip clearance, board seated on corner platforms, a microSD opening in the +Y wall, SurvivalWiki on the lid and a bigger BOXERDAWG3D on the base. Download [ESP32_28_Touch_Case_rev2.3mf](ESP32_28_Touch_Case_rev2.3mf). For a GPS version see [../2.8inch-gps/](../2.8inch-gps/README.md). Not yet test-printed.
 
+
+![2.8 inch Plain Case rev2](2.8inch_Plain_Case_rev2.png)
+
