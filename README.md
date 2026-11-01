@@ -127,7 +127,7 @@ screenshots/     UI preview screenshots
 Here is a quick look at the features and tools packed into the Survival Wiki:
 
 ### 1. Touchscreen Emergency Dashboard (3.5" & 2.8")
-[![Touch Dashboard Spotlight](docs/screenshots/01_touch_dashboard_spotlight.png)](docs/screenshots/01_touch_dashboard_spotlight.png)
+[![Stay Prepared: the Survival Wiki on a 2.8 inch touchscreen](docs/screenshots/01_touch_dashboard_cover.png)](docs/screenshots/01_touch_dashboard_cover.png)
 - **Triage Tile and Category Tiles**: a red Triage tile first, then 1-tap access to every category (First Steps, Water, Fire, Shelter, First Aid, Food, Navigation and more) on pages you flip with arrows.
 - **Live Status Bar**: Shows Wi-Fi hotspot state, connected devices, battery voltage, and microSD status.
 - **Fast Card Reading**: Instant category navigation reads guides directly off your microSD card without lag.
