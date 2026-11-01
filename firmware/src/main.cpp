@@ -668,7 +668,7 @@ static void drawSettings() {
   y += rowStep;
 
 #if PIN_LDR >= 0
-  drawSettingRow(y, "Auto night mode", "");
+  drawSettingRow(y, "Auto night dim", "");
   addBtn(SCR_W - btnW - 6, y + 2, btnW, btnH, B_NIGHT, nightAuto ? "On" : "Off");
   y += rowStep;
 #endif
@@ -1672,8 +1672,6 @@ static void nightLoop(uint32_t now) {
   else if (nightNow && v < LDR_LIGHT_ADC) nightNow = false;
   if (nightNow != wasNight) {
     setBacklight(nightNow ? min<int>(brightness, 25) : brightness);
-    gNightUI = nightNow;
-    redraw();
   }
 }
 #else
