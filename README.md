@@ -19,7 +19,7 @@ No internet. No cell service. No subscription. Power it up and tap.
 
 | | |
 | :--- | :--- |
-| 📖 **99 field guides** | Water, fire, shelter, first aid, weather, vehicles, home emergencies, radio, kids and family. Plain language, big type, illustrated. |
+| 📖 **118 field guides** | Water, fire, shelter, first aid, weather, vehicles, home emergencies, radio, kids and family. Plain language, big type, illustrated. |
 | 📚 **FM 21-76** | The complete 233-page US Army Survival Manual, one tap away. |
 | 💬 **Mesh chat** | Text other boards with no router and no towers. Messages hop from board to board, and you see who heard you. |
 | 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom right on the screen. |
@@ -69,7 +69,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 
 ### 2. Illustrated Field Guides & Clear Diagrams
 [![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
-- **99 Illustrated Guides**: Step-by-step visuals for water filtration, solar stills, traps, splints, and emergency shelters.
+- **118 Illustrated Guides**: Step-by-step visuals for water filtration, solar stills, traps, splints, and emergency shelters.
 - **High-Contrast Dark Theme**: Easy to read in direct sunlight, and preserves your night vision in the dark.
 - **Smooth Touch Paging**: Clean touch paging with percentage progress, fast-jump controls, and instant return to the index.
 - **Quick Trauma Reference**: Fast-access medical guides for severe bleeding, hypothermia, CPR, and shock.
@@ -84,7 +84,7 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 ### 4. Offline Wi-Fi Hotspot for Phones & Tablets
 [![Wireless Smartphone Hub Spotlight](docs/screenshots/04_wifi_portal_search_spotlight.png)](docs/screenshots/04_wifi_portal_search_spotlight.png)
 - **No Apps Required**: Scan the on-screen QR code with your phone or tablet to join the `SurvivalWiki` hotspot.
-- **Fast Offline Search**: Search all 99 guides and FM 21-76 chapters right from your phone's browser.
+- **Fast Offline Search**: Search all 118 guides and FM 21-76 chapters right from your phone's browser.
 - **Night-Vision Theme**: Gentle red/dark theme won't ruin night vision during power outages.
 - **Share with Friends**: Up to 8 phones or tablets can read different manuals at the same time.
 

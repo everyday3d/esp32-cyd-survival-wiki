@@ -19,6 +19,7 @@ fire-lays	fire	Fire Lays
 starting-fire	fire	Ways to Start a Fire
 fire-safety	fire	Fire Safety
 cooking-fire	fire	Cooking Over a Fire
+wet-weather-fire	fire	Starting a Fire in Wet Weather
 shelter-basics	shelter	Shelter Basics and Site Choice
 nuclear-get-inside	basics	Nuclear Emergency: Get Inside, Stay Inside, Stay Tuned
 nuclear-decon	basics	Fallout: Cleaning Up and Staying Safe
@@ -29,6 +30,7 @@ tarp-shelters	shelter	Tarp and Poncho Shelters
 cold-weather	shelter	Cold Weather and Snow Shelters
 hot-weather	shelter	Desert and Hot Weather Shelter
 sleeping-warm	shelter	Sleeping Warm
+snow-cave	shelter	Snow Cave and Quinzee
 first-aid-priorities	firstaid	First Aid Priorities
 cpr	firstaid	CPR
 severe-bleeding	firstaid	Severe Bleeding
@@ -46,11 +48,18 @@ bites-stings	firstaid	Ticks, Insect Stings and Spider Bites
 seizures	firstaid	Seizures
 diarrhea-vomiting	firstaid	Diarrhea, Vomiting and Rehydration
 eye-injuries	firstaid	Eye Injuries
+drowning	firstaid	Drowning and Water Rescue
+electric-shock	firstaid	Electric Shock
+poisoning	firstaid	Poisoning and Overdose
+diabetic-emergency	firstaid	Diabetic Emergency
+stroke-heart-attack	firstaid	Stroke and Heart Attack
+spinal-injury	firstaid	Spinal Injury
 food-priorities	food	Food in a Survival Situation
 foraging-safely	food	Foraging Plants Safely
 insects-fishing	food	Insects, Fishing and Small Game
 food-storage	food	Keeping Food and Camp Safe
 emergency-food	food	Emergency Food Storage
+food-after-outage	food	Food Safety After an Outage
 shadow-stick	navigation	Shadow-Stick Method
 watch-method	navigation	Finding Direction with a Watch
 stars	navigation	Navigating by the Stars
@@ -91,6 +100,7 @@ carbon-monoxide	home	Carbon Monoxide
 generator-safety	home	Generator Safety
 utility-shutoffs	home	Utility Shutoffs
 downed-power-lines	home	Downed Power Lines
+72-hour-kit	home	72-Hour Emergency Kit
 radio-basics	radio	Choosing an Emergency Radio
 frs-gmrs	radio	FRS and GMRS Walkie-Talkies
 ham-radio	radio	Ham Radio in an Emergency
@@ -105,3 +115,5 @@ kids-calm	family	Helping Kids Cope
 family-plan	family	Family Plan for Kids
 lost-child	family	Lost or Missing Child
 elders-special-needs	family	Older Adults and Special Needs
+emergency-toilet	hygiene	Emergency Toilet and Waste
+handwashing	hygiene	Handwashing with Little Water
