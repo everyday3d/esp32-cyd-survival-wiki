@@ -4,15 +4,32 @@
 [![3D Printable Case](https://img.shields.io/badge/3D%20Case-Snap--Fit%20(No%20Supports)-blue?style=for-the-badge&logo=bambulab)](case/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-Hey makers! Jimmy here from BoxerDawg 3D.
+<p align="center">
+  <img src="docs/preview_real_hardware_in_hand.jpg" alt="The Survival Wiki running on a 3.5 inch touchscreen" width="520">
+</p>
 
-I built the **ESP32 CYD Survival Wiki** as a 100% offline emergency knowledge base and wireless field guide you can throw in your pack or keep on your shop bench. It turns inexpensive ESP32 touchscreen display boards into dedicated, grid-down survival tools without needing cell towers, internet access, or subscriptions.
+<h3 align="center">When the grid goes down, the answers don't have to.</h3>
 
-Whether you're running the pocket-sized **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** or the larger **3.5" Hosyond Touch Display (`E32R35T`)**, you're completely covered:
-- **On the touchscreen:** Tap through 13 emergency categories, 99 illustrated field guides, and the complete 233-page **US Army Survival Manual (FM 21-76)** with smooth paging and crisp diagrams.
-- **On your phone or tablet:** Turn on the built-in Wi-Fi hotspot (`SurvivalWiki`) and anyone nearby can connect to read guides, search topics, or download the full survival PDF straight to their device.
-- **100% grid-down ready:** Everything runs off a standard FAT32 microSD card and any 5V USB battery bank or phone charger.
-- **Support-free 3D printable cases:** Custom 2-piece snap-fit cases modeled in Blender for both screen sizes—they print flat on your build plate and snap together without screws or glue.
+<p align="center">
+A survival library, a text mesh and a Wi-Fi hotspot, all on an inexpensive touchscreen board you can toss in a pack.<br>
+No internet. No cell service. No subscription. Power it up and tap.
+</p>
+
+## What you get
+
+| | |
+| :--- | :--- |
+| 📖 **99 field guides** | Water, fire, shelter, first aid, weather, vehicles, home emergencies, radio, kids and family. Plain language, big type, illustrated. |
+| 📚 **FM 21-76** | The complete 233-page US Army Survival Manual, one tap away. |
+| 💬 **Mesh chat** | Text other boards with no router and no towers. Messages hop from board to board, and you see who heard you. |
+| 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom right on the screen. |
+| 📱 **Phone hotspot** | The board makes its own Wi-Fi network, so anyone nearby can read, search and chat from a phone. |
+| 🔦 **Flashlight and SOS** | White light, red light to keep your night vision, and a Morse SOS strobe. |
+| 🖨️ **Printable cases** | Snap-fit cases for both screen sizes, no supports and no screws. GPS versions are in the works. |
+
+**Flash it from your browser in one click:** [everyday3d.github.io/esp32-cyd-survival-wiki](https://everyday3d.github.io/esp32-cyd-survival-wiki/)
+
+Works on the **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the **3.5" Hosyond (`E32R35T`)**. Everything lives on a normal FAT32 microSD card and runs off any 5V USB battery bank or phone charger.
 
 ---
 
