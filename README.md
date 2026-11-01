@@ -19,13 +19,15 @@ No internet. No cell service. No subscription. Power it up and tap.
 
 | | |
 | :--- | :--- |
-| 📖 **118 field guides** | Water, fire, shelter, first aid, weather, vehicles, home emergencies, radio, kids and family. Plain language, big type, illustrated. |
+| 📖 **118 field guides** | Water, fire, shelter, first aid, weather, vehicles, home, radio, kids and family, hygiene and more, in 15 categories. Plain language, big type. |
 | 📚 **FM 21-76** | The complete 233-page US Army Survival Manual, one tap away. |
+| 🩺 **Triage assistant** | Tap what is wrong and two or three taps take you to the right guide. |
 | 💬 **Mesh chat** | Text other boards with no router and no towers. Messages hop from board to board, and you see who heard you. |
-| 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom right on the screen. |
+| 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom on the screen. Mark waypoints and see how far away they are. |
+| 📍 **GPS (optional)** | With a GPS module: your position and a breadcrumb track on the map, positions shared over the mesh, and a radar screen. New, still being tested. |
 | 📱 **Phone hotspot** | The board makes its own Wi-Fi network, so anyone nearby can read, search and chat from a phone. |
 | 🔦 **Flashlight and SOS** | White light, red light to keep your night vision, and a Morse SOS strobe. |
-| 🖨️ **Printable cases** | Snap-fit cases for both screen sizes, no supports and no screws. GPS versions are in the works. |
+| 🖨️ **Printable cases** | Snap-fit cases for both screen sizes, plus a 2.8" GPS case. No supports and no screws. |
 
 **Flash it from your browser in one click:** [everyday3d.github.io/esp32-cyd-survival-wiki](https://everyday3d.github.io/esp32-cyd-survival-wiki/)
 
@@ -126,10 +128,10 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 
 ### 1. Touchscreen Emergency Dashboard (3.5" & 2.8")
 [![Touch Dashboard Spotlight](docs/screenshots/01_touch_dashboard_spotlight.png)](docs/screenshots/01_touch_dashboard_spotlight.png)
-- **8 Instant Emergency Tiles**: 1-tap access for First Steps, Water, Fire, Shelter, First Aid, Food, Navigation, and Signals & Rescue.
+- **Triage Tile and Category Tiles**: a red Triage tile first, then 1-tap access to every category (First Steps, Water, Fire, Shelter, First Aid, Food, Navigation and more) on pages you flip with arrows.
 - **Live Status Bar**: Shows Wi-Fi hotspot state, connected devices, battery voltage, and microSD status.
 - **Fast Card Reading**: Instant category navigation reads guides directly off your microSD card without lag.
-- **Easy Bottom Bar**: Jump between Books, the Wi-Fi hotspot, the flashlight, Mesh messaging, and Setup with one touch.
+- **Easy Bottom Bar**: Jump between Books, the Wi-Fi hotspot, the flashlight, Mesh messaging, the Map, and Setup with one touch.
 
 ### 2. Illustrated Field Guides & Clear Diagrams
 [![Field Guide Reader Spotlight](docs/screenshots/02_field_guide_reader_spotlight.png)](docs/screenshots/02_field_guide_reader_spotlight.png)
