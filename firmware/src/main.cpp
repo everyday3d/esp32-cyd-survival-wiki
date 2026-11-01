@@ -19,6 +19,7 @@
 #include "web.h"
 #include "mesh.h"
 #include "gps.h"
+#include "triage.h"
 #include "qrcodegen.h"
 
 TFT_eSPI tft;
@@ -37,7 +38,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP, SC_RADAR };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP, SC_RADAR, SC_TRIAGE, SC_WPS };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0, homePage = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -69,6 +70,7 @@ static uint32_t lastTouchMs = 0, lastStatusMs = 0;
 static void startMesh();             // (re)start mesh messaging on the right radio channel (defined below)
 static void saveBackup();            // settings backup to the SD card (defined below)
 static void restoreBackup();
+static void redraw();
 static int lastClients = -1;
 
 // ---------------------------------------------------------------- buttons
@@ -76,8 +78,9 @@ enum BtnId : uint16_t {
   B_NONE = 0, B_BACK, B_UP, B_DOWN, B_PREV, B_NEXT, B_LIBRARY, B_WIFI, B_SETTINGS,
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
   B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
-  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_RADAR, B_GPS_SHARE, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT,
+  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_RADAR, B_GPS_SHARE, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT, B_TRIAGE, B_MAP_ME, B_MAP_MARK, B_MAP_PTS, B_WP_DEL, B_WP_CLEAR, B_TRK_CLEAR,
   B_QUICK_BASE = 60,           // 60..69: quick messages
+  B_TRI_BASE = 70,             // 70..74: triage answers
   B_TILE = 100, B_ROW = 200,
   B_KEY_BASE = 1000            // 1000 + character: on-screen keyboard keys
 };
@@ -86,6 +89,12 @@ struct Btn { int16_t x, y, w, h; uint16_t id; String label; uint8_t icon; bool e
 static std::vector<Btn> btns;
 
 static const int ROWS_PER_PAGE = CONTENT_H / ROW_H;
+static_assert(B_TRK_CLEAR < B_QUICK_BASE, "button ids overlap the quick-message range");
+
+static bool articleFromTriage = false;               // the open guide came from the triage assistant
+static const TriNode *triCur = &TRIAGE[0];
+static const TriNode *triStack[8];
+static int triDepth = 0;
 
 // ---------------------------------------------------------------- helpers
 static uint16_t hexColor(const String &h) {
@@ -376,12 +385,36 @@ static void drawCatIcon(const String &id, int cx, int cy) {
   }
 }
 
+static void drawTriageTile(int x, int y, int tw, int th) {
+  btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)B_TRIAGE, "", I_NONE, true});
+  uint16_t red = NC(tft.color565(190, 40, 40));
+  tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), red);
+  int cx = SCR_W < 300 ? x + 18 : x + 24, cy = SCR_W < 300 ? y + th / 2 : y + 26;
+  int a = SCR_W < 300 ? 9 : 12, b = SCR_W < 300 ? 3 : 4;
+  tft.fillRect(cx - a, cy - b, 2 * a + 1, 2 * b + 1, NC(TFT_WHITE));
+  tft.fillRect(cx - b, cy - a, 2 * b + 1, 2 * a + 1, NC(TFT_WHITE));
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(NC(TFT_WHITE));
+  if (SCR_W < 300) {
+    tft.setTextFont(2);
+    tft.drawString("Triage", x + 34, y + 8);
+    tft.setTextFont(1);
+    tft.drawString("What's wrong?", x + 35, y + 26);
+  } else {
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.drawString("Triage", x + 10, y + th - 40);
+    tft.setTextFont(2);
+    tft.drawString("What's wrong?", x + 10, y + th - 20);
+  }
+}
+
 static void drawHome() {
   btns.clear();
   tft.fillScreen(C_BG);
   drawHeader("SURVIVAL WIKI", false);
   const int cols = 2, rows = 4, gap = TILE_GAP, perPage = cols * rows;
-  int vis[MAX_CATEGORIES], nVis = 0;
+  int vis[MAX_CATEGORIES + 1], nVis = 0;
+  vis[nVis++] = -2;                                    // the Triage tile comes first
   for (int i = 0; i < nCats; i++) if (i != goodboyIdx) vis[nVis++] = i;   // goodboy is the hidden easter egg
   int pages = max(1, (nVis + perPage - 1) / perPage);
   if (homePage >= pages) homePage = pages - 1;
@@ -400,6 +433,7 @@ static void drawHome() {
     int i = vis[k], slot = k - homePage * perPage;
     int x = gap + (slot % cols) * (tw + gap);
     int y = CONTENT_Y + gap + (slot / cols) * (th + gap);
+    if (i == -2) { drawTriageTile(x, y, tw, th); continue; }
     btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)(B_TILE + i), "", I_NONE, true});
     tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), cats[i].color);
     if (SCR_W < 300) {
@@ -1003,6 +1037,145 @@ static bool mapLoadCenter() {
   return true;
 }
 
+// ---- waypoints (SD: /maps/waypoints.txt) and GPS track (SD: /maps/track.csv) ----
+struct Waypoint { char name[12]; double lat, lon; };
+static Waypoint wps[16];
+static int nWps = 0;
+static bool wpDelMode = false;
+static uint32_t wpClearMs = 0, trkClearMs = 0;      // first tap arms "Clear", second tap within 3 s does it
+static const int TRK_MAX = 200;
+struct TrkPt { float lat, lon; };
+static TrkPt trk[TRK_MAX];
+static int trkN = 0;                                // points held (oldest first, shifted out when full)
+static bool trkLoaded = false;
+static char mapToast[24] = "";
+static uint32_t mapToastMs = 0;
+
+static int wpMax() { return min<int>(16, ROWS_PER_PAGE); }
+
+static void wpLoad() {
+  nWps = 0;
+  if (!sdUp) return;
+  File f = SD.open("/maps/waypoints.txt", FILE_READ);
+  if (!f) return;
+  while (f.available() && nWps < wpMax()) {
+    String l = readLine(f);
+    String p[3];
+    if (!l.length() || splitTabs(l, p, 3) < 3) continue;
+    Waypoint &w = wps[nWps];
+    snprintf(w.name, sizeof(w.name), "%s", p[0].c_str());
+    w.lat = p[1].toDouble(); w.lon = p[2].toDouble();
+    nWps++;
+  }
+  f.close();
+}
+
+static void wpSave() {
+  if (!sdUp) return;
+  SD.remove("/maps/waypoints.txt");
+  File f = SD.open("/maps/waypoints.txt", FILE_WRITE);
+  if (!f) return;
+  for (int i = 0; i < nWps; i++) f.printf("%s\t%.6f\t%.6f\n", wps[i].name, wps[i].lat, wps[i].lon);
+  f.close();
+}
+
+static void trkLoad() {
+  trkLoaded = true;
+  trkN = 0;
+  if (!sdUp) return;
+  File f = SD.open("/maps/track.csv", FILE_READ);
+  if (!f) return;
+  while (f.available()) {
+    String l = readLine(f);
+    float a, b;
+    if (sscanf(l.c_str(), "%f,%f", &a, &b) != 2) continue;
+    if (trkN == TRK_MAX) { memmove(trk, trk + 1, sizeof(TrkPt) * (TRK_MAX - 1)); trkN--; }
+    trk[trkN++] = {a, b};
+  }
+  f.close();
+}
+
+static void trkClear() {
+  trkN = 0;
+  if (sdUp) SD.remove("/maps/track.csv");
+}
+
+// Called from loop(): drop a breadcrumb every 15 m of travel while the GPS has a fix.
+static void trkLoop(uint32_t now) {
+  static uint32_t next = 0;
+  if ((int32_t)(now - next) < 0) return;
+  next = now + 5000;
+  GpsFix g = gpsGet();
+  if (!g.valid) return;
+  if (!trkLoaded) trkLoad();
+  if (trkN && geoDistM(trk[trkN - 1].lat, trk[trkN - 1].lon, g.lat, g.lon) < 15.0) return;
+  if (trkN == TRK_MAX) { memmove(trk, trk + 1, sizeof(TrkPt) * (TRK_MAX - 1)); trkN--; }
+  trk[trkN++] = {(float)g.lat, (float)g.lon};
+  if (sdUp) {
+    File f = SD.open("/maps/track.csv", FILE_APPEND);
+    if (f) {
+      if (f.size() < 150000) f.printf("%.6f,%.6f\n", g.lat, g.lon);
+      f.close();
+    }
+  }
+}
+
+static bool mapToScreen(double lat, double lon, int &sx, int &sy) {
+  int32_t px, py;
+  mapLatLonToPx(lat, lon, mapZ, px, py);
+  sx = px - (mapCx - SCR_W / 2);
+  sy = CONTENT_Y + py - (mapCy - CONTENT_H / 2);
+  return sx >= -6 && sx < SCR_W + 6 && sy >= CONTENT_Y - 6 && sy < CONTENT_Y + CONTENT_H + 6;
+}
+
+static void mapDrawLabel(const char *s, int x, int y, uint16_t col) {
+  tft.setTextFont(1);
+  tft.setTextDatum(TL_DATUM);
+  int w = tft.textWidth(s) + 4;
+  x = constrain(x, 0, SCR_W - w);
+  y = constrain(y, CONTENT_Y, CONTENT_Y + CONTENT_H - 11);
+  tft.fillRect(x, y, w, 10, C_BG);
+  tft.setTextColor(col);
+  tft.drawString(s, x + 2, y + 1);
+}
+
+static void mapDrawOverlays() {
+  int sx, sy, px = 0, py = 0;
+  bool prev = false;
+  uint16_t tcol = NC(TFT_CYAN);
+  for (int i = 0; i < trkN; i++) {                      // breadcrumb trail
+    bool on = mapToScreen(trk[i].lat, trk[i].lon, sx, sy);
+    if (prev && (on || (px >= 0 && px < SCR_W)) && abs(sx - px) < 400 && abs(sy - py) < 400) {
+      tft.drawLine(px, py, sx, sy, tcol);
+    } else if (on) {
+      tft.drawPixel(sx, sy, tcol);
+    }
+    px = sx; py = sy; prev = true;
+  }
+  for (int i = 0; i < nWps; i++) {                      // waypoints
+    if (!mapToScreen(wps[i].lat, wps[i].lon, sx, sy)) continue;
+    uint16_t c = NC(TFT_MAGENTA);
+    tft.fillTriangle(sx, sy - 6, sx - 5, sy, sx + 5, sy, c);
+    tft.fillTriangle(sx, sy + 6, sx - 5, sy, sx + 5, sy, c);
+    mapDrawLabel(wps[i].name, sx + 7, sy - 5, NC(TFT_WHITE));
+  }
+  MeshPeer pl[8];
+  int n = meshPeerList(pl, 8);
+  for (int i = 0; i < n; i++) {                         // boards that share their position
+    if (!pl[i].hasPos || pl[i].posAgeS > 300) continue;
+    if (!mapToScreen(pl[i].lat, pl[i].lon, sx, sy)) continue;
+    tft.fillCircle(sx, sy, 5, NC(TFT_YELLOW));
+    tft.drawCircle(sx, sy, 5, NC(TFT_BLACK));
+    mapDrawLabel(pl[i].name, sx + 7, sy - 5, NC(TFT_YELLOW));
+  }
+  GpsFix g = gpsGet();
+  if (g.valid && mapToScreen(g.lat, g.lon, sx, sy)) {   // you
+    tft.fillCircle(sx, sy, 5, NC(0x07E0));
+    tft.drawCircle(sx, sy, 6, NC(TFT_WHITE));
+  }
+  if (mapToast[0] && millis() - mapToastMs < 2500) mapDrawLabel(mapToast, 4, CONTENT_Y + 3, NC(TFT_WHITE));
+}
+
 static int mapClipX0, mapClipY0, mapClipX1, mapClipY1;
 static bool mapJpgOut(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bmp) {
   int x0 = max<int>(x, mapClipX0), y0 = max<int>(y, mapClipY0);
@@ -1029,6 +1202,7 @@ static void mapDrawTiles() {
       TJpgDec.drawFsJpg(tx * 256 - left, CONTENT_Y + ty * 256 - top, path, SD);   // a missing tile just stays grey
     }
   }
+  mapDrawOverlays();
   // crosshair at the centre and the centre's coordinates
   int cx = SCR_W / 2, cy = CONTENT_Y + CONTENT_H / 2;
   tft.drawCircle(cx, cy, 7, NC(TFT_RED));
@@ -1062,9 +1236,13 @@ static void drawMap() {
   } else {
     mapDrawTiles();
   }
+  if (!trkLoaded) trkLoad();
+  GpsFix gf = gpsGet();
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_MAP_OUT, "-", I_NONE, mapReady && mapZ > mapMinZ},
-                 {B_MAP_IN, "+", I_NONE, mapReady && mapZ < mapMaxZ}};
-  drawFooter(f, 3);
+                 {B_MAP_IN, "+", I_NONE, mapReady && mapZ < mapMaxZ},
+                 {B_MAP_ME, "Me", I_NONE, mapReady && gf.valid},
+                 {B_MAP_MARK, "Mark", I_NONE, mapReady}, {B_MAP_PTS, "Pts", I_NONE, true}};
+  drawFooter(f, 6);
 }
 
 // Drag to pan: the map jumps to the new spot when you lift your finger.
@@ -1088,9 +1266,144 @@ static void mapTouch(bool down, int tx, int ty) {
   }
 }
 
+// ---------------------------------------------------------------- triage assistant
+static void drawTriage() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Triage", true);
+  const TriNode &nd = *triCur;
+  tft.setTextFont(2);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(C_TEXT);
+  // wrap the question on word boundaries
+  String q = nd.q, line;
+  int y = CONTENT_Y + 8, lines = 0;
+  while (q.length() && lines < 3) {
+    int sp = q.indexOf(' ');
+    String w = sp < 0 ? q : q.substring(0, sp);
+    q = sp < 0 ? "" : q.substring(sp + 1);
+    String tryLine = line.length() ? line + " " + w : w;
+    if (tft.textWidth(tryLine) > SCR_W - 16 && line.length()) {
+      tft.drawString(line, 8, y); y += 18; lines++; line = w;
+    } else {
+      line = tryLine;
+    }
+  }
+  if (line.length() && lines < 3) { tft.drawString(line, 8, y); y += 18; }
+  y += 6;
+  int avail = SCR_H - FOOTER_H - y - 4;
+  int bh = min(SCR_W < 300 ? 40 : 54, avail / max<int>(1, nd.n) - 4);
+  for (int i = 0; i < nd.n; i++) addBtn(8, y + i * (bh + 4), SCR_W - 16, bh, B_TRI_BASE + i, nd.o[i].label);
+  FootDef f[] = {{B_BACK, triDepth ? "Back" : "Home", I_LEFT, true}};
+  drawFooter(f, 1);
+}
+
+static String triTitle(const String &id) {
+  File f = SD.open(F_CATALOG, FILE_READ);
+  String title = id;
+  if (!f) return title;
+  while (f.available()) {
+    String l = readLine(f);
+    String p[3];
+    if (l.length() && l[0] != '#' && splitTabs(l, p, 3) >= 3 && p[0] == id) { title = asciiOnly(p[2]); break; }
+  }
+  f.close();
+  return title;
+}
+
+static void triPick(int i) {
+  if (i < 0 || i >= triCur->n) return;
+  const char *to = triCur->o[i].to;
+  if (!strncmp(to, "g:", 2)) {
+    Entry e{String(to + 2), triTitle(String(to + 2)), ""};
+    articleFromTriage = true;
+    openArticle(e);
+    return;
+  }
+  for (int k = 0; k < N_TRIAGE; k++) {
+    if (!strcmp(TRIAGE[k].id, to)) {
+      if (triDepth < 8) triStack[triDepth++] = triCur;
+      triCur = &TRIAGE[k];
+      drawTriage();
+      return;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- waypoint list
+static String wpInfo(const Waypoint &w) {
+  GpsFix g = gpsGet();
+  char b[40];
+  if (!g.valid) {
+    snprintf(b, sizeof(b), "%s  %.4f, %.4f", w.name, w.lat, w.lon);
+  } else {
+    double d = geoDistM(g.lat, g.lon, w.lat, w.lon), br = geoBearing(g.lat, g.lon, w.lat, w.lon);
+    static const char *DIR[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+    const char *dir = DIR[((int)((br + 22.5) / 45.0)) & 7];
+    if (d < 1000) snprintf(b, sizeof(b), "%s  %d m %s", w.name, (int)d, dir);
+    else snprintf(b, sizeof(b), "%s  %.1f km %s", w.name, d / 1000.0, dir);
+  }
+  return String(b);
+}
+
+static void drawWps() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader(wpDelMode ? "Tap to delete" : "Waypoints", true);
+  if (!nWps) {
+    tft.setTextFont(2);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(C_MUTED);
+    tft.drawString("No waypoints yet.", SCR_W / 2, CONTENT_Y + 50);
+    tft.drawString("Centre the map on a spot", SCR_W / 2, CONTENT_Y + 78);
+    tft.drawString("and tap Mark.", SCR_W / 2, CONTENT_Y + 98);
+  }
+  for (int i = 0; i < nWps; i++) addBtn(4, CONTENT_Y + i * ROW_H, SCR_W - 8, ROW_H - 3, B_ROW + i, wpInfo(wps[i]));
+  bool armedW = millis() - wpClearMs < 3000, armedT = millis() - trkClearMs < 3000;
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_WP_DEL, wpDelMode ? "Done" : "Del", I_NONE, nWps > 0},
+                 {B_WP_CLEAR, armedW ? "Sure?" : "Clr pts", I_NONE, nWps > 0},
+                 {B_TRK_CLEAR, armedT ? "Sure?" : "Clr trk", I_NONE, trkN > 0}};
+  drawFooter(f, 4);
+}
+
+static void wpRowTap(int i) {
+  if (i < 0 || i >= nWps) return;
+  if (wpDelMode) {
+    for (int k = i; k < nWps - 1; k++) wps[k] = wps[k + 1];
+    nWps--;
+    wpSave();
+    if (!nWps) wpDelMode = false;
+    drawWps();
+    return;
+  }
+  if (!mapReady) mapLoadCenter();
+  if (mapReady) mapLatLonToPx(wps[i].lat, wps[i].lon, mapZ, mapCx, mapCy);
+  screen = SC_MAP;
+  redraw();
+}
+
+static void wpMark() {
+  double lat, lon;
+  mapPxToLatLon(mapCx, mapCy, mapZ, lat, lon);
+  if (nWps >= wpMax()) { snprintf(mapToast, sizeof(mapToast), "List full (%d)", wpMax()); }
+  else {
+    int next = 1;
+    for (int i = 0; i < nWps; i++) { int n = atoi(wps[i].name + 2); if (!strncmp(wps[i].name, "WP", 2) && n >= next) next = n + 1; }
+    Waypoint &w = wps[nWps++];
+    snprintf(w.name, sizeof(w.name), "WP%d", next);
+    w.lat = lat; w.lon = lon;
+    wpSave();
+    snprintf(mapToast, sizeof(mapToast), "Saved %s", w.name);
+  }
+  mapToastMs = millis();
+  mapDrawTiles();
+}
+
 static void redraw() {
   switch (screen) {
     case SC_MAP: drawMap(); break;
+    case SC_TRIAGE: drawTriage(); break;
+    case SC_WPS: drawWps(); break;
     case SC_NEAR: drawNear(); break;
     case SC_RADAR: drawRadar(); break;
     case SC_MESH: meshMarkRead(); drawMesh(); break;
@@ -1260,7 +1573,12 @@ static void scrollDoc(int dir) {
 
 static void goBack() {
   switch (screen) {
-    case SC_ARTICLE: doc.free(); screen = SC_CATEGORY; break;
+    case SC_ARTICLE: doc.free(); if (articleFromTriage) { articleFromTriage = false; screen = SC_TRIAGE; } else screen = SC_CATEGORY; break;
+    case SC_TRIAGE:
+      if (triDepth > 0) triCur = triStack[--triDepth];
+      else { screen = sdUp ? SC_HOME : SC_NOSD; }
+      break;
+    case SC_WPS: wpDelMode = false; screen = SC_MAP; break;
     case SC_BOOK: doc.free(); screen = SC_LIBRARY; break;
     case SC_QUICK:
     case SC_RADAR: screen = SC_NEAR; break;
@@ -1469,6 +1787,7 @@ static void onButton(uint16_t id) {
     drawKbText();
     return;
   }
+  if (id >= B_TRI_BASE && id < B_TRI_BASE + 5) { triPick(id - B_TRI_BASE); return; }
   if (id >= B_QUICK_BASE && id < B_QUICK_BASE + 10) {  // quick message
     static const char *QUICK[] = {"OK", "Need help", "Heading out", "At camp", "Water found", "Come to me"};
     if (id - B_QUICK_BASE < 6) meshSend(QUICK[id - B_QUICK_BASE]);
@@ -1478,6 +1797,7 @@ static void onButton(uint16_t id) {
   }
   if (id >= B_ROW) {
     int idx = id - B_ROW;
+    if (screen == SC_WPS) { wpRowTap(idx); return; }
     if (idx >= (int)list.size()) return;
     if (screen == SC_CATEGORY) openArticle(list[idx]);
     else if (screen == SC_LIBRARY) {
@@ -1530,12 +1850,31 @@ static void onButton(uint16_t id) {
     case B_MESH_NEAR: screen = SC_NEAR; redraw(); break;
     case B_RADAR: screen = SC_RADAR; redraw(); break;
     case B_GPS_SHARE: gpsShare = !gpsShare; prefs.putBool("gpsshare", gpsShare); redraw(); break;
-    case B_MAP: if (!mapReady) mapLoadCenter(); screen = SC_MAP; redraw(); break;
+    case B_MAP: if (!mapReady) mapLoadCenter(); if (!trkLoaded) trkLoad(); wpLoad(); screen = SC_MAP; redraw(); break;
     case B_MAP_IN:
       if (mapZ < mapMaxZ) { mapZ++; mapCx *= 2; mapCy *= 2; redraw(); }
       break;
     case B_MAP_OUT:
       if (mapZ > mapMinZ) { mapZ--; mapCx /= 2; mapCy /= 2; redraw(); }
+      break;
+    case B_TRIAGE: triCur = &TRIAGE[0]; triDepth = 0; screen = SC_TRIAGE; redraw(); break;
+    case B_MAP_ME: {
+      GpsFix g = gpsGet();
+      if (mapReady && g.valid) { mapLatLonToPx(g.lat, g.lon, mapZ, mapCx, mapCy); redraw(); }
+      break;
+    }
+    case B_MAP_MARK: wpMark(); break;
+    case B_MAP_PTS: wpLoad(); wpDelMode = false; screen = SC_WPS; redraw(); break;
+    case B_WP_DEL: wpDelMode = !wpDelMode; drawWps(); break;
+    case B_WP_CLEAR:
+      if (millis() - wpClearMs < 3000) { nWps = 0; wpDelMode = false; wpSave(); wpClearMs = 0; }
+      else wpClearMs = millis();
+      drawWps();
+      break;
+    case B_TRK_CLEAR:
+      if (millis() - trkClearMs < 3000) { trkClear(); trkClearMs = 0; }
+      else trkClearMs = millis();
+      drawWps();
       break;
     case B_MESH_TYPE: kbTarget = 0; kbBuf = ""; kbShift = false; screen = SC_KEYS; redraw(); break;
     case B_MESH_NAME: kbTarget = 1; kbBuf = meshName(); kbShift = false; screen = SC_KEYS; redraw(); break;
@@ -1778,6 +2117,7 @@ void loop() {
   if (screen == SC_LIGHT) { lastTouchMs = now; lightLoop(now); }   // flashlight keeps the screen awake
   nightLoop(now);
   gpsLoop();
+  trkLoop(now);
   {                                                    // share our position with nearby boards (only when the user turned that on)
     GpsFix gf = gpsGet();
     meshSetMyPos(gpsShare && gf.valid, gf.lat, gf.lon);
