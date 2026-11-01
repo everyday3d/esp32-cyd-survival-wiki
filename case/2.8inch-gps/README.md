@@ -1,4 +1,4 @@
-﻿# 2.8" CYD + GPS case (rev1)
+# 2.8" CYD + GPS case (rev1)
 
 Snap-fit two-piece case for the Sunton `ESP32-2432S028R` with a pod on one long edge for a Teyleten ATGM336H GPS module (about 16 x 13 mm) and its ceramic antenna (19 x 6 x 6.5 mm, 100 mm cable with a 3 x 3 mm plug).
 
@@ -9,3 +9,5 @@ Snap-fit two-piece case for the Sunton `ESP32-2432S028R` with a pod on one long 
 - Lid text: SurvivalWiki. Base text: BOXERDAWG3D.
 
 Print: `ESP32_28_GPS_Case_rev1.3mf` has both parts on one plate (base floor-down, lid face-down), no supports. Fit confirmed by print; the open cable notch is newer than that print.
+
+Wiring: see [WIRING.md](WIRING.md).
