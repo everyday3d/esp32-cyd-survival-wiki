@@ -350,6 +350,11 @@ static void drawCatIcon(const String &id, int cx, int cy) {
     tft.fillTriangle(cx - 8, cy - 1, cx + 4, cy - 8, cx + 8, cy - 1, w);
     tft.fillCircle(cx - 7, cy + 8, 3, C_BG); tft.drawCircle(cx - 7, cy + 8, 3, w);
     tft.fillCircle(cx + 7, cy + 8, 3, C_BG); tft.drawCircle(cx + 7, cy + 8, 3, w);
+  } else if (id == "radio") {             // handheld radio with an antenna
+    tft.fillRoundRect(cx - 8, cy - 4, 17, 17, 3, w);
+    tft.drawLine(cx + 4, cy - 4, cx + 9, cy - 13, w); tft.drawLine(cx + 5, cy - 4, cx + 10, cy - 13, w);
+    tft.fillCircle(cx, cy + 2, 3, C_BG);
+    tft.fillRect(cx - 5, cy + 8, 11, 2, C_BG);
   } else if (id == "home") {              // house with a door
     tft.fillTriangle(cx - 13, cy - 1, cx + 13, cy - 1, cx, cy - 12, w);
     tft.fillRect(cx - 9, cy - 1, 19, 12, w);
