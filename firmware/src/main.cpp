@@ -355,6 +355,11 @@ static void drawCatIcon(const String &id, int cx, int cy) {
     tft.drawLine(cx + 4, cy - 4, cx + 9, cy - 13, w); tft.drawLine(cx + 5, cy - 4, cx + 10, cy - 13, w);
     tft.fillCircle(cx, cy + 2, 3, C_BG);
     tft.fillRect(cx - 5, cy + 8, 11, 2, C_BG);
+  } else if (id == "family") {            // adult and child
+    tft.fillCircle(cx - 5, cy - 8, 4, w);
+    tft.fillRoundRect(cx - 10, cy - 2, 11, 14, 3, w);
+    tft.fillCircle(cx + 8, cy - 1, 3, w);
+    tft.fillRoundRect(cx + 3, cy + 3, 10, 9, 3, w);
   } else if (id == "home") {              // house with a door
     tft.fillTriangle(cx - 13, cy - 1, cx + 13, cy - 1, cx, cy - 12, w);
     tft.fillRect(cx - 9, cy - 1, 19, 12, w);
