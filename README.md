@@ -103,6 +103,13 @@ Here is a quick look at the features and tools packed into the Survival Wiki:
 - **Quick-Eject MicroSD Scoop**: Built-in thumb scoop makes swapping microSD cards effortless.
 - **Built-in Cooling Vents**: Angled rear louvers keep the ESP32 cool during extended Wi-Fi hotspot use.
 
+### New in 1.6.0: Triage, Map Waypoints and 12 New Guides (2.8" and 3.5" firmware)
+- **Triage Assistant**: a red **Triage** tile first on the home screen. Tap what is wrong (someone hurt, a storm, trouble at home or in the car, lost, a child or older adult) and two or three taps take you straight to the right guide. **Back** inside a guide returns to the triage menu.
+- **Map Waypoints**: on the **Map** screen, centre the crosshair on a spot and tap **Mark** to save it. **Pts** lists your waypoints with distance and direction, and tapping one jumps the map to it. Saved to `maps/waypoints.txt` on the SD card.
+- **GPS Track and Position on the Map** (needs a GPS module, see `case/2.8inch-gps/WIRING.md`): a breadcrumb trail, a green dot for you, and yellow dots for mesh boards that share their position. **Me** centres the map on you. GPS features are new and have not been tested on real hardware yet.
+- **GPS Position Sharing and Radar** (2.8" with GPS): boards can share their position over the mesh, and a radar screen shows where they are. Sharing is off until you turn it on, and positions are not encrypted.
+- **12 New Guides, 118 in All**: drowning, electric shock, poisoning and overdose, diabetic emergency, stroke and heart attack, spinal injury, snow cave, wet-weather fire, food safety after an outage, the 72-hour kit, plus a new **Hygiene & Sanitation** category with an emergency toilet and handwashing with little water.
+- **To get the new guides**, copy the repo's `sdcard/wiki/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
 ### New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" and 3.5" firmware)
 - **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
 - **Vehicles & Roads**: stranded in winter, breakdowns, changing a tire, jump-starting, vehicle fire, a car in water, a car emergency kit.
