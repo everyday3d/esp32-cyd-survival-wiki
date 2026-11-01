@@ -21,6 +21,8 @@
   #define PIN_LED_B       17
   #define PIN_AUDIO_EN    -1   // No external amp enable (GPIO 26 DAC audio out)
   #define PIN_LDR         34   // light sensor (input only)
+  #define PIN_GPS_RX      27   // GPS TX goes here (CN1 IO27)
+  #define PIN_GPS_TX      22   // spare CN1 pin; leave the GPS RX wire off
   #define HEADER_H        36
   #define FOOTER_H        38
   #define ROW_H           38
@@ -39,6 +41,8 @@
   #define PIN_LED_B       17
   #define PIN_AUDIO_EN     4   // speaker amp enable, LOW = on (kept off)
   #define PIN_LDR         -1   // no light sensor wired on this board
+  #define PIN_GPS_RX      -1   // GPS not wired yet: pick a free pin first
+  #define PIN_GPS_TX      -1
   #define HEADER_H        44
   #define FOOTER_H        52
   #define ROW_H           48

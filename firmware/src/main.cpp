@@ -18,6 +18,7 @@
 #include "doc.h"
 #include "web.h"
 #include "mesh.h"
+#include "gps.h"
 #include "qrcodegen.h"
 
 TFT_eSPI tft;
@@ -654,6 +655,13 @@ static void drawSettings() {
   tft.drawString("Survival Wiki " FW_VERSION " (" BOARD_NAME ")", 12, y);
   tft.drawString(String(nArticles) + " articles in " + shownCats + " categories", 12, y + lineH);
   tft.drawString("SD card: " + String(usedMB) + " MB used of " + totalMB + " MB", 12, y + lineH * 2);
+  if (gpsPresent()) {
+    GpsFix g = gpsGet();
+    String gl = g.sentences == 0 ? String("GPS: no data (check wiring)")
+              : g.valid ? "GPS: " + String(g.lat, 5) + ", " + String(g.lon, 5) + " (" + g.sats + " sats)"
+              : "GPS: searching, " + String(g.sats) + " sats";
+    tft.drawString(gl, 12, y + lineH * 3);
+  }
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
   drawFooter(f, 1);
 }
@@ -1521,6 +1529,8 @@ static void handleTap(int x, int y) {
 void setup() {
   Serial.begin(115200);
 
+  gpsBegin();                          // no-op unless the board profile wires a GPS (PIN_GPS_RX)
+
   // Audio amp (if present on 3.5" board)
 #if PIN_AUDIO_EN >= 0
   pinMode(PIN_AUDIO_EN, OUTPUT);
@@ -1675,6 +1685,7 @@ void loop() {
 
   if (screen == SC_LIGHT) { lastTouchMs = now; lightLoop(now); }   // flashlight keeps the screen awake
   nightLoop(now);
+  gpsLoop();
 
   meshLoop();
   {                                                    // a message sent from a phone changes the list too
