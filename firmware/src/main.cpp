@@ -37,7 +37,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP, SC_RADAR };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0, homePage = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -50,6 +50,7 @@ static const char *TIMEOUT_NAMES[] = {"Never", "1 min", "3 min", "5 min", "10 mi
 static bool invertColors = false;
 static bool wifiOn = true;
 static bool sleeping = false;
+static bool gpsShare = false;        // send our GPS position to nearby boards (off until the user turns it on)
 static bool nightAuto = false;       // dim the backlight when the room is dark (CYD light sensor)
 static bool nightNow = false;        // currently dimmed by night mode
 static uint8_t lightMode = 0;        // flashlight: 0 white, 1 red, 2 SOS strobe
@@ -74,7 +75,7 @@ enum BtnId : uint16_t {
   B_NONE = 0, B_BACK, B_UP, B_DOWN, B_PREV, B_NEXT, B_LIBRARY, B_WIFI, B_SETTINGS,
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
   B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
-  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT,
+  B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_RADAR, B_GPS_SHARE, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT,
   B_QUICK_BASE = 60,           // 60..69: quick messages
   B_TILE = 100, B_ROW = 200,
   B_KEY_BASE = 1000            // 1000 + character: on-screen keyboard keys
@@ -766,7 +767,7 @@ static void drawMesh() {
   }
   FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_MESH_QUICK, "Quick", I_NONE, meshActive()},
                  {B_MESH_TYPE, "Type", I_NONE, meshActive()}, {B_MESH_NAME, "Name", I_NONE, true},
-                 {B_MESH_NEAR, "Near", I_NONE, meshActive()}};
+                 {B_MESH_NEAR, "Near", I_NONE, meshActive()}};   // (radar button lives on the Near screen)
   drawFooter(f, 5);
 }
 
@@ -821,8 +822,88 @@ static void drawNear() {
   // The signal listener can't run while the hotspot is on (phones couldn't join), so say why there is no distance.
   tft.drawString(webRunning() ? "Turn Wi-Fi off to see distance" : "Distance is a rough guess from signal strength",
                  SCR_W / 2, SCR_H - FOOTER_H - 4);
-  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
-  drawFooter(f, 1);
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_RADAR, "Radar", I_NONE, gpsPresent()}};
+  drawFooter(f, gpsPresent() ? 2 : 1);
+}
+
+// ---------------------------------------------------------------- radar (nearby boards that share a GPS position)
+static double geoDistM(double la1, double lo1, double la2, double lo2) {
+  const double R = 6371000.0, d2r = 0.017453292519943295;
+  double dla = (la2 - la1) * d2r, dlo = (lo2 - lo1) * d2r;
+  double a = sin(dla / 2) * sin(dla / 2) + cos(la1 * d2r) * cos(la2 * d2r) * sin(dlo / 2) * sin(dlo / 2);
+  return 2 * R * atan2(sqrt(a), sqrt(1 - a));
+}
+static double geoBearing(double la1, double lo1, double la2, double lo2) {   // degrees clockwise from north
+  const double d2r = 0.017453292519943295;
+  double dlo = (lo2 - lo1) * d2r;
+  double y = sin(dlo) * cos(la2 * d2r);
+  double x = cos(la1 * d2r) * sin(la2 * d2r) - sin(la1 * d2r) * cos(la2 * d2r) * cos(dlo);
+  double b = atan2(y, x) / d2r;
+  return b < 0 ? b + 360 : b;
+}
+static String compass8(double b) {
+  static const char *N[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+  return N[(int)((b + 22.5) / 45) % 8];
+}
+static String metersText(double m) { return m < 1000 ? String((int)m) + " m" : String(m / 1000.0, m < 10000 ? 1 : 0) + " km"; }
+
+static void drawRadar() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Radar", true);
+  GpsFix g = gpsGet();
+  MeshPeer pl[8];
+  int n = meshPeerList(pl, 8);
+  int listH = (SCR_W < 300) ? 52 : 66;
+  int R = min(SCR_W / 2 - 12, (CONTENT_H - listH - 14) / 2);
+  int cx = SCR_W / 2, cy = CONTENT_Y + 8 + R;
+  tft.drawCircle(cx, cy, R, C_LINE); tft.drawCircle(cx, cy, R / 2, C_LINE);
+  tft.drawFastHLine(cx - R, cy, 2 * R + 1, C_LINE); tft.drawFastVLine(cx, cy - R, 2 * R + 1, C_LINE);
+  tft.setTextFont(1); tft.setTextDatum(TC_DATUM); tft.setTextColor(C_MUTED);
+  tft.drawString("N", cx, cy - R + 2);
+  if (!g.valid) {
+    tft.setTextFont(2); tft.setTextDatum(MC_DATUM); tft.setTextColor(C_ACCENT);
+    tft.drawString(g.sentences == 0 ? "No GPS data" : "Waiting for GPS fix", cx, cy - 8);
+    tft.setTextColor(C_MUTED);
+    tft.drawString(g.sentences == 0 ? "check the wiring" : String(g.sats) + " satellites, go outside", cx, cy + 10);
+  } else {
+    double maxD = 0;
+    double dist[8], brg[8];
+    for (int i = 0; i < n; i++) {
+      if (!pl[i].hasPos) continue;
+      dist[i] = geoDistM(g.lat, g.lon, pl[i].lat, pl[i].lon); brg[i] = geoBearing(g.lat, g.lon, pl[i].lat, pl[i].lon);
+      if (dist[i] > maxD) maxD = dist[i];
+    }
+    static const int STEPS[] = {100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000};
+    int ring = STEPS[9];
+    for (int s : STEPS) if (maxD <= s) { ring = s; break; }
+    tft.fillCircle(cx, cy, 4, 0x07E0);                         // you
+    tft.setTextFont(1); tft.setTextDatum(TL_DATUM);
+    for (int i = 0; i < n; i++) {
+      if (!pl[i].hasPos) continue;
+      double r = min(dist[i], (double)ring) / ring * R, a = brg[i] * 0.017453292519943295;
+      int px = cx + (int)(r * sin(a)), py = cy - (int)(r * cos(a));
+      tft.fillCircle(px, py, 4, C_ACCENT);
+      tft.setTextColor(C_TEXT);
+      tft.drawString(fitText(pl[i].name, 48), constrain(px + 6, 2, SCR_W - 50), constrain(py - 4, CONTENT_Y + 2, cy + R));
+    }
+    tft.setTextDatum(BR_DATUM); tft.setTextColor(C_MUTED);
+    tft.drawString("ring " + metersText(ring), SCR_W - 4, cy + R);
+    // nearest sharing boards, written out
+    int shown = 0, ly = cy + R + 8;
+    tft.setTextFont(2); tft.setTextDatum(TL_DATUM);
+    for (int pass = 0; pass < 3; pass++) {
+      int best = -1;
+      for (int i = 0; i < n; i++) if (pl[i].hasPos && dist[i] >= 0 && (best < 0 || dist[i] < dist[best])) best = i;
+      if (best < 0) break;
+      tft.setTextColor(C_TEXT);
+      tft.drawString(fitText(pl[best].name, SCR_W / 2 - 10) + "  " + metersText(dist[best]) + " " + compass8(brg[best]), 8, ly);
+      dist[best] = -1; ly += (SCR_W < 300 ? 16 : 18); shown++;
+    }
+    if (!shown) { tft.setTextColor(C_MUTED); tft.drawString(n ? "Nobody here shares a position." : "No boards heard yet.", 8, ly); }
+  }
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_GPS_SHARE, gpsShare ? "Share:On" : "Share:Off", I_NONE, true}};
+  drawFooter(f, 2);
 }
 
 static void drawQuick() {
@@ -1009,6 +1090,7 @@ static void redraw() {
   switch (screen) {
     case SC_MAP: drawMap(); break;
     case SC_NEAR: drawNear(); break;
+    case SC_RADAR: drawRadar(); break;
     case SC_MESH: meshMarkRead(); drawMesh(); break;
     case SC_QUICK: drawQuick(); break;
     case SC_KEYS: drawKeys(); break;
@@ -1179,6 +1261,7 @@ static void goBack() {
     case SC_ARTICLE: doc.free(); screen = SC_CATEGORY; break;
     case SC_BOOK: doc.free(); screen = SC_LIBRARY; break;
     case SC_QUICK:
+    case SC_RADAR: screen = SC_NEAR; break;
     case SC_NEAR:
     case SC_KEYS: screen = SC_MESH; break;
     default: list.clear(); screen = sdUp ? SC_HOME : SC_NOSD; break;
@@ -1439,6 +1522,8 @@ static void onButton(uint16_t id) {
       break;
     case B_MESH_QUICK: screen = SC_QUICK; redraw(); break;
     case B_MESH_NEAR: screen = SC_NEAR; redraw(); break;
+    case B_RADAR: screen = SC_RADAR; redraw(); break;
+    case B_GPS_SHARE: gpsShare = !gpsShare; prefs.putBool("gpsshare", gpsShare); redraw(); break;
     case B_MAP: if (!mapReady) mapLoadCenter(); screen = SC_MAP; redraw(); break;
     case B_MAP_IN:
       if (mapZ < mapMaxZ) { mapZ++; mapCx *= 2; mapCy *= 2; redraw(); }
@@ -1566,6 +1651,7 @@ void setup() {
   invertColors = prefs.getBool("inv", false);
   wifiOn = prefs.getBool("wifi", true);
   nightAuto = prefs.getBool("night", false);
+  gpsShare = prefs.getBool("gpsshare", false);
   meshEnabled = prefs.getBool("mesh", true);
   if (prefs.isKey("nick")) meshSetName(prefs.getString("nick").c_str());
 
@@ -1686,6 +1772,14 @@ void loop() {
   if (screen == SC_LIGHT) { lastTouchMs = now; lightLoop(now); }   // flashlight keeps the screen awake
   nightLoop(now);
   gpsLoop();
+  {                                                    // share our position with nearby boards (only when the user turned that on)
+    GpsFix gf = gpsGet();
+    meshSetMyPos(gpsShare && gf.valid, gf.lat, gf.lon);
+  }
+  if (screen == SC_RADAR && !sleeping) {               // keep the radar live
+    static uint32_t radarMs = 0;
+    if (now - radarMs > 2000) { radarMs = now; drawRadar(); }
+  }
 
   meshLoop();
   {                                                    // a message sent from a phone changes the list too

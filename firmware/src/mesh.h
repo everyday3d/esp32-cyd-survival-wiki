@@ -42,7 +42,12 @@ struct MeshPeer {
   char name[MESH_NAME_LEN];
   int8_t rssi;           // dBm, smoothed; 0 = not measured yet (only heard through a relay)
   uint32_t ageS;         // seconds since we last heard it
+  bool hasPos;           // the board shared a GPS position recently
+  double lat, lon;
+  uint32_t posAgeS;      // seconds since that position arrived
 };
+// Share our GPS position in the hello pings (call with valid=false to stop sharing). Positions are NOT encrypted.
+void meshSetMyPos(bool valid, double lat, double lon);
 int   meshPeerList(MeshPeer *out, int max);       // strongest first
 float meshDistanceM(int rssi);                    // metres, -1 if unknown. A rough guess only.
 int   meshBars(int rssi);                         // 0..4

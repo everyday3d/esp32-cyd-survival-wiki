@@ -76,7 +76,11 @@ struct Pending { Pkt p; uint32_t due; bool used; };
 static Pending pend[12];
 
 // Boards heard recently
-struct Peer { char name[MESH_NAME_LEN]; uint32_t ms; int8_t rssi; };   // rssi 0 = never measured
+struct Peer { char name[MESH_NAME_LEN]; uint32_t ms; int8_t rssi; bool hasPos; double lat, lon; uint32_t posMs; };   // rssi 0 = never measured
+static bool myPosValid = false;
+static double myLat = 0, myLon = 0;
+#define POS_MS 15000UL        // hello interval while we share a position
+#define POS_STALE_MS 90000UL  // a shared position older than this is not shown
 static Peer peers[8];
 
 static uint32_t keyOf(const Pkt &p) {
@@ -140,7 +144,7 @@ int meshSnapshot(MeshMsg *out, int max, uint32_t *latestSeq) {
 }
 
 // rssi is only passed for frames that came straight from the author (not a relay), 0 otherwise.
-static void notePeer(const char *name, int rssi) {
+static void notePeer(const char *name, int rssi, bool hasPos = false, double lat = 0, double lon = 0) {
   portENTER_CRITICAL(&dataMux);
   int free_i = -1, oldest = 0, hit = -1;
   for (int i = 0; i < 8; i++) {
@@ -150,12 +154,14 @@ static void notePeer(const char *name, int rssi) {
   }
   if (hit >= 0) {
     peers[hit].ms = millis();
+    if (hasPos) { peers[hit].hasPos = true; peers[hit].lat = lat; peers[hit].lon = lon; peers[hit].posMs = millis(); }
     if (rssi) peers[hit].rssi = peers[hit].rssi ? (int8_t)((peers[hit].rssi * 3 + rssi) / 4) : (int8_t)rssi;   // smooth the jitter
   } else {
     int i = free_i >= 0 ? free_i : oldest;
     strlcpy(peers[i].name, name, sizeof(peers[i].name));
     peers[i].ms = millis();
     peers[i].rssi = (int8_t)rssi;
+    peers[i].hasPos = hasPos; peers[i].lat = lat; peers[i].lon = lon; peers[i].posMs = hasPos ? millis() : 0;
   }
   portEXIT_CRITICAL(&dataMux);
 }
@@ -347,7 +353,11 @@ void meshLoop() {
       continue;
     }
     if (p.rsv == 1) {                              // hello ping: note the board, nothing else
-      if (strcmp(p.from, myName) != 0) notePeer(p.from, rssi);   // hello pings are never relayed, so rssi is the author's
+      if (strcmp(p.from, myName) != 0) {            // hello pings are never relayed, so rssi is the author's
+        double la, lo; bool pos = false;
+        if (p.text[0] == 'P' && sscanf(p.text + 1, "%lf,%lf", &la, &lo) == 2 && fabs(la) <= 90 && fabs(lo) <= 180) pos = true;   // older boards send no text in hellos
+        notePeer(p.from, rssi, pos, la, lo);
+      }
       continue;
     }
     uint32_t k = keyOf(p);
@@ -365,12 +375,13 @@ void meshLoop() {
     if (q.used && (int32_t)(now - q.due) >= 0) { txPkt(q.p); q.used = false; }
   }
   if ((int32_t)(now - nextHello) >= 0) {           // hello ping: direct neighbours only, not passed on
-    nextHello = now + HELLO_MS;
+    nextHello = now + (myPosValid ? POS_MS : HELLO_MS);
     Pkt h;
     memset(&h, 0, sizeof(h));
     h.magic = MESH_MAGIC; h.ver = MESH_VER; h.ttl = 1; h.rsv = 1;
     h.id = esp_random();
     strlcpy(h.from, myName, sizeof(h.from));
+    if (myPosValid) snprintf(h.text, sizeof(h.text), "P%.5f,%.5f", myLat, myLon);   // older boards ignore a hello's text
     txPkt(h);
   }
 }
@@ -397,6 +408,8 @@ void meshDemo() {
   notePeer("Alex", -84);
 }
 #endif
+
+void meshSetMyPos(bool valid, double lat, double lon) { myPosValid = valid; myLat = lat; myLon = lon; }
 
 uint32_t meshLastSeq() { return seqCounter; }
 uint32_t meshChangeCount() { return changeCounter; }
@@ -425,6 +438,9 @@ int meshPeerList(MeshPeer *out, int max) {
     strlcpy(out[i].name, p.name, sizeof(out[i].name));
     out[i].rssi = p.rssi;
     out[i].ageS = (now - p.ms) / 1000;
+    out[i].hasPos = p.hasPos && now - p.posMs < POS_STALE_MS;
+    out[i].lat = p.lat; out[i].lon = p.lon;
+    out[i].posAgeS = (now - p.posMs) / 1000;
   }
   portEXIT_CRITICAL(&dataMux);
   return n;
