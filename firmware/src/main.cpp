@@ -2116,6 +2116,14 @@ void loop() {
   nightLoop(now);
   gpsLoop();
   trkLoop(now);
+  {                                                    // GPS status on the serial port, for checking the wiring
+    static uint32_t gpsLogMs = 0;
+    if (gpsPresent() && now - gpsLogMs > 3000) {
+      gpsLogMs = now;
+      GpsFix g = gpsGet();
+      Serial.printf("[gps] sentences %u, fix %s, sats %u, %.5f %.5f%s\n", (unsigned)g.sentences, g.valid ? "yes" : "no", g.sats, g.lat, g.lon, g.phone ? " (phone)" : "");
+    }
+  }
   {                                                    // share our position with nearby boards (only when the user turned that on)
     GpsFix gf = gpsGet();
     meshSetMyPos(gpsShare && gf.valid, gf.lat, gf.lon);
