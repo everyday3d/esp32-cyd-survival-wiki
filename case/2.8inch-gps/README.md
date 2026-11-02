@@ -6,8 +6,9 @@ Snap-fit two-piece case for the Sunton `ESP32-2432S028R` with a pod on one long 
 - microSD card goes in through an opening in the same wall as the pod.
 - The antenna sits just under a thin roof in the lid; the module sits in its own bay.
 - Antenna cable drops into an open notch in the wall between the bays; a passage through the main wall lines up with the CN1 connector.
+- **Room for the 4-pin connector (updated):** the module bay is 34 mm long. The module sits at the far end, and the black 4-pin Dupont housing (about 14 mm long, 10 mm wide) that plugs onto its header lies in the space between the module and the wall opening. The first version had no room for it, so the lid would not close. The case is now 94 x 94.5 mm and the print plate needs about 198 x 95 mm.
 - Lid text: SurvivalWiki. Base text: BOXERDAWG3D.
 
-Print: `ESP32_28_GPS_Case_rev1.3mf` has both parts on one plate (base floor-down, lid face-down), no supports. Fit confirmed by print; the open cable notch is newer than that print.
+Print: `ESP32_28_GPS_Case_rev1.3mf` has both parts on one plate (base floor-down, lid face-down), no supports. Fit of the main body confirmed by print. The longer pod for the connector is newer than that print and has not been printed yet.
 
 Wiring: see [WIRING.md](WIRING.md).

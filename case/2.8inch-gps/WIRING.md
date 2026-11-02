@@ -37,6 +37,7 @@ The antenna is a passive ceramic one. It has no power wire; it plugs into the sm
 ## 4. Route the wires to the CYD
 1. Sit the module in its bay, antenna cable already in the notch.
 2. Feed the three power and signal wires out through the wall passage into the main case. It lines up with CN1.
+   If you use a 4-pin Dupont plug on the module, set the module at the far end of the bay so the plug (about 14 mm long) lies between the module and the wall opening, with the plug on the module's edge that faces the CYD.
 3. Plug the 4-pin cable into CN1 on the board (or solder to the pads). Check the orientation: it only fits one way.
 4. Close the case. The lid should drop all the way down and click. If wires stop it, re-tuck them.
 
