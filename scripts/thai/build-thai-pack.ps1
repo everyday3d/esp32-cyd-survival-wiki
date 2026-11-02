@@ -116,15 +116,18 @@ function Strip-Marks([string]$s) { ($s -replace '\|', '') }
 # ---- atlas: strings.tsv -> atlasNN.thb -------------------------------------------------------------------
 function Build-Atlas([string]$board) {
   $K = $BD[$board].K
-  $file = Join-Path $l10n "strings.tsv"
-  if (-not (Test-Path $file)) { Write-Host "no strings.tsv"; return }
+  $files = @(Get-ChildItem $l10n -Filter "strings*.tsv" | Sort-Object Name | ForEach-Object { $_.FullName })
+  if ($files.Count -eq 0) { Write-Host "no strings*.tsv"; return }
   $entries = New-Object System.Collections.Generic.List[object]
   $count = 0
-  foreach ($line in [IO.File]::ReadAllLines($file, $u8)) {
+  $seen = @{}
+  foreach ($line in ($files | ForEach-Object { [IO.File]::ReadAllLines($_, $u8) })) {
     if ($line.Length -eq 0 -or $line[0] -eq '#') { continue }
     $p = $line.Split("`t")
     if ($p.Count -lt 2 -or $p[1].Trim().Length -eq 0) { continue }
     $en = $p[0]; $th = Strip-Marks $p[1].Trim()
+    if ($seen.ContainsKey($en)) { continue }
+    $seen[$en] = 1
     $hash = [ThaiPack]::Fnv($u8.GetBytes($en))
     for ($s = 0; $s -lt $STY.Count; $s++) {
       $px = [math]::Round($STY[$s][0] * $K)
@@ -150,7 +153,7 @@ function Build-Atlas([string]$board) {
 # ---- pages: articles\<id>.md -> pNN\<id>.thp -------------------------------------------------------------
 # Item types: 0 text, 1 warning box rectangle, 2 rule, 3 dot, 4 picture (path stored after the item table)
 function Wrap-Lines([string]$text, [double]$px, [bool]$bold, [double]$maxW) {
-  $text = ($text -replace '\*\*', '' -replace '`', '').Trim()
+  $text = ($text -replace '\[([^\]]+)\]\([^)]*\)', '$1' -replace '\*\*', '' -replace '`', '').Trim()
   $toks = New-Object System.Collections.Generic.List[object]
   $parts = [regex]::Split($text, '( |\|)')
   $pendingSpace = $false

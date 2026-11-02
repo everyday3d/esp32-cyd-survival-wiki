@@ -19,6 +19,7 @@ No internet. No cell service. No subscription. Power it up and tap.
 
 | | |
 | :--- | :--- |
+| 🇹🇭 **Thai edition (beta)** | Thai text on the screen and the first guides in Thai. Pick **ไทย (Thai, beta)** on the web flasher. Not every guide is translated yet. See [`l10n/th/README.md`](l10n/th/README.md). |
 | 📖 **118 field guides** | Water, fire, shelter, first aid, weather, vehicles, home, radio, kids and family, hygiene and more, in 15 categories. Plain language, big type. |
 | 📚 **FM 21-76** | The complete 233-page US Army Survival Manual, one tap away. |
 | 🩺 **Triage assistant** | Tap what is wrong and two or three taps take you to the right guide. |

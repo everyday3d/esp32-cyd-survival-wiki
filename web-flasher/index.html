@@ -207,7 +207,16 @@ footer a { text-decoration: none; }
       <div class="flasher-grid">
         <div>
           <h2>Program your board over USB</h2>
-          <div class="targets">
+          <div class="targets" style="margin-bottom:10px;">
+            <button type="button" id="btn-lang-en" class="target-btn active" onclick="selectLang('en')">
+              <span class="tb-title">English</span>
+              <span class="tb-sub">The standard version</span>
+            </button>
+            <button type="button" id="btn-lang-th" class="target-btn" onclick="selectLang('th')">
+              <span class="tb-title">&#3652;&#3607;&#3618; (Thai, beta)</span>
+              <span class="tb-sub">Thai text on the screen &bull; testing now</span>
+            </button>
+          </div>          <div class="targets">
             <button type="button" id="btn-target-35" class="target-btn active" onclick="selectTarget('35')">
               <span class="tb-title">3.5" Display (Hosyond E32R35T)</span>
               <span class="tb-sub">320&times;480 ST7796 &bull; Centered USB-C</span>
@@ -226,7 +235,9 @@ footer a { text-decoration: none; }
             <p>Target: <strong>Sunton 2.8" 240x320 ESP32-2432S028R "Cheap Yellow Display"</strong> (<a href="https://link.amazon/B0fETEIFF" target="_blank" rel="noopener sponsored">Amazon (affiliate link)</a>).</p>
             <p>Compact 240&times;320 screen, ILI9341 driver, XPT2046 touch with a quick 3-tap calibration. Includes the 1.2.0 flashlight, night dim and settings backup.</p>
           </div>
-          <p class="small">The image holds the bootloader, partition table and full firmware, written at offset <code>0x0</code>.</p>
+          <div id="thai-note" class="target-desc" style="display:none;">
+            <p><strong>Thai edition (beta).</strong> After flashing, load the Thai SD card pack: <a href="https://github.com/everyday3d/esp32-cyd-survival-wiki/releases/download/th-test-1/survival-wiki-sdcard-thai.zip">survival-wiki-sdcard-thai.zip</a>. Unzip it onto a FAT32 microSD card (everything goes in the root). Not every guide is translated yet, and anything that is not translated shows in English.</p>
+          </div>          <p class="small">The image holds the bootloader, partition table and full firmware, written at offset <code>0x0</code>.</p>
         </div>
         <div class="flasher-action">
           <div class="label">Browser web flasher</div>
@@ -305,19 +316,23 @@ footer a { text-decoration: none; }
 </div>
 
 <script>
-function selectTarget(target) {
-  var b35 = document.getElementById('btn-target-35');
-  var b28 = document.getElementById('btn-target-28');
-  var d35 = document.getElementById('target-desc-35');
-  var d28 = document.getElementById('target-desc-28');
-  var slot = document.getElementById('install-slot');
-  var is28 = target === '28';
-  b28.classList.toggle('active', is28);
-  b35.classList.toggle('active', !is28);
-  d28.style.display = is28 ? 'block' : 'none';
-  d35.style.display = is28 ? 'none' : 'block';
-  slot.innerHTML = '<esp-web-install-button manifest="' + (is28 ? 'manifest-28.json' : 'manifest.json') + '"></esp-web-install-button>';
+var curTarget = '35', curLang = 'en';
+function manifestName() {
+  if (curLang === 'th') return curTarget === '28' ? 'manifest-th-28.json' : 'manifest-th.json';
+  return curTarget === '28' ? 'manifest-28.json' : 'manifest.json';
 }
-</script>
+function refreshFlasher() {
+  var is28 = curTarget === '28', isTh = curLang === 'th';
+  document.getElementById('btn-target-28').classList.toggle('active', is28);
+  document.getElementById('btn-target-35').classList.toggle('active', !is28);
+  document.getElementById('btn-lang-en').classList.toggle('active', !isTh);
+  document.getElementById('btn-lang-th').classList.toggle('active', isTh);
+  document.getElementById('target-desc-28').style.display = is28 ? 'block' : 'none';
+  document.getElementById('target-desc-35').style.display = is28 ? 'none' : 'block';
+  document.getElementById('thai-note').style.display = isTh ? 'block' : 'none';
+  document.getElementById('install-slot').innerHTML = '<esp-web-install-button manifest="' + manifestName() + '"></esp-web-install-button>';
+}
+function selectTarget(target) { curTarget = target; refreshFlasher(); }
+function selectLang(lang) { curLang = lang; refreshFlasher(); }</script>
 </body>
 </html>

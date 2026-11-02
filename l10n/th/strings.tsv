@@ -1,6 +1,8 @@
 # English<TAB>Thai. Used for buttons, tiles, headers and titles. Put | where a line may break between words.
+# The English text must match the text in the firmware exactly (including capitals and punctuation).
 SURVIVAL WIKI	สารานุกรม|เอา|ตัว|รอด
 Survival Wiki	สารานุกรม|เอา|ตัว|รอด
+offline field reference	คู่|มือ|ภาค|สนาม|ออฟ|ไลน์
 Triage	คัด|แยก|อาการ
 What's wrong?	เกิด|อะไร|ขึ้น?
 GPS	GPS
@@ -24,13 +26,253 @@ Books	หนังสือ
 Wi-Fi	Wi-Fi
 Light	ไฟ|ฉาย
 Mesh	เมช
+Mesh*	เมช*
 Map	แผน|ที่
 Set	ตั้ง|ค่า
 Settings	ตั้ง|ค่า
-CPR	ช่วย|ชีวิต|(CPR)
+Home	หน้า|หลัก
+Library	คลัง|หนังสือ
+Load	โหลด
+Save	บันทึก
+Send	ส่ง
+Cancel	ยก|เลิก
+Done	เสร็จ
+Redo	ทำ|ใหม่
+Retry	ลอง|ใหม่
+Quick	ด่วน
+Type	พิมพ์
+Pick	เลือก
+Go	ไป
+Go to	ไป|ที่
+Mark	ปัก|หมุด
+Me	ฉัน
+Me*	ฉัน*
+Pts	จุด
+Radar	เรดาร์
+Del	ลบ
+Guide	คู่|มือ
+Name	ชื่อ
+Near	ใกล้
+Nearby	ใกล้|เคียง
+Network	เครือ|ข่าย
+Password	รหัส|ผ่าน
+Phones	โทรศัพท์
+Address	ที่|อยู่
+On	เปิด
+Off	ปิด
+Never	ไม่|เคย
+Auto	อัตโนมัติ
+Auto*	อัตโนมัติ*
+DST	DST
+DST*	DST*
+Share:On	แชร์:เปิด
+Share:Off	แชร์:ปิด
+Sure?	แน่|ใจ|ไหม?
+Clr pts	ล้าง|จุด
+Clr trk	ล้าง|เส้น|ทาง
+1 min	1 นาที
+3 min	3 นาที
+5 min	5 นาที
+10 min	10 นาที
+Brightness	ความ|สว่าง
+Screen off after	ปิด|จอ|หลัง
+Invert colors	กลับ|สี
+Auto night dim	หรี่|จอ|อัตโนมัติ
+Touch calibration	ปรับ|หน้า|จอ|สัมผัส
+SD backup	สำรอง|ลง SD
+Phone Access	เข้า|จาก|โทรศัพท์
+Turn Wi-Fi off	ปิด Wi-Fi
+Turn Wi-Fi on	เปิด Wi-Fi
+Wi-Fi hotspot is off.	ฮอต|สปอต Wi-Fi|ปิด|อยู่
+Turn it on to share the wiki with phones.	เปิด|เพื่อ|แชร์|สารานุกรม|ให้|โทรศัพท์
+Scan to connect phone	สแกน|เพื่อ|เชื่อม|ต่อ|โทรศัพท์
+Starting hotspot...	กำลัง|เริ่ม|ฮอต|สปอต...
+Stopping hotspot...	กำลัง|หยุด|ฮอต|สปอต...
+none (open)	ไม่|มี (เปิด)
+Turn Wi-Fi off to see distance	ปิด Wi-Fi|เพื่อ|ดู|ระยะ|ทาง
+Distance is a rough guess from signal strength	ระยะ|ทาง|เป็น|การ|ประมาณ|จาก|ความ|แรง|สัญญาณ
+Quick message	ข้อ|ความ|ด่วน
+New message	ข้อ|ความ|ใหม่
+No messages yet.	ยัง|ไม่|มี|ข้อ|ความ
+Tap Quick or Type to send one.	แตะ|ด่วน|หรือ|พิมพ์|เพื่อ|ส่ง|ข้อ|ความ
+Mesh is off. Tap On to talk to	เมช|ปิด|อยู่ แตะ|เปิด|เพื่อ|คุย|กับ
+nearby boards.	บอร์ด|ที่|อยู่|ใกล้
+No boards heard yet.	ยัง|ไม่|พบ|บอร์ด|ใกล้|เคียง
+Nobody here shares a position.	ไม่|มี|ใคร|แชร์|ตำ|แหน่ง
+Boards say hello every 30 s.	บอร์ด|ส่ง|สัญญาณ|ทัก|ทาย|ทุก 30 วินาที
+Your name	ชื่อ|ของ|คุณ
+Need help	ต้อง|การ|ความ|ช่วย|เหลือ
+Water found	พบ|น้ำ
+At camp	อยู่|ที่|แคมป์
+Heading out	ออก|เดิน|ทาง
+Come to me	มา|หา|ฉัน|หน่อย
+Water found at the creek	พบ|น้ำ|ที่|ลำ|ธาร
+FAILED (mesh off or rate limit)	ล้ม|เหลว (เมช|ปิด|หรือ|ส่ง|ถี่|เกิน)
+sent to nearby boards	ส่ง|ให้|บอร์ด|ใกล้|เคียง|แล้ว
+could not send	ส่ง|ไม่|ได้
+mesh is off (Mesh screen)	เมช|ปิด|อยู่ (หน้า|เมช)
+SD card not found	ไม่|พบ|การ์ด SD
+Insert the micro SD card (FAT32)	ใส่|การ์ด microSD (FAT32)
+with the Survival Wiki files, then tap Retry.	พร้อม|ไฟล์|สารานุกรม|แล้ว|แตะ|ลอง|ใหม่
+No articles found on the SD card.	ไม่|พบ|บทความ|ใน|การ์ด SD
+Copy the 'sdcard' folder contents to it.	คัด|ลอก|เนื้อ|หา|ใน|โฟลเดอร์ 'sdcard' ลง|ไป
+Copy the newest sdcard files	คัด|ลอก|ไฟล์ sdcard|ล่า|สุด
+No manuals in /library yet.	ยัง|ไม่|มี|คู่|มือ|ใน /library
+No backup on the SD card	ไม่|มี|ไฟล์|สำรอง|ใน|การ์ด SD
+Saved to SD card	บันทึก|ลง|การ์ด SD|แล้ว
+Restored - restarting...	กู้|คืน|แล้ว กำลัง|รีสตาร์ท...
 Loading...	กำลัง|โหลด...
+Could not open this article.	เปิด|บทความ|นี้|ไม่|ได้
+Could not open this part.	เปิด|ส่วน|นี้|ไม่|ได้
+[picture missing]	[ไม่|มี|รูป]
+Tap each marker as it appears	แตะ|แต่ละ|จุด|เมื่อ|ปรากฏ
+Tap each arrow corner as it appears	แตะ|มุม|ลูก|ศร|แต่ละ|มุม|เมื่อ|ปรากฏ
+Taps didn't register - try again	แตะ|ไม่|ติด ลอง|อีก|ครั้ง
+hold screen to calibrate touch	กด|หน้า|จอ|ค้าง|เพื่อ|ปรับ
+(a fingernail or stylus works best)	(ใช้|เล็บ|หรือ|ปากกา|สไตลัส|จะ|ดี|ที่|สุด)
+No maps on the SD card	ไม่|มี|แผน|ที่|ใน|การ์ด SD
+Run scripts/get-map-tiles.ps1	รัน scripts/get-map-tiles.ps1
+on a PC, then copy the	บน|พีซี แล้ว|คัด|ลอก
+maps folder to the card.	โฟลเดอร์ maps|ไป|ที่|การ์ด
+Centre the map on a spot	จัด|แผน|ที่|ให้|อยู่|ตรง|จุด
+and tap Mark.	แล้ว|แตะ|ปัก|หมุด
+Waypoints	จุด|หมาย
+Tap to delete	แตะ|เพื่อ|ลบ
+Tap to go there	แตะ|เพื่อ|ไป|ที่|นั่น
+No waypoints yet.	ยัง|ไม่|มี|จุด|หมาย
+Mark one on the Map, or tap	ปัก|หมุด|บน|แผน|ที่ หรือ|แตะ
+Set start here on I'm lost.	ตั้ง|จุด|เริ่ม|ต้น|ใน|หน้า|หลง|ทาง
+waypoint list is full	รายการ|จุด|หมาย|เต็ม
+start point saved	บันทึก|จุด|เริ่ม|ต้น|แล้ว
+set a start point first	ตั้ง|จุด|เริ่ม|ต้น|ก่อน
+GPS: no data (check wiring)	GPS: ไม่|มี|ข้อ|มูล (ตรวจ|สาย)
+No GPS fix yet	ยัง|ไม่|พบ|สัญญาณ GPS
+no GPS fix yet	ยัง|ไม่|พบ|สัญญาณ GPS
+Waiting for GPS fix	รอ|สัญญาณ GPS
+Waiting for GPS...	รอ GPS...
+Waiting for GPS time	รอ|เวลา|จาก GPS
+Waiting for a GPS fix	รอ|สัญญาณ GPS
+Waiting for the phone	รอ|โทรศัพท์
+waiting for the phone to share GPS	รอ|โทรศัพท์|แชร์ GPS
+Waiting for the phone's GPS	รอ GPS|จาก|โทรศัพท์
+keep the phone map page open	เปิด|หน้า|แผน|ที่|บน|โทรศัพท์|ไว้
+check the wiring	ตรวจ|สาย|ไฟ
+No GPS data	ไม่|มี|ข้อ|มูล GPS
+from your phone	จาก|โทรศัพท์|ของ|คุณ
+Needs the GPS to see the sky once.	ต้อง|ให้ GPS|เห็น|ท้อง|ฟ้า|สัก|ครั้ง
+time: waiting for GPS	เวลา: รอ GPS
+Sun times need a position fix.	เวลา|พระ|อาทิตย์|ต้อง|ทราบ|ตำ|แหน่ง
+Altitude: not shared by the phone	ความ|สูง: โทรศัพท์|ไม่|ส่ง|มา
+Heading: walk a few steps	ทิศ|ทาง: เดิน|สัก|สอง|สาม|ก้าว
+arrow: your walking direction	ลูก|ศร: ทิศ|ที่|คุณ|เดิน
+arrow: last walking direction	ลูก|ศร: ทิศ|ที่|เดิน|ล่า|สุด
+N is up: walk to get your direction	เหนือ|อยู่|ด้าน|บน: เดิน|เพื่อ|หา|ทิศ
+You are here	คุณ|อยู่|ที่|นี่
+Go to a waypoint	ไป|ยัง|จุด|หมาย
+I'm lost	ฉัน|หลง|ทาง
+Back to start	กลับ|ไป|จุด|เริ่ม|ต้น
+Send my spot	ส่ง|ตำ|แหน่ง|ของ|ฉัน
+Set start here	ตั้ง|จุด|เริ่ม|ต้น|ที่|นี่
+Clock and sun	นาฬิกา|และ|พระ|อาทิตย์
+Speed and altitude	ความ|เร็ว|และ|ความ|สูง
+Reset trip	รี|เซ็ต|ทริป
+Sunset alarm: off	เตือน|ก่อน|ตก|ดิน: ปิด
+TURN BACK	ถึง|เวลา|กลับ|แล้ว
+Snooze 15 minutes	เลื่อน 15 นาที
+Got it	รับ|ทราบ
+The sun has set	พระ|อาทิตย์|ตก|แล้ว
+The sun is down	พระ|อาทิตย์|ตก|แล้ว
+Sun is up all day	พระ|อาทิตย์|อยู่|ตลอด|วัน
+Sunset is close	ใกล้|พระ|อาทิตย์|ตก|ดิน
+What is happening? Call emergency services first if you can.	เกิด|อะไร|ขึ้น? โทร|เบอร์|ฉุก|เฉิน|ก่อน|ถ้า|ทำ|ได้
+Someone is hurt or sick	มี|คน|บาด|เจ็บ|หรือ|ป่วย
+Storm, quake or disaster	พายุ แผ่น|ดิน|ไหว|หรือ|ภัย|พิบัติ
+Trouble at home or in a car	ปัญหา|ที่|บ้าน|หรือ|ใน|รถ
+Lost, cold or need supplies	หลง|ทาง หนาว|หรือ|ขาด|ของ|จำเป็น
+A child, baby or older adult	เด็ก ทารก|หรือ|ผู้|สูง|อายุ
+Are they awake and breathing normally?	ผู้|ป่วย|ตื่น|และ|หาย|ใจ|ปกติ|หรือ|ไม่?
+No response, not breathing	ไม่|ตอบ|สนอง ไม่|หาย|ใจ
+Choking, cannot speak	สำลัก พูด|ไม่|ได้
+Heavy bleeding	เลือด|ออก|มาก
+Awake but hurt or ill	ตื่น|แต่|บาด|เจ็บ|หรือ|ป่วย
+Poison, bite or allergy	พิษ สัตว์|กัด|หรือ|แพ้
+What kind of problem is it?	เป็น|ปัญหา|แบบ|ไหน?
+Fall, crash or broken bone	ตก ชน|หรือ|กระดูก|หัก
+Chest pain, stroke, seizure	เจ็บ|หน้า|อก อัมพาต|หรือ|ชัก
+Burn or electric shock	ไฟ|ไหม้|หรือ|ไฟ|ดูด
+Too hot or too cold	ร้อน|หรือ|หนาว|เกิน|ไป
+Sick: vomiting, diarrhea	ป่วย: อาเจียน|ท้อง|เสีย
+After a fall, crash or blow:	หลัง|ตก ชน|หรือ|ถูก|กระแทก:
+Neck or back pain, numb	ปวด|คอ|หรือ|หลัง|ชา
+Head injury	บาด|เจ็บ|ที่|ศีรษะ
+Broken bone or sprain	กระดูก|หัก|หรือ|แพลง
+Cut or wound	แผล|ฉีก|ขาด
+Pulled from water	ช่วย|ขึ้น|จาก|น้ำ
+Which fits best?	ข้อ|ไหน|ตรง|ที่|สุด?
+Chest pain or stroke signs	เจ็บ|หน้า|อก|หรือ|สัญ|ญาณ|อัมพาต
+Seizure	ชัก
+Diabetic, shaky, confused	เบา|หวาน มือ|สั่น|สับ|สน
+Pale, clammy, faint	ซีด|เหงื่อ|เย็น|เป็น|ลม
+Eye injury	บาด|เจ็บ|ที่|ตา
+What happened?	เกิด|อะไร|ขึ้น?
+Burn	แผล|ไฟ|ไหม้
+Electric shock	ไฟ|ดูด
+Lightning or power line	ฟ้า|ผ่า|หรือ|สาย|ไฟ|ล้ม
+Fire in the house	ไฟ|ไหม้|บ้าน
+Too hot or too cold?	ร้อน|หรือ|หนาว|เกิน|ไป?
+Cold, shivering, frostbite	หนาว|สั่น|หรือ|ถูก|ความ|เย็น|กัด
+Hot, confused, not sweating	ร้อน|สับ|สน|ไม่|มี|เหงื่อ
+Fell through ice	ตก|ลง|ไป|ใน|น้ำ|แข็ง
+Thirsty, dehydrated	กระหาย|น้ำ|ขาด|น้ำ
+What was it?	เป็น|อะไร?
+Swallowed poison or drugs	กิน|พิษ|หรือ|ยา|เกิน|ขนาด
+Severe allergic reaction	แพ้|รุนแรง
+Snakebite	งู|กัด
+Tick, sting or spider	เห็บ ต่อย|หรือ|แมง|มุม
+Carbon monoxide	คาร์บอน|มอน|อกไซด์
+Which one?	อัน|ไหน?
+Tornado	ทอร์|นา|โด
+Flood	น้ำ|ท่วม
+Earthquake	แผ่น|ดิน|ไหว
+Wildfire	ไฟ|ป่า
+More...	เพิ่ม|เติม...
+Hurricane	พายุ|เฮอร์|ริเคน
+Blizzard or ice storm	พายุ|หิมะ|หรือ|พายุ|น้ำ|แข็ง
+Heat wave	คลื่น|ความ|ร้อน
+Nuclear emergency	เหตุ|ฉุก|เฉิน|นิวเคลียร์
+Power outage	ไฟ|ดับ
+Where is the trouble?	ปัญหา|อยู่|ที่|ไหน?
+Gas, fire or pipes	แก๊ส ไฟ|หรือ|ท่อ|น้ำ
+Car broke down or stuck	รถ|เสีย|หรือ|ติด
+Power lines or generator	สาย|ไฟ|หรือ|เครื่อง|ปั่น|ไฟ
+Carbon monoxide alarm	สัญญาณ|เตือน|คาร์บอน|มอน|อกไซด์
+What is it?	เป็น|อะไร?
+Smell of gas	กลิ่น|แก๊ส
+Burst or frozen pipe	ท่อ|แตก|หรือ|ท่อ|แข็ง
+Shut off utilities	ปิด|ระบบ|สาธารณูปโภค
+Food spoiling	อาหาร|เสีย
+Downed power line	สาย|ไฟ|ขาด|ตก|พื้น
+Using a generator	การ|ใช้|เครื่อง|ปั่น|ไฟ
+Power is out	ไฟ|ดับ
+What is the car doing?	รถ|เป็น|อะไร?
+Broken down	รถ|เสีย
+Stuck in the cold	ติด|อยู่|ใน|ที่|หนาว
+In water	รถ|ตก|น้ำ
+On fire	รถ|ไฟ|ไหม้
+Flat tire	ยาง|แบน
+What do you need?	ต้อง|การ|อะไร?
+I am lost	ฉัน|หลง|ทาง
+Shelter, warm and dry	ที่|พัก|อุ่น|และ|แห้ง
+Signal for help	ส่ง|สัญญาณ|ขอ|ความ|ช่วย|เหลือ
+Who needs help?	ใคร|ต้อง|การ|ความ|ช่วย|เหลือ?
+Lost or missing child	เด็ก|หลง|หรือ|หาย
+Child with a fever	เด็ก|มี|ไข้
+Baby, no power	ทารก ไฟ|ดับ
+Child hurt or ill	เด็ก|บาด|เจ็บ|หรือ|ป่วย
+Older adult	ผู้|สูง|อายุ
 The Rule of 3s	กฎ|ของ|เลข 3
 STOP - Stop, Think, Observe, Plan	หยุด คิด สังเกต วาง|แผน
+CPR	ช่วย|ชีวิต|ด้วย CPR
 Basic Survival Kit	ชุด|เอา|ตัว|รอด|พื้น|ฐาน
 Finding Water	การ|หา|น้ำ
 Making Water Safe to Drink	ทำ|น้ำ|ให้|ดื่ม|ได้|อย่าง|ปลอด|ภัย
@@ -40,4 +282,4 @@ First Aid Priorities	ลำ|ดับ|ความ|สำคัญ|ใน|กา
 Severe Bleeding	เลือด|ออก|มาก
 Choking	สำลัก
 Shock	ภาวะ|ช็อก
-Burns	แผล|ไฟ|ไหม้
+Burns	แผล|ไฟ|ไหม้|และ|น้ำ|ร้อน|ลวก
