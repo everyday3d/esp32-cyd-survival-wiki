@@ -38,7 +38,7 @@ static int nArticles = 0;
 static std::vector<Entry> list;   // current category's articles, or the library books
 
 // ---------------------------------------------------------------- state
-enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP, SC_RADAR, SC_TRIAGE, SC_WPS };
+enum Screen { SC_HOME, SC_CATEGORY, SC_ARTICLE, SC_LIBRARY, SC_BOOK, SC_WIFI, SC_SETTINGS, SC_NOSD, SC_LIGHT, SC_MESH, SC_QUICK, SC_KEYS, SC_NEAR, SC_MAP, SC_RADAR, SC_TRIAGE, SC_WPS, SC_WHERE, SC_LOST, SC_GOTO, SC_CLOCK };
 static Screen screen = SC_HOME;
 static int curCat = 0, listPage = 0, scrollY = 0, homePage = 0;
 static int bookIdx = 0, bookPart = 1, bookParts = 1;
@@ -79,6 +79,7 @@ enum BtnId : uint16_t {
   B_WIFI_TOGGLE, B_BRIGHT_DN, B_BRIGHT_UP, B_TIMEOUT, B_INVERT, B_CALIB, B_RETRY,
   B_LIGHT, B_NIGHT, B_BACKUP_SAVE, B_BACKUP_LOAD,
   B_MESH, B_MESH_TOGGLE, B_MESH_QUICK, B_MESH_TYPE, B_MESH_NAME, B_MESH_NEAR, B_RADAR, B_GPS_SHARE, B_KB_DEL, B_KB_SHIFT, B_KB_SEND, B_MAP, B_MAP_IN, B_MAP_OUT, B_TRIAGE, B_MAP_ME, B_MAP_MARK, B_MAP_PTS, B_WP_DEL, B_WP_CLEAR, B_TRK_CLEAR,
+  B_WHERE, B_LOST, B_GOTO, B_CLOCK, B_GOTO_START, B_SEND_SPOT, B_SET_START, B_GOTO_PREV, B_GOTO_NEXT, B_LOST_GUIDE, B_WP_GO, B_TZ_DN, B_TZ_UP, B_TZ_DST, B_TZ_AUTO, B_TZ_24H,
   B_QUICK_BASE = 60,           // 60..69: quick messages
   B_TRI_BASE = 70,             // 70..74: triage answers
   B_TILE = 100, B_ROW = 200,
@@ -89,12 +90,22 @@ struct Btn { int16_t x, y, w, h; uint16_t id; String label; uint8_t icon; bool e
 static std::vector<Btn> btns;
 
 static const int ROWS_PER_PAGE = CONTENT_H / ROW_H;
-static_assert(B_TRK_CLEAR < B_QUICK_BASE, "button ids overlap the quick-message range");
+static_assert(B_TZ_24H < B_QUICK_BASE, "button ids overlap the quick-message range");
 
 static bool articleFromTriage = false;               // the open guide came from the triage assistant
 static const TriNode *triCur = &TRIAGE[0];
 static const TriNode *triStack[8];
 static int triDepth = 0;
+static bool articleFromLost = false;                 // the open guide came from the I'm lost screen
+static int gotoIdx = 0;                              // waypoint the Go to arrow points at
+static Screen gotoFrom = SC_WHERE;                   // where Back from the Go to screen returns
+static bool lostFromTriage = false, wpGoMode = false;
+static bool tzAuto = true, tzDst = false, clock24 = false;   // clock settings
+static int8_t tzHours = 0;
+static double lastLat = 0, lastLon = 0;              // last good GPS position (for the clock and sun times)
+static bool haveLast = false;
+static char gsToast[28] = "";
+static uint32_t gsToastMs = 0, sunCalcMs = 0;
 
 // ---------------------------------------------------------------- helpers
 static uint16_t hexColor(const String &h) {
@@ -385,6 +396,30 @@ static void drawCatIcon(const String &id, int cx, int cy) {
   }
 }
 
+static void drawWhereTile(int x, int y, int tw, int th) {
+  btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)B_WHERE, "", I_NONE, true});
+  uint16_t grn = NC(tft.color565(30, 125, 80));
+  tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), grn);
+  int cx = SCR_W < 300 ? x + 18 : x + 24, cy = SCR_W < 300 ? y + th / 2 : y + 26;
+  int r = SCR_W < 300 ? 9 : 12;
+  tft.drawCircle(cx, cy, r, NC(TFT_WHITE)); tft.drawCircle(cx, cy, r - 1, NC(TFT_WHITE));
+  tft.fillCircle(cx, cy, r / 3, NC(TFT_WHITE));
+  tft.drawFastHLine(cx - r - 3, cy, 2 * r + 7, NC(TFT_WHITE)); tft.drawFastVLine(cx, cy - r - 3, 2 * r + 7, NC(TFT_WHITE));
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(NC(TFT_WHITE));
+  if (SCR_W < 300) {
+    tft.setTextFont(2);
+    tft.drawString("GPS", x + 34, y + 8);
+    tft.setTextFont(1);
+    tft.drawString("Lost, go to, clock", x + 35, y + 26);
+  } else {
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.drawString("GPS", x + 10, y + th - 40);
+    tft.setTextFont(2);
+    tft.drawString("Lost, go to, clock", x + 10, y + th - 20);
+  }
+}
+
 static void drawTriageTile(int x, int y, int tw, int th) {
   btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)B_TRIAGE, "", I_NONE, true});
   uint16_t red = NC(tft.color565(190, 40, 40));
@@ -413,8 +448,9 @@ static void drawHome() {
   tft.fillScreen(C_BG);
   drawHeader("SURVIVAL WIKI", false);
   const int cols = 2, rows = 4, gap = TILE_GAP, perPage = cols * rows;
-  int vis[MAX_CATEGORIES + 1], nVis = 0;
+  int vis[MAX_CATEGORIES + 2], nVis = 0;
   vis[nVis++] = -2;                                    // the Triage tile comes first
+  if (gpsPresent()) vis[nVis++] = -3;                  // then the GPS tile, when there is a GPS (or a phone sharing its position)
   for (int i = 0; i < nCats; i++) if (i != goodboyIdx) vis[nVis++] = i;   // goodboy is the hidden easter egg
   int pages = max(1, (nVis + perPage - 1) / perPage);
   if (homePage >= pages) homePage = pages - 1;
@@ -434,6 +470,7 @@ static void drawHome() {
     int x = gap + (slot % cols) * (tw + gap);
     int y = CONTENT_Y + gap + (slot / cols) * (th + gap);
     if (i == -2) { drawTriageTile(x, y, tw, th); continue; }
+    if (i == -3) { drawWhereTile(x, y, tw, th); continue; }
     btns.push_back({(int16_t)x, (int16_t)y, (int16_t)tw, (int16_t)th, (uint16_t)(B_TILE + i), "", I_NONE, true});
     tft.fillRoundRect(x, y, tw, th, (SCR_W < 300 ? 8 : 10), cats[i].color);
     if (SCR_W < 300) {
@@ -1314,6 +1351,7 @@ static String triTitle(const String &id) {
 static void triPick(int i) {
   if (i < 0 || i >= triCur->n) return;
   const char *to = triCur->o[i].to;
+  if (!strcmp(to, "x:lost")) { lostFromTriage = true; screen = SC_LOST; redraw(); return; }
   if (!strncmp(to, "g:", 2)) {
     Entry e{String(to + 2), triTitle(String(to + 2)), ""};
     articleFromTriage = true;
@@ -1349,7 +1387,7 @@ static String wpInfo(const Waypoint &w) {
 static void drawWps() {
   btns.clear();
   tft.fillScreen(C_BG);
-  drawHeader(wpDelMode ? "Tap to delete" : "Waypoints", true);
+  drawHeader(wpDelMode ? "Tap to delete" : (wpGoMode ? "Tap to go there" : "Waypoints"), true);
   if (!nWps) {
     tft.setTextFont(2);
     tft.setTextDatum(MC_DATUM);
@@ -1360,14 +1398,16 @@ static void drawWps() {
   }
   for (int i = 0; i < nWps; i++) addBtn(4, CONTENT_Y + i * ROW_H, SCR_W - 8, ROW_H - 3, B_ROW + i, wpInfo(wps[i]));
   bool armedW = millis() - wpClearMs < 3000, armedT = millis() - trkClearMs < 3000;
-  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_WP_DEL, wpDelMode ? "Done" : "Del", I_NONE, nWps > 0},
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_WP_GO, wpGoMode ? "Pick" : "Go", I_NONE, nWps > 0},
+                 {B_WP_DEL, wpDelMode ? "Done" : "Del", I_NONE, nWps > 0},
                  {B_WP_CLEAR, armedW ? "Sure?" : "Clr pts", I_NONE, nWps > 0},
                  {B_TRK_CLEAR, armedT ? "Sure?" : "Clr trk", I_NONE, trkN > 0}};
-  drawFooter(f, 4);
+  drawFooter(f, 5);
 }
 
 static void wpRowTap(int i) {
   if (i < 0 || i >= nWps) return;
+  if (wpGoMode) { wpGoMode = false; gotoIdx = i; gotoFrom = SC_WPS; screen = SC_GOTO; redraw(); return; }
   if (wpDelMode) {
     for (int k = i; k < nWps - 1; k++) wps[k] = wps[k + 1];
     nWps--;
@@ -1399,11 +1439,346 @@ static void wpMark() {
   mapDrawTiles();
 }
 
+// ---------------------------------------------------------------- GPS: where am I, I'm lost, go to, clock
+static void geoNote() {                              // remember the last good position (the clock and sun times need it)
+  GpsFix g = gpsGet();
+  if (!g.valid) return;
+  lastLat = g.lat; lastLon = g.lon; haveLast = true;
+  static double savedLat = 999, savedLon = 999;
+  if (geoDistM(savedLat, savedLon, g.lat, g.lon) > 5000.0) {   // keep it across reboots, but write rarely
+    savedLat = g.lat; savedLon = g.lon;
+    prefs.putFloat("llat", (float)g.lat); prefs.putFloat("llon", (float)g.lon);
+  }
+}
+
+static void gsSay(const char *s) { snprintf(gsToast, sizeof(gsToast), "%s", s); gsToastMs = millis(); }
+
+static String fmtDist(double m) {
+  char b[24];
+  if (m < 1000) snprintf(b, sizeof(b), "%d m", (int)(m + 0.5));
+  else if (m < 100000) snprintf(b, sizeof(b), "%.1f km", m / 1000.0);
+  else snprintf(b, sizeof(b), "%d km", (int)(m / 1000.0 + 0.5));
+  return String(b);
+}
+static String fmtDistImp(double m) {
+  char b[24];
+  double ft = m * 3.28084;
+  if (ft < 1000) snprintf(b, sizeof(b), "%d ft", (int)(ft + 0.5));
+  else snprintf(b, sizeof(b), "%.1f mi", m / 1609.344);
+  return String(b);
+}
+static const char *cardinal(double deg) {
+  static const char *D[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+  return D[((int)((deg + 22.5) / 45.0)) & 7];
+}
+
+static void bigFont() { if (SCR_W < 300) tft.setTextFont(4); else tft.setFreeFont(&FreeSansBold18pt7b); }
+static void midFont() { if (SCR_W < 300) tft.setTextFont(2); else tft.setFreeFont(&FreeSansBold9pt7b); }
+static void lineText(const String &s, int x, int y, uint8_t datum, uint16_t fg) {   // draws over the old text, so no clearing needed
+  tft.setTextDatum(datum);
+  tft.setTextColor(fg, C_BG);
+  tft.setTextPadding(SCR_W - 8);
+  tft.drawString(s, x, y);
+  tft.setTextPadding(0);
+}
+
+// ---- time: GPS gives UTC, the zone is set on the Clock screen ----
+static int tzOffsetHours() {
+  int base = tzAuto ? (haveLast ? (int)lround(lastLon / 15.0) : 0) : tzHours;
+  return base + (tzDst ? 1 : 0);
+}
+static void civilFromDays(int32_t z, int &y, int &m, int &d) {
+  z += 719468;
+  int32_t era = (z >= 0 ? z : z - 146096) / 146097;
+  unsigned doe = (unsigned)(z - era * 146097);
+  unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  y = (int)yoe + era * 400;
+  unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  unsigned mp = (5 * doy + 2) / 153;
+  d = (int)(doy - (153 * mp + 2) / 5 + 1);
+  m = (int)(mp < 10 ? mp + 3 : mp - 9);
+  y += (m <= 2);
+}
+struct LocalTime { int y, mo, d, h, mi, s, wday; };
+static LocalTime localFromEpoch(uint32_t epochUtc) {
+  int64_t t = (int64_t)epochUtc + (int64_t)tzOffsetHours() * 3600;
+  int32_t days = (int32_t)(t / 86400);
+  int32_t rem = (int32_t)(t - (int64_t)days * 86400);
+  if (rem < 0) { rem += 86400; days--; }
+  LocalTime L;
+  civilFromDays(days, L.y, L.mo, L.d);
+  L.h = rem / 3600; L.mi = (rem % 3600) / 60; L.s = rem % 60;
+  L.wday = (int)((days + 4) % 7); if (L.wday < 0) L.wday += 7;
+  return L;
+}
+static String fmtClock(int h, int mi, int s, bool withSec) {
+  char b[24];
+  if (clock24) {
+    if (withSec) snprintf(b, sizeof(b), "%02d:%02d:%02d", h, mi, s); else snprintf(b, sizeof(b), "%02d:%02d", h, mi);
+  } else {
+    int hh = h % 12 == 0 ? 12 : h % 12; const char *ap = h < 12 ? "AM" : "PM";
+    if (withSec) snprintf(b, sizeof(b), "%d:%02d:%02d %s", hh, mi, s, ap); else snprintf(b, sizeof(b), "%d:%02d %s", hh, mi, ap);
+  }
+  return String(b);
+}
+static String fmtLocalEpoch(uint32_t epochUtc, bool withSec) {
+  LocalTime L = localFromEpoch(epochUtc);
+  return fmtClock(L.h, L.mi, L.s, withSec);
+}
+static String tzLabel() {
+  int o = tzOffsetHours();
+  char b[24];
+  snprintf(b, sizeof(b), "UTC%s%d%s%s", o < 0 ? "-" : "+", abs(o), tzDst ? " DST" : "", tzAuto ? " (auto)" : "");
+  return String(b);
+}
+
+// ---- where the sun is: the same maths as the phone Tools page ----
+static void sunPos(double unixSec, double lat, double lon, double &az, double &alt) {
+  const double R = M_PI / 180.0;
+  double d = unixSec / 86400.0 + 2440587.5 - 2451545.0;
+  double g = fmod(357.529 + 0.98560028 * d, 360.0), q = fmod(280.459 + 0.98564736 * d, 360.0);
+  double L = fmod(q + 1.915 * sin(g * R) + 0.020 * sin(2 * g * R), 360.0), e = 23.439 - 0.00000036 * d;
+  double ra = atan2(cos(e * R) * sin(L * R), cos(L * R)) / R, dec = asin(sin(e * R) * sin(L * R));
+  double gm = fmod(18.697374558 + 24.06570982441908 * d, 24.0);
+  double lst = fmod(fmod(gm * 15.0 + lon, 360.0) + 360.0, 360.0), H = (lst - ra) * R, la = lat * R;
+  alt = asin(sin(la) * sin(dec) + cos(la) * cos(dec) * cos(H)) / R;
+  az = fmod(atan2(sin(H), cos(H) * sin(la) - tan(dec) * cos(la)) / R + 180.0 + 360.0, 360.0);
+}
+// sunrise and sunset (UTC epoch, 0 = none) for the local day that contains `nowUtc`
+static void sunTimes(uint32_t nowUtc, double lat, double lon, uint32_t &rise, uint32_t &set, bool &up) {
+  rise = set = 0;
+  int64_t off = (int64_t)tzOffsetHours() * 3600;
+  int64_t day0 = ((int64_t)nowUtc + off) / 86400 * 86400 - off;      // local midnight, as UTC
+  double az, alt, prev;
+  sunPos((double)day0, lat, lon, az, prev);
+  for (int m = 5; m <= 1440; m += 5) {
+    double t = (double)day0 + m * 60.0;
+    sunPos(t, lat, lon, az, alt);
+    if (prev < -0.833 && alt >= -0.833 && !rise) rise = (uint32_t)(t - 150);   // good to a few minutes
+    if (prev >= -0.833 && alt < -0.833 && !set) set = (uint32_t)(t - 150);
+    prev = alt;
+  }
+  sunPos((double)nowUtc, lat, lon, az, alt);
+  up = alt > -0.833;
+}
+
+// ---- the readout shared by the GPS hub and the lost screen ----
+static String localTimeLine() {
+  uint32_t ep;
+  if (!gpsUtcNow(&ep)) return String("time: waiting for GPS");
+  return fmtLocalEpoch(ep, true) + "  " + tzLabel();
+}
+static void drawReadout(int y) {
+  GpsFix g = gpsGet();
+  int step = SCR_W < 300 ? 28 : 46;
+  int cx = SCR_W / 2;
+  bigFont();
+  if (g.valid) {
+    char a[28], b[28];
+    snprintf(a, sizeof(a), "%.5f %c", fabs(g.lat), g.lat < 0 ? 'S' : 'N');
+    snprintf(b, sizeof(b), "%.5f %c", fabs(g.lon), g.lon < 0 ? 'W' : 'E');
+    lineText(a, cx, y, TC_DATUM, C_TEXT);
+    lineText(b, cx, y + step, TC_DATUM, C_TEXT);
+  } else {
+    lineText("No GPS fix yet", cx, y, TC_DATUM, C_ACCENT);
+    lineText("", cx, y + step, TC_DATUM, C_TEXT);
+  }
+  midFont();
+  String l3;
+  if (gsToast[0] && millis() - gsToastMs < 3500) l3 = gsToast;
+  else if (g.valid) l3 = g.phone ? String("from your phone") : String(g.sats) + " satellites, " + String((int)g.altM) + " m up";
+  else l3 = PIN_GPS_RX < 0 ? "waiting for the phone to share GPS" : String(g.sats) + " satellites, go outside";
+  lineText(l3, cx, y + 2 * step - 2, TC_DATUM, gsToast[0] && millis() - gsToastMs < 3500 ? NC(0x07E0) : C_MUTED);
+  lineText(localTimeLine(), cx, y + 2 * step + (SCR_W < 300 ? 18 : 26), TC_DATUM, C_MUTED);
+}
+
+// ---- Where hub ----
+static void drawWhere() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("GPS", true);
+  int y0 = CONTENT_Y + (SCR_W < 300 ? 6 : 10);
+  int bh = SCR_W < 300 ? 40 : 56, gap = SCR_W < 300 ? 6 : 8;
+  int by = CONTENT_Y + CONTENT_H - 4 * (bh + gap) + gap;
+  addBtn(8, by, SCR_W - 16, bh, B_LOST, "I'm lost");
+  addBtn(8, by + (bh + gap), SCR_W - 16, bh, B_GOTO, "Go to a waypoint");
+  addBtn(8, by + 2 * (bh + gap), SCR_W - 16, bh, B_CLOCK, "Clock and sun");
+  addBtn(8, by + 3 * (bh + gap), SCR_W - 16, bh, B_MAP, "Map");
+  drawReadout(y0);
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}};
+  drawFooter(f, 1);
+}
+static void updateWhere() { drawReadout(CONTENT_Y + (SCR_W < 300 ? 6 : 10)); }
+
+// ---- I'm lost ----
+static int wpFind(const char *name) {
+  for (int i = 0; i < nWps; i++) if (!strcmp(wps[i].name, name)) return i;
+  return -1;
+}
+static void drawLost() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("I'm lost", true);
+  wpLoad();
+  int bh = SCR_W < 300 ? 38 : 54, gap = SCR_W < 300 ? 4 : 8;
+  int by = CONTENT_Y + CONTENT_H - 3 * (bh + gap) + gap;
+  addBtn(8, by, SCR_W - 16, bh, B_GOTO_START, "Back to start");
+  addBtn(8, by + (bh + gap), SCR_W - 16, bh, B_SEND_SPOT, "Send my spot");
+  addBtn(8, by + 2 * (bh + gap), SCR_W - 16, bh, B_SET_START, "Set start here");
+  drawReadout(CONTENT_Y + (SCR_W < 300 ? 4 : 8));
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_LOST_GUIDE, "Guide", I_NONE, true}};
+  drawFooter(f, 2);
+}
+static void updateLost() { drawReadout(CONTENT_Y + (SCR_W < 300 ? 4 : 8)); }
+
+static void wpSetStart() {
+  GpsFix g = gpsGet();
+  if (!g.valid) { gsSay("no GPS fix yet"); return; }
+  wpLoad();
+  int i = wpFind("START");
+  if (i < 0) {
+    if (nWps >= wpMax()) { gsSay("waypoint list is full"); return; }
+    i = nWps++;
+    snprintf(wps[i].name, sizeof(wps[i].name), "START");
+  }
+  wps[i].lat = g.lat; wps[i].lon = g.lon;
+  wpSave();
+  gsSay("start point saved");
+}
+static void sendSpot() {
+  GpsFix g = gpsGet();
+  if (!g.valid) { gsSay("no GPS fix yet"); return; }
+  if (!meshEnabled) { gsSay("mesh is off (Mesh screen)"); return; }
+  char b[64];
+  snprintf(b, sizeof(b), "HELP lost at %.5f,%.5f", g.lat, g.lon);
+  gsSay(meshSend(b) ? "sent to nearby boards" : "could not send");
+}
+
+// ---- Go to a waypoint: arrow and distance ----
+static void drawArrow(int cx, int cy, int r, double angDeg, uint16_t col) {   // angle clockwise from straight up
+  double a = angDeg * M_PI / 180.0;
+  auto pt = [&](double rr, double off, int &x, int &y) { double t = a + off; x = cx + (int)lround(rr * sin(t)); y = cy - (int)lround(rr * cos(t)); };
+  int tx, ty, lx, ly, rx, ry, mx, my;
+  pt(r, 0, tx, ty); pt(r * 0.78, 2.45, lx, ly); pt(r * 0.78, -2.45, rx, ry); pt(r * 0.30, M_PI, mx, my);
+  tft.fillTriangle(tx, ty, lx, ly, mx, my, col);
+  tft.fillTriangle(tx, ty, rx, ry, mx, my, col);
+}
+static void drawGoto() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Go to", true);
+  wpLoad();
+  if (gotoIdx >= nWps) gotoIdx = 0;
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_GOTO_PREV, "", I_LEFT, nWps > 1}, {B_GOTO_NEXT, "", I_RIGHT, nWps > 1}};
+  drawFooter(f, 3);
+}
+static void updateGoto() {
+  const int cx = SCR_W / 2, cy = CONTENT_Y + CONTENT_H * 40 / 100, R = min<int>(SCR_W, CONTENT_H) * 27 / 100;
+  tft.fillRect(0, CONTENT_Y, SCR_W, CONTENT_H, C_BG);
+  tft.setTextPadding(0);
+  if (nWps == 0) {
+    midFont();
+    lineText("No waypoints yet.", cx, CONTENT_Y + 50, TC_DATUM, C_ACCENT);
+    lineText("Mark one on the Map, or tap", cx, CONTENT_Y + 80, TC_DATUM, C_MUTED);
+    lineText("Set start here on I'm lost.", cx, CONTENT_Y + 100, TC_DATUM, C_MUTED);
+    return;
+  }
+  const Waypoint &w = wps[gotoIdx];
+  midFont();
+  lineText(String(w.name) + (nWps > 1 ? "  (" + String(gotoIdx + 1) + "/" + String(nWps) + ")" : String("")), cx, CONTENT_Y + 4, TC_DATUM, C_ACCENT);
+  GpsFix g = gpsGet();
+  int yd = cy + R + (SCR_W < 300 ? 24 : 36), y2 = yd + (SCR_W < 300 ? 24 : 38), y3 = y2 + (SCR_W < 300 ? 18 : 28);
+  if (!g.valid) {
+    lineText("Waiting for GPS...", cx, cy, MC_DATUM, C_MUTED);
+    return;
+  }
+  double dist = geoDistM(g.lat, g.lon, w.lat, w.lon), brg = geoBearing(g.lat, g.lon, w.lat, w.lon);
+  bool head = g.courseMs != 0;
+  double rel = head ? brg - g.courseDeg : brg;
+  bool arrived = dist < 20.0;
+  uint16_t col = arrived ? NC(0x07E0) : C_ACCENT;
+  tft.drawCircle(cx, cy, R + 10, C_LINE);
+  if (head) tft.fillTriangle(cx, cy - R - 16, cx - 6, cy - R - 6, cx + 6, cy - R - 6, C_TEXT);   // straight ahead
+  else { tft.setTextFont(1); lineText("N", cx, cy - R - 24, TC_DATUM, C_MUTED); }
+  if (arrived) { tft.fillCircle(cx, cy, R / 3, col); }
+  else drawArrow(cx, cy, R, rel, col);
+  bigFont();
+  lineText(arrived ? String("You are here") : fmtDist(dist), cx, yd, MC_DATUM, col);
+  midFont();
+  char b[40];
+  snprintf(b, sizeof(b), "%s   %d %s", fmtDistImp(dist).c_str(), (int)(brg + 0.5), cardinal(brg));
+  lineText(b, cx, y2, MC_DATUM, C_TEXT);
+  lineText(head ? (g.speedKmh >= 2.0f ? String("arrow: your walking direction") : String("arrow: last walking direction")) : String("N is up: walk to get your direction"),
+           cx, y3, MC_DATUM, C_MUTED);
+}
+
+// ---- Clock and sun ----
+static void drawClock() {
+  btns.clear();
+  tft.fillScreen(C_BG);
+  drawHeader("Clock and sun", true);
+  FootDef f[] = {{B_BACK, "Back", I_LEFT, true}, {B_TZ_DN, "-", I_NONE, true}, {B_TZ_UP, "+", I_NONE, true},
+                 {B_TZ_DST, tzDst ? "DST*" : "DST", I_NONE, true}, {B_TZ_AUTO, tzAuto ? "Auto*" : "Auto", I_NONE, true},
+                 {B_TZ_24H, clock24 ? "24h*" : "24h", I_NONE, true}};
+  drawFooter(f, 6);
+}
+static void updateClock() {
+  int cx = SCR_W / 2, y = CONTENT_Y + (SCR_W < 300 ? 8 : 14);
+  int s1 = SCR_W < 300 ? 36 : 56, s2 = SCR_W < 300 ? 22 : 32;
+  uint32_t ep;
+  if (!gpsUtcNow(&ep)) {
+    midFont();
+    lineText("Waiting for GPS time", cx, y + 20, TC_DATUM, C_ACCENT);
+    lineText("Needs the GPS to see the sky once.", cx, y + 20 + s2, TC_DATUM, C_MUTED);
+    return;
+  }
+  LocalTime L = localFromEpoch(ep);
+  static const char *DAY[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+  static const char *MON[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  bigFont();
+  lineText(fmtClock(L.h, L.mi, L.s, true), cx, y, TC_DATUM, C_TEXT);
+  midFont();
+  char b[48];
+  snprintf(b, sizeof(b), "%s %s %d %d", DAY[L.wday], MON[L.mo - 1], L.d, L.y);
+  lineText(b, cx, y + s1, TC_DATUM, C_TEXT);
+  lineText(tzLabel(), cx, y + s1 + s2, TC_DATUM, C_MUTED);
+  snprintf(b, sizeof(b), "GPS time, synced %us ago", (unsigned)gpsTimeSyncAgeS());
+  lineText(b, cx, y + s1 + 2 * s2, TC_DATUM, C_MUTED);
+  int ys = y + s1 + 3 * s2 + 10;
+  if (!haveLast) { lineText("Sun times need a position fix.", cx, ys, TC_DATUM, C_MUTED); return; }
+  static uint32_t rise = 0, set = 0; static bool up = false;
+  if (!sunCalcMs || millis() - sunCalcMs > 30000) { sunCalcMs = millis(); sunTimes(ep, lastLat, lastLon, rise, set, up); }
+  lineText(String("Sunrise  ") + (rise ? fmtLocalEpoch(rise, false) : String("none today")), cx, ys, TC_DATUM, C_TEXT);
+  lineText(String("Sunset   ") + (set ? fmtLocalEpoch(set, false) : String("none today")), cx, ys + s2, TC_DATUM, C_TEXT);
+  String l;
+  if (up && set && set > ep) { uint32_t m = (set - ep) / 60; l = "Daylight left  " + String(m / 60) + "h " + String(m % 60) + "m"; }
+  else if (!up) l = "The sun is down";
+  else l = "Sun is up all day";
+  lineText(l, cx, ys + 2 * s2, TC_DATUM, up ? NC(0xFFE0) : C_MUTED);
+}
+static void clockSave() {
+  prefs.putChar("tz", tzHours); prefs.putBool("tzauto", tzAuto); prefs.putBool("dst", tzDst); prefs.putBool("h24", clock24);
+}
+
+static void geoRefresh() {                           // called about once a second while one of these screens is showing
+  switch (screen) {
+    case SC_WHERE: updateWhere(); break;
+    case SC_LOST: updateLost(); break;
+    case SC_GOTO: updateGoto(); break;
+    case SC_CLOCK: updateClock(); break;
+    default: break;
+  }
+}
+
 static void redraw() {
   switch (screen) {
     case SC_MAP: drawMap(); break;
     case SC_TRIAGE: drawTriage(); break;
     case SC_WPS: drawWps(); break;
+    case SC_WHERE: drawWhere(); break;
+    case SC_LOST: drawLost(); break;
+    case SC_GOTO: drawGoto(); updateGoto(); break;
+    case SC_CLOCK: drawClock(); updateClock(); break;
     case SC_NEAR: drawNear(); break;
     case SC_RADAR: drawRadar(); break;
     case SC_MESH: meshMarkRead(); drawMesh(); break;
@@ -1573,7 +1948,15 @@ static void scrollDoc(int dir) {
 
 static void goBack() {
   switch (screen) {
-    case SC_ARTICLE: doc.free(); if (articleFromTriage) { articleFromTriage = false; screen = SC_TRIAGE; } else screen = SC_CATEGORY; break;
+    case SC_ARTICLE:
+      doc.free();
+      if (articleFromLost) { articleFromLost = false; screen = SC_LOST; }
+      else if (articleFromTriage) { articleFromTriage = false; screen = SC_TRIAGE; }
+      else screen = SC_CATEGORY;
+      break;
+    case SC_LOST: screen = lostFromTriage ? SC_TRIAGE : SC_WHERE; lostFromTriage = false; break;
+    case SC_GOTO: screen = gotoFrom; break;
+    case SC_CLOCK: screen = SC_WHERE; break;
     case SC_TRIAGE:
       if (triDepth > 0) triCur = triStack[--triDepth];
       else { screen = sdUp ? SC_HOME : SC_NOSD; }
@@ -1856,6 +2239,38 @@ static void onButton(uint16_t id) {
       if (mapZ > mapMinZ) { mapZ--; mapCx /= 2; mapCy /= 2; redraw(); }
       break;
     case B_TRIAGE: triCur = &TRIAGE[0]; triDepth = 0; screen = SC_TRIAGE; redraw(); break;
+    case B_WHERE: screen = SC_WHERE; redraw(); break;
+    case B_LOST: lostFromTriage = false; screen = SC_LOST; redraw(); break;
+    case B_GOTO: gotoFrom = SC_WHERE; screen = SC_GOTO; redraw(); break;
+    case B_CLOCK: screen = SC_CLOCK; redraw(); break;
+    case B_GOTO_START: {
+      wpLoad();
+      int i = wpFind("START");
+      if (i < 0) { gsSay("set a start point first"); updateLost(); break; }
+      gotoIdx = i; gotoFrom = SC_LOST; screen = SC_GOTO; redraw();
+      break;
+    }
+    case B_SEND_SPOT: sendSpot(); updateLost(); break;
+    case B_SET_START: wpSetStart(); updateLost(); break;
+    case B_GOTO_PREV: if (nWps) { gotoIdx = (gotoIdx + nWps - 1) % nWps; updateGoto(); } break;
+    case B_GOTO_NEXT: if (nWps) { gotoIdx = (gotoIdx + 1) % nWps; updateGoto(); } break;
+    case B_LOST_GUIDE: {
+      Entry e{String("staying-found"), triTitle(String("staying-found")), ""};
+      articleFromLost = true; articleFromTriage = false;
+      openArticle(e);
+      break;
+    }
+    case B_WP_GO: wpGoMode = !wpGoMode; if (wpGoMode) wpDelMode = false; drawWps(); break;
+    case B_TZ_DN:
+    case B_TZ_UP: {
+      if (tzAuto) { tzHours = haveLast ? (int8_t)lround(lastLon / 15.0) : 0; tzAuto = false; }
+      tzHours = constrain(tzHours + (id == B_TZ_UP ? 1 : -1), -12, 14);
+      sunCalcMs = 0; clockSave(); drawClock(); updateClock();
+      break;
+    }
+    case B_TZ_DST: tzDst = !tzDst; sunCalcMs = 0; clockSave(); drawClock(); updateClock(); break;
+    case B_TZ_AUTO: tzAuto = true; sunCalcMs = 0; clockSave(); drawClock(); updateClock(); break;
+    case B_TZ_24H: clock24 = !clock24; clockSave(); drawClock(); updateClock(); break;
     case B_MAP_ME: {
       GpsFix g = gpsGet();
       if (mapReady && g.valid) { mapLatLonToPx(g.lat, g.lon, mapZ, mapCx, mapCy); redraw(); }
@@ -1995,6 +2410,8 @@ void setup() {
   wifiOn = prefs.getBool("wifi", true);
   nightAuto = prefs.getBool("night", false);
   gpsShare = prefs.getBool("gpsshare", false);
+  tzHours = prefs.getChar("tz", 0); tzAuto = prefs.getBool("tzauto", true); tzDst = prefs.getBool("dst", false); clock24 = prefs.getBool("h24", false);
+  if (prefs.isKey("llat")) { lastLat = prefs.getFloat("llat", 0); lastLon = prefs.getFloat("llon", 0); haveLast = true; }
   meshEnabled = prefs.getBool("mesh", true);
   if (prefs.isKey("nick")) meshSetName(prefs.getString("nick").c_str());
 
@@ -2121,12 +2538,18 @@ void loop() {
     if (gpsPresent() && now - gpsLogMs > 3000) {
       gpsLogMs = now;
       GpsFix g = gpsGet();
-      Serial.printf("[gps] sentences %u, fix %s, sats %u, %.5f %.5f%s\n", (unsigned)g.sentences, g.valid ? "yes" : "no", g.sats, g.lat, g.lon, g.phone ? " (phone)" : "");
+      uint32_t ep = 0; bool hasT = gpsUtcNow(&ep); String lt = hasT ? fmtLocalEpoch(ep, true) : String("-");
+      Serial.printf("[gps] sentences %u, fix %s, sats %u, %.5f %.5f%s, utc %lu, local %s (%s), course %.0f\n", (unsigned)g.sentences, g.valid ? "yes" : "no", g.sats, g.lat, g.lon, g.phone ? " (phone)" : "", (unsigned long)ep, lt.c_str(), tzLabel().c_str(), g.courseDeg);
     }
   }
   {                                                    // share our position with nearby boards (only when the user turned that on)
     GpsFix gf = gpsGet();
     meshSetMyPos(gpsShare && gf.valid, gf.lat, gf.lon);
+  }
+  {                                                    // GPS screens (lost, go to, clock) update about once a second
+    static uint32_t geoMs = 0, noteMs = 0;
+    if (now - noteMs > 2000) { noteMs = now; geoNote(); }
+    if (!sleeping && (screen == SC_WHERE || screen == SC_LOST || screen == SC_GOTO || screen == SC_CLOCK) && now - geoMs > 1000) { geoMs = now; geoRefresh(); }
   }
   if (screen == SC_RADAR && !sleeping) {               // keep the radar live
     static uint32_t radarMs = 0;

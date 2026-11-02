@@ -101,7 +101,7 @@ static const TriNode TRIAGE[] = {
     {"Flat tire", "g:flat-tire"}}},
 
   {"outdoors", "What do you need?", 5, {
-    {"I am lost", "g:staying-found"},
+    {"I am lost", "x:lost"},
     {"Water", "g:finding-water"},
     {"Shelter, warm and dry", "g:shelter-basics"},
     {"Fire", "g:fire-basics"},

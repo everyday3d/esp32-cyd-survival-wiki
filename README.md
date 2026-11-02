@@ -24,7 +24,7 @@ No internet. No cell service. No subscription. Power it up and tap.
 | 🩺 **Triage assistant** | Tap what is wrong and two or three taps take you to the right guide. |
 | 💬 **Mesh chat** | Text other boards with no router and no towers. Messages hop from board to board, and you see who heard you. |
 | 🗺️ **Offline maps** | Your own saved map tiles, pan and zoom on the screen. Mark waypoints and see how far away they are. |
-| 📍 **GPS (optional)** | With a GPS module, or just your phone: your position and a breadcrumb track on the map, positions shared over the mesh, and a radar screen. On the phone map page, tap **Share GPS** and the board uses your phone's position. New, still being tested. |
+| 📍 **GPS (optional)** | With a GPS module, or just your phone: your position and a breadcrumb track on the map, positions shared over the mesh, and a radar screen. An **I'm lost** screen with big coordinates, a send-my-spot button and an arrow back to your start point, a **Go to** arrow and distance for any waypoint, and a **clock** from GPS time with sunrise, sunset and daylight left. On the phone map page, tap **Share GPS** and the board uses your phone's position. New, still being tested. |
 | 🧭 **Phone tools** | A compass, sun finder (sunrise, sunset and where the sun is), level and camera magnifier on your phone, using the phone's own sensors. Open **Tools** on the hotspot page. New, in the next release. |
 | 📱 **Phone hotspot** | The board makes its own Wi-Fi network, so anyone nearby can read, search and chat from a phone. Add it to your home screen, or tap **Save to my phone** to keep every guide on the phone with no Wi-Fi. |
 | 🔦 **Flashlight and SOS** | White light, red light to keep your night vision, and a Morse SOS strobe. |

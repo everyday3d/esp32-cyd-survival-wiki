@@ -23,6 +23,26 @@ static bool phoneFresh(GpsFix *out) {
   return true;
 }
 
+// ---- GPS time (UTC from the NMEA RMC sentence) ----
+static uint32_t timeEpoch = 0, timeSyncMs = 0;      // epoch seconds at the last stamp, and millis() then
+static bool timeSeen = false;
+
+// days since 1970-01-01 for a civil date (Howard Hinnant's algorithm)
+static int32_t daysFromCivil(int y, int m, int d) {
+  y -= m <= 2;
+  int era = (y >= 0 ? y : y - 399) / 400;
+  unsigned yoe = (unsigned)(y - era * 400);
+  unsigned doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+  unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+  return era * 146097 + (int)doe - 719468;
+}
+
+bool gpsUtcNow(uint32_t *epochS) {
+  if (!timeSeen) return false;
+  if (epochS) *epochS = timeEpoch + (millis() - timeSyncMs) / 1000;
+  return true;
+}
+uint32_t gpsTimeSyncAgeS() { return timeSeen ? (millis() - timeSyncMs) / 1000 : 0xFFFFFFFF; }
 #if PIN_GPS_RX >= 0
 static GpsFix fix = {};
 static char line[100];
@@ -58,7 +78,18 @@ static void handle(char *s) {                       // s = text between '$' and 
       fix.altM = atof(f[9]); fix.valid = true; fix.fixMs = millis();
     } else fix.valid = false;
   } else if (!strncmp(t, "RMC", 3) && n >= 8) {
-    if (*f[2] == 'A') fix.speedKmh = atof(f[7]) * 1.852f;
+    if (*f[2] == 'A') {
+      fix.speedKmh = atof(f[7]) * 1.852f;
+      if (n >= 9 && *f[8] && fix.speedKmh >= 2.0f) { fix.courseDeg = atof(f[8]); fix.courseMs = millis() | 1; }   // heading only means something while moving
+      if (n >= 10 && strlen(f[1]) >= 6 && strlen(f[9]) == 6) {          // hhmmss.ss and ddmmyy
+        int hh = (f[1][0] - '0') * 10 + (f[1][1] - '0'), mi = (f[1][2] - '0') * 10 + (f[1][3] - '0'), ss = (f[1][4] - '0') * 10 + (f[1][5] - '0');
+        int dd = (f[9][0] - '0') * 10 + (f[9][1] - '0'), mo = (f[9][2] - '0') * 10 + (f[9][3] - '0'), yy = 2000 + (f[9][4] - '0') * 10 + (f[9][5] - '0');
+        if (hh < 24 && mi < 60 && ss < 61 && dd >= 1 && dd <= 31 && mo >= 1 && mo <= 12) {
+          timeEpoch = (uint32_t)daysFromCivil(yy, mo, dd) * 86400UL + hh * 3600UL + mi * 60UL + ss;
+          timeSyncMs = millis(); timeSeen = true;
+        }
+      }
+    }
   }
 }
 
