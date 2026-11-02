@@ -32,3 +32,6 @@ tools/
 
 # Downloaded offline map tiles (large, made with scripts/get-map-tiles.ps1)
 sdcard/maps/
+
+# Generated Thai pack (build with scripts/thai/build-thai-pack.ps1; ships as a release download)
+sdcard-th/

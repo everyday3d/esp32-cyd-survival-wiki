@@ -20,9 +20,10 @@
 #include "mesh.h"
 #include "gps.h"
 #include "triage.h"
+#include "l10n.h"
 #include "qrcodegen.h"
 
-TFT_eSPI tft;
+L10nTft tft;
 static SPIClass sdSPI(VSPI);
 static Preferences prefs;
 static Doc doc;
@@ -145,6 +146,7 @@ static String readLine(File &f) {
 
 static String fitText(String s, int maxW) {
   if (tft.textWidth(s) <= maxW) return s;
+  if (l10nHas(s.c_str())) return s;                  // a Thai picture can not be shortened with dots: it is cropped instead
   while (s.length() > 1 && tft.textWidth(s + "...") > maxW) s.remove(s.length() - 1);
   s.trim();
   return s + "...";
@@ -2058,7 +2060,7 @@ static bool startSD() {
   if (sdUp) return true;
   sdSPI.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS);
   for (int i = 0; i < 3; i++) {
-    if (SD.begin(PIN_SD_CS, sdSPI, 20000000)) { sdUp = true; return true; }
+    if (SD.begin(PIN_SD_CS, sdSPI, 20000000)) { sdUp = true; l10nBegin(); return true; }
     delay(200);
   }
   return false;

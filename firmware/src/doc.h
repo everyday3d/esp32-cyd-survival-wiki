@@ -21,10 +21,12 @@ public:
   int  height() const { return totalH; }
   String title() const { return docTitle; }
   bool loaded() const { return buf != nullptr; }
+  bool thai() const { return thMode; }
 private:
   void layout(bool markdown);
   void wrap(int start, int end, int x0, int width, uint8_t style);
   void addGap(int px) { cursorY += px; }
+  bool thMode = false;            // showing a pre-drawn Thai page (see l10n.h)
   char *buf = nullptr;
   int len = 0;
   int cursorY = 0;
