@@ -38,6 +38,19 @@ Works on the **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the **3.5" Ho
 
 ## 🆕 What's New
 
+### New in 1.7.0: GPS Tools and Phone Tools (2.8" and 3.5" firmware)
+- **Map Follows You**: tap **Me** on the Map to centre on yourself, tap it again and the map keeps you centred as you move (**Me\***). Dragging the map turns following off.
+- **I'm Lost**: a screen with big coordinates, **Send my spot** (broadcasts "HELP lost at ..." to nearby boards), **Set start here** and **Back to start**. Triage's "I am lost" opens it.
+- **Go To a Waypoint**: pick one of your waypoints and get an arrow and distance that update as you walk. The arrow uses your walking direction from the GPS, so you need to be moving.
+- **GPS Clock and Sun**: the exact time and date from the GPS, with a time zone you can set, plus sunrise, sunset and daylight left. A **sunset alarm** warns you 30 to 120 minutes before dark with a flashing red screen.
+- **Speed and Altitude**: speed, altitude and heading, with a trip tracker for distance, time moving, top speed and climb.
+- **A GPS Tile on the Home Screen**: it opens the hub for all of the above. It shows when there is a GPS module, or a phone sharing its position.
+- **Phone Tools**: on the hotspot page, **Tools** opens a compass, a sun finder, a level and a camera magnifier that use your phone's own sensors. **Share GPS** on the phone map page feeds your phone's position to the board, so it works without a GPS module. **Save to my phone** downloads every guide for offline use, and the page has a home-screen icon.
+- **To get the phone page updates**, copy the repo's `sdcard/web/` folder to your microSD card. The GPS features need a GPS module (see `case/2.8inch-gps/WIRING.md`) or your phone sharing its position. The GPS case has a new **rev2** with a taller pod and cable pegs, not yet print-tested.
+
+<details>
+<summary><b>Earlier versions (1.6.0 and older)</b></summary>
+
 ### New in 1.6.0: Triage, Map Waypoints and 12 New Guides (2.8" and 3.5" firmware)
 - **Triage Assistant**: a red **Triage** tile first on the home screen. Tap what is wrong (someone hurt, a storm, trouble at home or in the car, lost, a child or older adult) and two or three taps take you straight to the right guide. **Back** inside a guide returns to the triage menu.
 - **Map Waypoints**: on the **Map** screen, centre the crosshair on a spot and tap **Mark** to save it. **Pts** lists your waypoints with distance and direction, and tapping one jumps the map to it. Saved to `maps/waypoints.txt` on the SD card.
@@ -46,8 +59,6 @@ Works on the **2.8" Cheap Yellow Display (`ESP32-2432S028R`)** and the **3.5" Ho
 - **12 New Guides, 118 in All**: drowning, electric shock, poisoning and overdose, diabetic emergency, stroke and heart attack, spinal injury, snow cave, wet-weather fire, food safety after an outage, the 72-hour kit, plus a new **Hygiene & Sanitation** category with an emergency toilet and handwashing with little water.
 - **To get the new guides**, copy the repo's `sdcard/wiki/` folder to your microSD card. Keep your `config.txt` and your `maps` folder.
 
-<details>
-<summary><b>Earlier versions (1.5.0 and older)</b></summary>
 
 ### New in 1.5.0: Five New Categories and a Paged Home Screen (2.8" and 3.5" firmware)
 - **Weather & Storms**: tornado, floods, hurricanes and storm surge, wildfire and smoke, blizzards and ice storms, earthquakes, extreme heat.
