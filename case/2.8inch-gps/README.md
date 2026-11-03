@@ -17,6 +17,7 @@ Parts and files:
 | `1_ESP32_28_GPS_Case_Base_rev2.stl` | Base with the tall pod |
 | `2_ESP32_28_GPS_Case_Top_rev2.stl` | Main lid |
 | `3_ESP32_28_GPS_Case_PodLid_rev2.stl` | Pod lid, press fits into the pod (a dab of glue or a bit of tape keeps it shut) |
+| `ESP32_28_GPS_PodLid_rev2_snug.3mf` | **Snug pod lid, only.** The first pod lid sat loose. This one has tighter fit and small crush ribs on its rim that press into the bay walls, plus a small tab at the far end to get a fingernail or coin under it. Print just this part if you already have the base. |
 | `ESP32_28_GPS_Case_rev2.blend` | Blender 5.2 model |
 
 **Not printed yet.** The 5 mm figure is from your measurement of how much the first print was short. If the lid still will not close, tell me how much and I will change one number and rebuild.
