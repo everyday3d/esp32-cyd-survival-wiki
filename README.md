@@ -19,7 +19,8 @@ No internet. No cell service. No subscription. Power it up and tap.
 
 | | |
 | :--- | :--- |
-| 🇹🇭 **Thai edition (beta)** | Thai text on the screen and the first guides in Thai. Pick **ไทย (Thai, beta)** on the web flasher. Not every guide is translated yet. See [`l10n/th/README.md`](l10n/th/README.md). |
+| 🇹🇭 **Thai edition (beta, English-base)** | Built from this project's latest firmware (English-base), with Thai text on the screen and the first guides in Thai. Pick **ไทย (Thai, beta)** on the web flasher. Not every guide is translated yet. See [`l10n/th/README.md`](l10n/th/README.md). |
+| 🇹🇭 **Community Thai edition** | A separate, community-made Thai version by [zmikiz1423](https://github.com/zmikiz1423/esp32-cyd-survival-wiki-thai): 118 guides in Thai and offline province maps, for the 2.8" board. It is based on 1.6.0 and its author notes it has not been tested on a real board yet. Not made or tested by this project, so check it yourself before you flash it. |
 | 📖 **118 field guides** | Water, fire, shelter, first aid, weather, vehicles, home, radio, kids and family, hygiene and more, in 15 categories. Plain language, big type. |
 | 📚 **FM 21-76** | The complete 233-page US Army Survival Manual, one tap away. |
 | 🩺 **Triage assistant** | Tap what is wrong and two or three taps take you to the right guide. |
