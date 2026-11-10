@@ -21,6 +21,9 @@
 #include "gps.h"
 #include "triage.h"
 #include "l10n.h"
+#ifdef LANG_TH
+#include "utf8.h"
+#endif
 #include "qrcodegen.h"
 
 L10nTft tft;
@@ -146,7 +149,21 @@ static String readLine(File &f) {
 
 static String fitText(String s, int maxW) {
   if (tft.textWidth(s) <= maxW) return s;
-  if (l10nHas(s.c_str())) return s;                  // a Thai picture can not be shortened with dots: it is cropped instead
+#ifdef LANG_TH
+  if (l10nHas(s.c_str())) {                          // Thai: shorten a whole letter cluster at a time, never half a character
+    const char *b = s.c_str();
+    int len = s.length(), p = 0, fit = 0;
+    while (p < len) {
+      int e = utf8ClusterEnd(b, len, p);
+      if (tft.textWidth(s.substring(0, e) + "...") > maxW) break;
+      fit = e;
+      p = e;
+    }
+    String out = s.substring(0, fit);
+    out.trim();
+    return out + "...";
+  }
+#endif
   while (s.length() > 1 && tft.textWidth(s + "...") > maxW) s.remove(s.length() - 1);
   s.trim();
   return s + "...";
@@ -155,9 +172,13 @@ static String fitText(String s, int maxW) {
 static String asciiOnly(const String &in) {
   static char b[160];
   int n = in.length();
+#ifdef LANG_TH
+  n = utf8Copy(b, in.c_str(), 151);                  // keeps Thai whole: a character is never cut in half
+#else
   if (n > 150) n = 150;
   memcpy(b, in.c_str(), n);
   b[n] = 0;
+#endif
   docSanitize(b, n);
   return String(b);
 }

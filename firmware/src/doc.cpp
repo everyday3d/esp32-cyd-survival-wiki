@@ -11,13 +11,13 @@ static const int TEXT_X = (SCR_W < 300) ? 8 : 10;
 static const int TEXT_W = SCR_W - (TEXT_X * 2);
 
 #ifdef LANG_TH
-struct ThItem { uint8_t type, fg, bg; int16_t x, y; uint16_t w, h; uint32_t off; };
-static std::vector<ThItem> thItems;
-static File thFile;
-static bool thLoad(const char *path, int &totalH);
+#include "utf8.h"
 #endif
 
 static int lineHeight(uint8_t s) {
+#ifdef LANG_TH
+  return tft.thaiLineHeight() + 2;           // room for the tallest vowel and tone mark stack
+#endif
   if (SCR_W < 300) {
     switch (s) {
       case S_H1: return 28;
@@ -36,6 +36,10 @@ static int lineHeight(uint8_t s) {
 }
 
 static void setStyleFont(uint8_t s) {
+#ifdef LANG_TH
+  tft.setThaiSize(s == S_H1 ? 22 : s == S_CAPTION ? 14 : 18);
+  return;
+#endif
   if (SCR_W < 300) {
     switch (s) {
       case S_H1: tft.setFreeFont(&FreeSansBold9pt7b); break;
@@ -56,6 +60,14 @@ static void setStyleFont(uint8_t s) {
 // ---------- UTF-8 -> ASCII (the built-in fonts only have ASCII) ----------
 void docSanitize(char *s, int &len) {
   int w = 0;
+#ifdef LANG_TH
+  // The Thai glyph tables cover Thai, Latin and common punctuation: keep the text as it is, minus CR and a BOM.
+  for (int r = (len >= 3 && (uint8_t)s[0] == 0xEF && (uint8_t)s[1] == 0xBB && (uint8_t)s[2] == 0xBF) ? 3 : 0; r < len; r++)
+    if (s[r] != '\r') s[w++] = s[r];
+  len = w;
+  s[len] = 0;
+  return;
+#endif
   for (int r = 0; r < len;) {
     uint8_t c = (uint8_t)s[r];
     if (c < 0x80) { if (c != '\r') s[w++] = (char)c; r++; continue; }
@@ -116,15 +128,11 @@ static void stripInline(char *s, int &len) {
 
 bool Doc::load(const char *path, bool markdown) {
   free();
-#ifdef LANG_TH
-  if (markdown && thLoad(path, totalH)) {
-    thMode = true;
-    buf = (char *)malloc(1);                // loaded means buf is set
-    return buf != nullptr;
-  }
-#endif
   File f = SD.open(path, FILE_READ);
   if (!f) return false;
+#ifdef LANG_TH
+  if (f.size() > MAX_DOC_BYTES) { f.close(); return false; }   // Thai is longer in bytes: refuse rather than cut a page
+#endif
   buf = (char *)malloc(MAX_DOC_BYTES + 1);
   if (!buf) { f.close(); return false; }
   len = f.read((uint8_t *)buf, MAX_DOC_BYTES);
@@ -138,10 +146,6 @@ bool Doc::load(const char *path, bool markdown) {
 }
 
 void Doc::free() {
-#ifdef LANG_TH
-  if (thMode) { thFile.close(); thItems.clear(); }
-#endif
-  thMode = false;
   if (buf) ::free(buf);
   buf = nullptr;
   len = 0;
@@ -151,10 +155,19 @@ void Doc::free() {
   docTitle = "";
 }
 
+#ifdef LANG_TH
+static char tmp[768];
+#else
 static char tmp[256];
+#endif
 
 static const char *slice(const char *b, int start, int n) {
-  if (n > (int)sizeof(tmp) - 1) n = sizeof(tmp) - 1;
+  if (n > (int)sizeof(tmp) - 1) {
+    n = sizeof(tmp) - 1;
+#ifdef LANG_TH
+    while (n > 0 && ((uint8_t)b[start + n] & 0xC0) == 0x80) n--;   // never cut a UTF-8 character in half
+#endif
+  }
   memcpy(tmp, b + start, n);
   tmp[n] = 0;
   return tmp;
@@ -164,6 +177,30 @@ void Doc::wrap(int start, int end, int x0, int width, uint8_t style) {
   setStyleFont(style);
   int lh = lineHeight(style);
   int pos = start;
+#ifdef LANG_TH
+  // Thai has no spaces: lines break at a space, a zero width space (put between words by the translators) or a
+  // hyphen, and otherwise between letter clusters, so a vowel or tone mark is never left on its own.
+  while (pos < end) {
+    while (pos < end && buf[pos] == ' ') pos++;
+    if (pos >= end) break;
+    int lineStart = pos, lastFit = pos, lastBreak = -1, p = pos;
+    while (p < end) {
+      int next = utf8ClusterEnd(buf, end, p);
+      if (next - lineStart > 760 || tft.textWidth(slice(buf, lineStart, next - lineStart)) > width) break;
+      lastFit = next;
+      int cpPos = p;
+      uint32_t cp = utf8Decode(buf, end, cpPos);
+      if (cp == ' ' || cp == '\t' || cp == 0x200B || cp == '-') lastBreak = next;
+      p = next;
+    }
+    if (lastFit < end && lastBreak > lineStart) lastFit = lastBreak;
+    if (lastFit == lineStart) lastFit = utf8ClusterEnd(buf, end, lineStart);
+    items.push_back({(uint16_t)lineStart, (uint16_t)(lastFit - lineStart), (int16_t)x0, (int16_t)cursorY, (int16_t)lh, style});
+    cursorY += lh;
+    pos = lastFit;
+  }
+  return;
+#endif
   while (pos < end) {
     while (pos < end && buf[pos] == ' ') pos++;
     if (pos >= end) break;
@@ -310,102 +347,9 @@ static bool jpgOut(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bmp) 
   return true;
 }
 
-#ifdef LANG_TH
-// ---------- Thai pages: pre-drawn on a PC (scripts/thai/build-thai-pack.ps1), see l10n.h ----------
-
-static bool thLoad(const char *path, int &totalH) {
-  const char *pre = "/wiki/articles/";
-  if (strncmp(path, pre, strlen(pre)) != 0 || !l10nActive()) return false;
-  String id = String(path + strlen(pre));
-  if (id.endsWith(".md")) id.remove(id.length() - 3);
-  String f = String(SCR_W < 300 ? "/th/p28/" : "/th/p35/") + id + ".thp";
-  if (!SD.exists(f)) return false;
-  thFile = SD.open(f, FILE_READ);
-  if (!thFile) return false;
-  uint8_t h[12];
-  if (thFile.read(h, 12) != 12 || memcmp(h, "THP1", 4) != 0) { thFile.close(); return false; }
-  int n = h[8] | (h[9] << 8);
-  totalH = h[6] | (h[7] << 8);
-  thItems.clear();
-  thItems.reserve(n);
-  for (int i = 0; i < n; i++) {
-    uint8_t r[16];
-    if (thFile.read(r, 16) != 16) { thFile.close(); thItems.clear(); return false; }
-    thItems.push_back({r[0], r[1], r[2], (int16_t)(r[4] | (r[5] << 8)), (int16_t)(r[6] | (r[7] << 8)), (uint16_t)(r[8] | (r[9] << 8)), (uint16_t)(r[10] | (r[11] << 8)),
-                       (uint32_t)(r[12] | (r[13] << 8) | (r[14] << 16) | ((uint32_t)r[15] << 24))});
-  }
-  return true;
-}
-
-static void thDrawText(const ThItem &it, int y) {
-  static const uint16_t FG[] = {C_TEXT, C_ACCENT, C_MUTED};
-  uint16_t fg = FG[it.fg > 2 ? 0 : it.fg], bg = it.bg == 1 ? C_WARN_BG : C_BG;
-  const int rs = (it.w + 1) / 2;
-  if (it.w > SCR_W || rs > 160) return;
-  static uint8_t raw[8 * 160];
-  static uint16_t line[8 * 320];
-  int r0 = max(0, -y), r1 = min<int>(it.h, CONTENT_H - y);
-  for (int r = r0; r < r1; r += 8) {
-    int rows = min(8, r1 - r);
-    thFile.seek(it.off + (uint32_t)r * rs);
-    thFile.read(raw, rows * rs);
-    for (int j = 0; j < rows; j++)
-      for (int c = 0; c < it.w; c++) {
-        uint8_t b = raw[j * rs + (c >> 1)];
-        uint8_t a = (c & 1) ? (b & 15) : (b >> 4);
-        line[j * it.w + c] = a == 0 ? bg : (a == 15 ? fg : tft.alphaBlend(a * 17, fg, bg));
-      }
-    int cw = min<int>(it.w, SCR_W - it.x);
-    if (cw == it.w) tft.pushImage(it.x, y + r, it.w, rows, line);
-    else if (cw > 0) for (int j = 0; j < rows; j++) tft.pushImage(it.x, y + r + j, cw, 1, line + j * it.w);
-  }
-}
-
-static void thDrawPage(int scroll) {
-  for (const ThItem &it : thItems) {
-    int y = it.y - scroll;
-    if (y + it.h < 0 || y > CONTENT_H) continue;
-    switch (it.type) {
-      case 1:
-        tft.fillRect((SCR_W < 300 ? 6 : 10), y, SCR_W - (SCR_W < 300 ? 12 : 20), it.h, C_WARN_BG);
-        tft.fillRect((SCR_W < 300 ? 6 : 10), y, (SCR_W < 300 ? 3 : 4), it.h, C_WARN_BAR);
-        break;
-      case 2:
-        tft.drawFastHLine(TEXT_X, y + (SCR_W < 300 ? 6 : 8), TEXT_W, C_LINE);
-        break;
-      case 3:
-        tft.fillCircle(it.x + (SCR_W < 300 ? 3 : 4), y + it.h / 2, (SCR_W < 300 ? 2 : 3), C_ACCENT);
-        break;
-      case 4: {
-        char rel[80];
-        thFile.seek(it.off);
-        int n = thFile.read((uint8_t *)rel, sizeof(rel) - 1);
-        rel[n < 0 ? 0 : n] = 0;
-        String full = String("/wiki/") + rel;
-        uint16_t w = 0, h = 0;
-        if (TJpgDec.getFsJpgSize(&w, &h, full.c_str(), SD) == JDR_OK) {
-          int sc = 1;
-          while (w / sc > TEXT_W && sc < 8) sc *= 2;
-          TJpgDec.setJpgScale(sc);
-          TJpgDec.setCallback(jpgOut);
-          jpgClipBottom = CONTENT_H;
-          TJpgDec.drawFsJpg(it.x, y, full.c_str(), SD);
-        }
-        break;
-      }
-      default:
-        thDrawText(it, y);
-        break;
-    }
-  }
-}
-#endif
 void Doc::draw(int scroll) {
   tft.fillRect(0, 0, SCR_W, CONTENT_H, C_BG);
   if (!buf) return;
-#ifdef LANG_TH
-  if (thMode) { thDrawPage(scroll); return; }
-#endif
   tft.setTextDatum(TL_DATUM);
   for (const DocItem &it : items) {
     int y = it.y - scroll;

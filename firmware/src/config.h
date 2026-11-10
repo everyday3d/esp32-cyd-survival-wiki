@@ -87,4 +87,8 @@ static inline uint16_t NC(uint16_t c) {
 #define MAX_CATEGORIES   16
 #define MAX_ARTICLES    400
 #define MAX_BOOKS        40
+#ifdef LANG_TH
+#define MAX_DOC_BYTES  32768   // Thai takes three bytes a letter
+#else
 #define MAX_DOC_BYTES  24576   // largest article / book part loaded at once
+#endif

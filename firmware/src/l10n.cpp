@@ -1,125 +1,182 @@
 #include "l10n.h"
 
 #ifdef LANG_TH
-#include <SD.h>
 #include "config.h"
+#include "utf8.h"
+#include "thai_font_data.h"
+#include "th_strings.h"
 
 extern L10nTft tft;
 
-struct AtlasEntry { uint32_t key; uint32_t off; uint16_t w, h; };
-static AtlasEntry *atlas = nullptr;
-static uint32_t nAtlas = 0;
-static File atlasFile;
+// ---------- English -> Thai lookup ----------
 
-enum { TS_S, TS_SB, TS_MB, TS_LB, TS_XL };
-
-bool l10nActive() { return atlas != nullptr && nAtlas > 0; }
-
-bool l10nBegin() {
-  if (atlas) { free(atlas); atlas = nullptr; nAtlas = 0; }
-  if (atlasFile) atlasFile.close();
-  atlasFile = SD.open(SCR_W < 300 ? "/th/atlas28.thb" : "/th/atlas35.thb", FILE_READ);
-  if (!atlasFile) return false;
-  uint8_t hdr[8];
-  if (atlasFile.read(hdr, 8) != 8 || memcmp(hdr, "THA1", 4) != 0) { atlasFile.close(); return false; }
-  uint32_t n = hdr[4] | (hdr[5] << 8) | (hdr[6] << 16) | ((uint32_t)hdr[7] << 24);
-  if (n == 0 || n > 20000) { atlasFile.close(); return false; }
-  atlas = (AtlasEntry *)malloc(n * sizeof(AtlasEntry));
-  if (!atlas) { atlasFile.close(); return false; }
-  for (uint32_t i = 0; i < n; i++) {
-    uint8_t r[12];
-    if (atlasFile.read(r, 12) != 12) { free(atlas); atlas = nullptr; atlasFile.close(); return false; }
-    atlas[i].key = r[0] | (r[1] << 8) | (r[2] << 16) | ((uint32_t)r[3] << 24);
-    atlas[i].off = r[4] | (r[5] << 8) | (r[6] << 16) | ((uint32_t)r[7] << 24);
-    atlas[i].w = r[8] | (r[9] << 8);
-    atlas[i].h = r[10] | (r[11] << 8);
+static const char *findStr(const char *s) {
+  int lo = 0, hi = TH_STR_N - 1;
+  while (lo <= hi) {
+    int m = (lo + hi) / 2;
+    int c = strcmp(TH_STR[m].en, s);
+    if (c == 0) return TH_STR[m].th;
+    if (c < 0) lo = m + 1; else hi = m - 1;
   }
-  nAtlas = n;
-  Serial.printf("[th] Thai pack loaded: %lu pictures\n", (unsigned long)n);
-  return true;
+  return nullptr;
 }
 
-static uint32_t fnv(const char *s) {
-  uint32_t h = 2166136261u;
-  for (; *s; s++) { h ^= (uint8_t)*s; h *= 16777619u; }
-  return h;
+bool l10nIsThai(const char *s) {
+  for (; *s; s++) if ((uint8_t)*s >= 0x80) return true;
+  return false;
 }
 
-static const AtlasEntry *findEntry(const char *s, uint8_t style) {
-  if (!atlas || !s || !*s) return nullptr;
-  uint32_t key = fnv(s) + (uint32_t)style * 2654435761u;
-  uint32_t lo = 0, hi = nAtlas;
-  while (lo < hi) {
-    uint32_t mid = (lo + hi) / 2;
-    if (atlas[mid].key < key) lo = mid + 1; else hi = mid;
+// "6 arts." has no entry of its own, but " arts." does: keep the count and translate the end.
+const char *l10nTr(const char *s) {
+  if (!s || !*s) return s;
+  if (l10nIsThai(s)) return s;
+  const char *t = findStr(s);
+  if (t) return t;
+  static String out;
+  for (const char *p = s + 1; *p; p++) {
+    if (*p != ' ') continue;
+    bool count = true;
+    for (const char *q = s; q < p; q++) if (!isdigit((uint8_t)*q) && *q != '.' && *q != ',') { count = false; break; }
+    if (!count) break;
+    const char *tail = findStr(p);
+    if (tail) { out = String(s).substring(0, p - s); out += tail; return out.c_str(); }
   }
-  return (lo < nAtlas && atlas[lo].key == key) ? &atlas[lo] : nullptr;
+  return s;
 }
 
-bool l10nHas(const char *s) { return findEntry(s, TS_S) != nullptr; }
+bool l10nHas(const char *s) { return s && (l10nIsThai(s) || findStr(s) != nullptr); }
+bool l10nActive() { return true; }
+bool l10nBegin() { return true; }
 
-// Draws a 4-bit alpha picture over the background, using the text colour. The background colour is the
-// text background if the code set one, otherwise whatever is on the screen at the left edge of the text.
-static int16_t drawAtlas(L10nTft &t, const AtlasEntry *e, int32_t x, int32_t y) {
-  const int w = e->w, h = e->h;
-  uint8_t d = t.textdatum;
-  int hz = d < 9 ? d % 3 : d - 9, vt = d < 9 ? d / 3 : 2;
-  int x0 = hz == 0 ? x : (hz == 1 ? x - w / 2 : x - w);
-  int y0 = vt == 0 ? y : (vt == 1 ? y - h / 2 : y - h);
-  uint16_t fg = (uint16_t)t.textcolor, bg = (uint16_t)t.textbgcolor;
-  uint16_t pad = t.getTextPadding();
-  if (bg == fg) bg = t.readPixel(constrain(x0 + 1, 0, SCR_W - 1), constrain(y0 + h / 2, 0, SCR_H - 1));
-  else if (pad > 0) {                                        // clear the old text, like the normal fonts do
-    int px0 = hz == 0 ? x : (hz == 1 ? x - pad / 2 : x - pad);
-    t.fillRect(max(0, px0), max(0, y0), min<int>(pad, SCR_W - max(0, px0)), h, bg);
+// ---------- Thai glyphs ----------
+
+static const ThaiShape *findShape(uint32_t key) {
+  int lo = 0, hi = thaiShapeCount - 1;
+  while (lo <= hi) {
+    int m = (lo + hi) / 2;
+    uint32_t k = thaiShapes[m].key;
+    if (k == key) return &thaiShapes[m];
+    if (k < key) lo = m + 1; else hi = m - 1;
   }
-  static uint8_t raw[8 * 160];
-  static uint16_t line[8 * 320];
-  const int rs = (w + 1) / 2;
-  if (w > 320 || rs > 160) return w;
-  for (int r0 = 0; r0 < h; r0 += 8) {
-    int rows = min(8, h - r0);
-    atlasFile.seek(e->off + (uint32_t)r0 * rs);
-    atlasFile.read(raw, rows * rs);
-    for (int r = 0; r < rows; r++) {
-      for (int c = 0; c < w; c++) {
-        uint8_t b = raw[r * rs + (c >> 1)];
-        uint8_t a = (c & 1) ? (b & 15) : (b >> 4);
-        line[r * w + c] = a == 0 ? bg : (a == 15 ? fg : t.alphaBlend(a * 17, fg, bg));
-      }
-    }
-    int yy = y0 + r0, cx0 = x0, cw = w, skip = 0;
-    if (cx0 < 0) { skip = -cx0; cw -= skip; cx0 = 0; }
-    if (cx0 + cw > SCR_W) cw = SCR_W - cx0;
-    if (cw <= 0 || yy >= SCR_H) continue;
-    if (skip == 0 && cw == w) t.pushImage(cx0, yy, w, rows, line);
-    else for (int r = 0; r < rows; r++) t.pushImage(cx0, yy + r, cw, 1, line + r * w + skip);
-  }
-  return w;
+  return nullptr;
 }
 
-int16_t L10nTft::drawString(const char *s, int32_t x, int32_t y) {
-  const AtlasEntry *e = findEntry(s, thStyle);
-  if (e) return drawAtlas(*this, e, x, y);
-  return TFT_eSPI::drawString(s, x, y);
+static const ThaiCodepoint *findCodepoint(uint32_t cp) {
+  int lo = 0, hi = thaiCodepointCount - 1;
+  while (lo <= hi) {
+    int m = (lo + hi) / 2;
+    uint32_t c = thaiCodepoints[m].codepoint;
+    if (c == cp) return &thaiCodepoints[m];
+    if (c < cp) lo = m + 1; else hi = m - 1;
+  }
+  return nullptr;
 }
-int16_t L10nTft::drawString(const String &s, int32_t x, int32_t y) { return drawString(s.c_str(), x, y); }
-int16_t L10nTft::textWidth(const char *s) {
-  const AtlasEntry *e = findEntry(s, thStyle);
-  return e ? e->w : TFT_eSPI::textWidth(s);
-}
-int16_t L10nTft::textWidth(const String &s) { return textWidth(s.c_str()); }
+
+void L10nTft::setThaiSize(uint8_t px) { thStyle = px <= 12 ? 0 : px <= 14 ? 1 : px <= 16 ? 2 : px <= 18 ? 3 : 4; }
+int L10nTft::thaiLineHeight() const { return thaiAtlases[thStyle].height; }
 
 void L10nTft::setFreeFont(const GFXfont *f) {
-  if (f == &FreeSansBold9pt7b) thStyle = TS_SB;
-  else if (f == &FreeSansBold12pt7b || f == &FreeSans12pt7b) thStyle = TS_MB;
-  else if (f == &FreeSansBold18pt7b) thStyle = TS_LB;
-  else if (f == &FreeSansBold24pt7b) thStyle = TS_XL;
-  else thStyle = TS_S;
+  if (f == &FreeSansBold12pt7b || f == &FreeSans12pt7b) thStyle = 3;
+  else if (f == &FreeSansBold18pt7b || f == &FreeSansBold24pt7b) thStyle = 4;
+  else thStyle = 2;
   TFT_eSPI::setFreeFont(f);
 }
 void L10nTft::setTextFont(uint8_t f) {
-  thStyle = (f == 4) ? TS_LB : TS_S;
+  thStyle = (f == 1) ? 0 : (f == 4) ? 4 : 1;
   TFT_eSPI::setTextFont(f);
 }
+
+// Returns the width. With paint set it also draws, blending each 4-bit glyph over what is on the screen so that
+// tone marks and vowels never wipe the letter under them.
+int L10nTft::thaiRender(const char *s, int x, int y, bool paint) {
+  const ThaiAtlas &a = thaiAtlases[thStyle];
+  const uint16_t ink = (uint16_t)textcolor;
+  int len = strlen(s), p = 0;
+  int32_t pen = 0;
+  auto glyph = [&](uint16_t gid, int gx, int gy) {
+    if (!paint) return;
+    const ThaiBitmap &b = a.glyphs[gid];
+    int x0 = x + gx + b.left, y0 = y + a.baseline - gy - b.top;
+    int stride = (b.width + 1) / 2;
+    static uint16_t tile[48 * 48];
+    if (b.width > 48 || b.height > 48 || !b.width || !b.height) return;
+    if (x0 >= SCR_W || y0 >= SCR_H || x0 + b.width <= 0 || y0 + b.height <= 0) return;
+    memset(tile, 0, sizeof(tile));
+    readRect(x0, y0, b.width, b.height, tile);
+    for (int row = 0; row < b.height; row++)
+      for (int col = 0; col < b.width; col++) {
+        uint8_t packed = a.pixels[b.offset + row * stride + col / 2];
+        uint8_t alpha = col & 1 ? packed & 15 : packed >> 4;
+        if (!alpha) continue;
+        uint16_t color = ink;
+        if (alpha < 15) {
+          uint16_t raw = tile[row * b.width + col];
+          uint16_t bg = (raw << 8) | (raw >> 8);       // readRect and pushRect use byte swapped RGB565
+          int r = (((ink >> 11) & 31) * alpha + ((bg >> 11) & 31) * (15 - alpha) + 7) / 15;
+          int g = (((ink >> 5) & 63) * alpha + ((bg >> 5) & 63) * (15 - alpha) + 7) / 15;
+          int bl = ((ink & 31) * alpha + (bg & 31) * (15 - alpha) + 7) / 15;
+          color = (r << 11) | (g << 5) | bl;
+        }
+        tile[row * b.width + col] = (color << 8) | (color >> 8);
+      }
+    pushRect(x0, y0, b.width, b.height, tile);
+  };
+  while (p < len) {
+    uint32_t cp = utf8Decode(s, len, p);
+    if (cp == 0x200B || cp == 0xFEFF) continue;
+    const ThaiShape *sh = nullptr;
+    if (cp >= 0xE01 && cp <= 0xE5B) {
+      uint32_t key = (cp & 255) << 24;
+      sh = findShape(key);
+      int q = p, used = p;
+      for (int n = 1; n < 4 && q < len; n++) {
+        uint32_t next = utf8Decode(s, len, q);
+        if (!(thaiMark(next) || next == 0xE33 || next == 0xE32)) break;
+        key |= (next & 255) << (24 - 8 * n);
+        const ThaiShape *candidate = findShape(key);
+        if (candidate) { sh = candidate; used = q; }
+      }
+      p = used;
+    }
+    if (sh) {
+      for (int i = 0; i < sh->count; i++) {
+        const ThaiRunGlyph &g = thaiRuns[sh->offset + i];
+        glyph(g.glyph, (pen + g.x * a.size + 500) / 1000, (int)roundf(g.y * a.size / 1000.0f));
+      }
+      pen += sh->advance * a.size;
+    } else {
+      const ThaiCodepoint *g = findCodepoint(cp);
+      if (!g) g = findCodepoint('?');
+      glyph(g->glyph, (pen + 500) / 1000, 0);
+      pen += g->advance * a.size;
+    }
+  }
+  return (pen + 999) / 1000;
+}
+
+int16_t L10nTft::textWidth(const char *s) {
+  const char *t = l10nTr(s);
+  if (!l10nIsThai(t)) return TFT_eSPI::textWidth(s);
+  return thaiRender(t, 0, 0, false);
+}
+int16_t L10nTft::textWidth(const String &s) { return textWidth(s.c_str()); }
+
+int16_t L10nTft::drawString(const char *s, int32_t x, int32_t y) {
+  const char *t = l10nTr(s);
+  if (!l10nIsThai(t)) return TFT_eSPI::drawString(s, x, y);
+  String keep = t;                                   // l10nTr may hand back a buffer that the next lookup reuses
+  const uint8_t d = textdatum < 9 ? textdatum : 0;
+  const int hz = d % 3, vt = d / 3;
+  int w = thaiRender(keep.c_str(), 0, 0, false), h = thaiLineHeight();
+  int x0 = hz == 0 ? x : hz == 1 ? x - w / 2 : x - w;
+  int y0 = vt == 0 ? y : vt == 1 ? y - h / 2 : y - h;
+  uint16_t pad = getTextPadding();
+  if (textbgcolor != textcolor && pad > 0) {         // clear the old text, like the normal fonts do
+    int px0 = hz == 0 ? x : hz == 1 ? x - pad / 2 : x - pad;
+    fillRect(max(0, px0), max(0, y0), min<int>(pad, SCR_W - max(0, px0)), h, textbgcolor);
+  }
+  thaiRender(keep.c_str(), x0, y0, true);
+  return w;
+}
+int16_t L10nTft::drawString(const String &s, int32_t x, int32_t y) { return drawString(s.c_str(), x, y); }
 #endif
